@@ -1,0 +1,225 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <PropertyGroup>
+    <ProjectGuid>{F783796B-2189-4A3E-AE6E-3E50F68FEE5C}</ProjectGuid>
+    <ProjectTypeGuids>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <OutputType>Library</OutputType>
+    <RootNamespace>CommonUtils</RootNamespace>
+    <AssemblyName>CommonUtils</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <NoWin32Manifest>False</NoWin32Manifest>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <NoStdLib>False</NoStdLib>
+    <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
+    <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
+    <WarningLevel>4</WarningLevel>
+    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Platform)' == 'AnyCPU' ">
+    <PlatformTarget>x86</PlatformTarget>
+    <BaseAddress>4194304</BaseAddress>
+    <RegisterForComInterop>False</RegisterForComInterop>
+    <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
+    <FileAlignment>4096</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <OutputPath>bin\Debug\</OutputPath>
+    <DebugSymbols>True</DebugSymbols>
+    <DebugType>Full</DebugType>
+    <Optimize>False</Optimize>
+    <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <BaseIntermediateOutputPath>obj\</BaseIntermediateOutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <OutputPath>bin\Release\</OutputPath>
+    <DebugSymbols>False</DebugSymbols>
+    <DebugType>None</DebugType>
+    <Optimize>True</Optimize>
+    <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
+    <DefineConstants>TRACE</DefineConstants>
+    <BaseIntermediateOutputPath>obj\</BaseIntermediateOutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Bass.Net">
+      <HintPath>NativeLibraries\Bass.x86\Bass.Net.dll</HintPath>
+    </Reference>
+    <Reference Include="DiffPlex">
+      <HintPath>NativeLibraries\DiffPlex\DiffPlex.dll</HintPath>
+    </Reference>
+    <Reference Include="Jacobi.Vst.Core">
+      <HintPath>NativeLibraries\VST.NET\Jacobi.Vst.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Jacobi.Vst.Framework">
+      <HintPath>NativeLibraries\VST.NET\Jacobi.Vst.Framework.dll</HintPath>
+    </Reference>
+    <Reference Include="Jacobi.Vst.Interop">
+      <HintPath>NativeLibraries\VST.NET\Jacobi.Vst.Interop.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.CSharp">
+      <RequiredTargetFramework>4.0</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="NAudio">
+      <HintPath>NativeLibraries\NAudio\NAudio.dll</HintPath>
+    </Reference>
+    <Reference Include="NAudio.WindowsMediaFormat">
+      <HintPath>NativeLibraries\NAudio\NAudio.WindowsMediaFormat.dll</HintPath>
+    </Reference>
+    <Reference Include="NAudioFLAC">
+      <HintPath>NativeLibraries\NAudio\NAudioFLAC.dll</HintPath>
+    </Reference>
+    <Reference Include="NAudioOggVorbis">
+      <HintPath>NativeLibraries\NAudio\NAudioOggVorbis.dll</HintPath>
+    </Reference>
+    <Reference Include="NUnit.Framework">
+      <HintPath>$(SharpDevelopBinPath)\Tools\NUnit\NUnit.Framework.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="ZedGraph">
+      <HintPath>NativeLibraries\ZedGraph\ZedGraph.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Source\Arguments.cs" />
+    <Compile Include="Source\Audio\AudioUtils.cs" />
+    <Compile Include="Source\Audio\Bass\BassProxy.cs" />
+    <Compile Include="Source\Audio\ISoundPlayer.cs" />
+    <Compile Include="Source\Audio\ISpectrumPlayer.cs" />
+    <Compile Include="Source\Audio\IWaveformPlayer.cs" />
+    <Compile Include="Source\Audio\NAudio\AudioUtilsNAudio.cs" />
+    <Compile Include="Source\Audio\NAudio\AudioUtilsNAudioExtra.cs" />
+    <Compile Include="Source\Audio\OscillatorGenerator.cs" />
+    <Compile Include="Source\Audio\RiffRead.cs" />
+    <Compile Include="Source\Audio\SampleConverter.cs" />
+    <Compile Include="Source\BinaryFile.cs" />
+    <Compile Include="Source\BitCounter.cs" />
+    <Compile Include="Source\ColorUtils.cs" />
+    <Compile Include="Source\CommonMath\Comirva\CholeskyDecomposition.cs" />
+    <Compile Include="Source\CommonMath\Comirva\Dct.cs" />
+    <Compile Include="Source\CommonMath\Comirva\DctMethods.cs" />
+    <Compile Include="Source\CommonMath\Comirva\EigenvalueDecomposition.cs" />
+    <Compile Include="Source\CommonMath\Comirva\LUDecomposition.cs" />
+    <Compile Include="Source\CommonMath\Comirva\Matrix.cs" />
+    <Compile Include="Source\CommonMath\Comirva\QRDecomposition.cs" />
+    <Compile Include="Source\CommonMath\Comirva\SingularValueDecomposition.cs" />
+    <Compile Include="Source\CommonMath\FFT\AudioAnalyzer.cs" />
+    <Compile Include="Source\CommonMath\FFT\ExocortexDSP\Complex.cs" />
+    <Compile Include="Source\CommonMath\FFT\ExocortexDSP\ComplexArray.cs" />
+    <Compile Include="Source\CommonMath\FFT\ExocortexDSP\ComplexF.cs" />
+    <Compile Include="Source\CommonMath\FFT\ExocortexDSP\ComplexMath.cs" />
+    <Compile Include="Source\CommonMath\FFT\ExocortexDSP\ComplexStats.cs" />
+    <Compile Include="Source\CommonMath\FFT\ExocortexDSP\Fourier.cs" />
+    <Compile Include="Source\CommonMath\FFT\ExocortexDSP\FourierDirection.cs" />
+    <Compile Include="Source\CommonMath\FFT\FFT.cs" />
+    <Compile Include="Source\CommonMath\FFT\FFTTesting.cs" />
+    <Compile Include="Source\CommonMath\FFT\FFTUtils.cs" />
+    <Compile Include="Source\CommonMath\FFT\FFTWindows.cs" />
+    <Compile Include="Source\CommonMath\FFT\fftwlib\Interop.cs" />
+    <Compile Include="Source\CommonMath\FFT\fftwlib\Managed.cs" />
+    <Compile Include="Source\CommonMath\FFT\fftw\FFTW.cs" />
+    <Compile Include="Source\CommonMath\FFT\LomontFFT.cs" />
+    <Compile Include="Source\CommonMath\FFT\STFT.cs" />
+    <Compile Include="Source\CommonMath\FFT\WindowFunctions.cs" />
+    <Compile Include="Source\CommonMath\MFCC\MFCC.cs" />
+    <Compile Include="Source\CommonMath\Wavelets\Haar.cs" />
+    <Compile Include="Source\CommonMath\Wavelets\HaarCSharp\ColorChannels.cs" />
+    <Compile Include="Source\CommonMath\Wavelets\HaarCSharp\ForwardWaveletTransform.cs" />
+    <Compile Include="Source\CommonMath\Wavelets\HaarCSharp\ImageProcessor.cs" />
+    <Compile Include="Source\CommonMath\Wavelets\HaarCSharp\InverseWaveletTransform.cs" />
+    <Compile Include="Source\CommonMath\Wavelets\HaarCSharp\SafeColorChannels.cs" />
+    <Compile Include="Source\CommonMath\Wavelets\HaarCSharp\UnsafeColorChannels.cs" />
+    <Compile Include="Source\CommonMath\Wavelets\HaarCSharp\WaveletTransform.cs" />
+    <Compile Include="Source\CommonMath\Wavelets\HaarTransform.cs" />
+    <Compile Include="Source\CommonMath\Wavelets\HaarWaveletDecomposition.cs" />
+    <Compile Include="Source\CommonMath\Wavelets\NonStandardHaarWaveletDecomposition.cs" />
+    <Compile Include="Source\CommonMath\Wavelets\StandardHaarWaveletDecomposition.cs" />
+    <Compile Include="Source\CommonMath\Wavelets\Thresholding.cs" />
+    <Compile Include="Source\CommonMath\Wavelets\WaveletCompress\HaarWaveletTransform.cs" />
+    <Compile Include="Source\CommonMath\Wavelets\WaveletCompress\Quantize.cs" />
+    <Compile Include="Source\CommonMath\Wavelets\WaveletCompress\VerificationResult.cs" />
+    <Compile Include="Source\CommonMath\Wavelets\WaveletCompress\WaveletComDec.cs" />
+    <Compile Include="Source\CommonMath\Wavelets\WaveletCompress\WaveletCompress.cs" />
+    <Compile Include="Source\CommonMath\Wavelets\WaveletCompress\WaveletDecompress.cs" />
+    <Compile Include="Source\CommonMath\Wavelets\WaveletUtils.cs" />
+    <Compile Include="Source\Conversions.cs" />
+    <Compile Include="Source\CSVWriter.cs" />
+    <Compile Include="Source\DebugTimer.cs" />
+    <Compile Include="Source\Diff\SimpleBinaryDiff.cs" />
+    <Compile Include="Source\Diff\UnidiffSeqFormatter.cs" />
+    <Compile Include="Source\Export.cs" />
+    <Compile Include="Source\ExtendedGraphics.cs" />
+    <Compile Include="Source\FXP.cs" />
+    <Compile Include="Source\GUI\FrequencyAnalyserUserControl.cs" />
+    <Compile Include="Source\GUI\FrequencyAnalyserUserControl.Designer.cs">
+      <DependentUpon>FrequencyAnalyserUserControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Source\GUI\GUIUtils.cs" />
+    <Compile Include="Source\GUI\WaveDisplayUserControl.cs" />
+    <Compile Include="Source\GUI\WaveDisplayUserControl.Designer.cs">
+      <DependentUpon>WaveDisplayUserControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Source\ImageUtils.cs" />
+    <Compile Include="Source\IOUtils.cs" />
+    <Compile Include="Source\MathUtils.cs" />
+    <Compile Include="Source\MidiUtils.cs" />
+    <Compile Include="Source\NumberUtils.cs" />
+    <Compile Include="Source\ObjectUtils.cs" />
+    <Compile Include="Source\RandomUtils.cs" />
+    <Compile Include="Source\StringUtils.cs" />
+    <Compile Include="Source\VST\AudioOutput.cs" />
+    <Compile Include="Source\VST\VstHost.cs" />
+    <Compile Include="Source\VST\VstPlaybackNAudio.cs" />
+    <Compile Include="Source\XmlUtils.cs" />
+    <Compile Include="Tests\FFTTest.cs" />
+    <Compile Include="Tests\WaveletTest.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Source\CommonMath\MFCC" />
+    <Folder Include="Source\CommonMath\Wavelets" />
+    <Folder Include="Source\CommonMath\Wavelets\HaarCSharp" />
+    <Folder Include="Source\CommonMath\Wavelets\WaveletCompress" />
+    <Folder Include="Tests" />
+    <Folder Include="Source" />
+    <Folder Include="Source\Audio" />
+    <Folder Include="Source\Audio\Bass" />
+    <Folder Include="Source\Audio\NAudio" />
+    <Folder Include="Source\CommonMath" />
+    <Folder Include="Source\CommonMath\Comirva" />
+    <Folder Include="Source\CommonMath\FFT" />
+    <Folder Include="Source\CommonMath\FFT\ExocortexDSP" />
+    <Folder Include="Source\CommonMath\FFT\fftw" />
+    <Folder Include="Source\CommonMath\FFT\fftwlib" />
+    <Folder Include="Source\Diff" />
+    <Folder Include="Source\GUI" />
+    <Folder Include="Source\VST" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Source\GUI\FrequencyAnalyserUserControl.resx">
+      <DependentUpon>FrequencyAnalyserUserControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Source\GUI\WaveDisplayUserControl.resx">
+      <DependentUpon>WaveDisplayUserControl.Designer.cs</DependentUpon>
+    </EmbeddedResource>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PreBuildEvent>xcopy /ey "$(ProjectDir)NativeLibraries\Bass.x86\*.dll" "$(TargetDir)"
+xcopy /ey "$(ProjectDir)NativeLibraries\libfftw.x86\*.dll" "$(TargetDir)"
+xcopy /ey "$(ProjectDir)NativeLibraries\DiffPlex\*.dll" "$(TargetDir)"
+xcopy /ey "$(ProjectDir)NativeLibraries\NAudio\*.dll" "$(TargetDir)"
+xcopy /ey "$(ProjectDir)NativeLibraries\ZedGraph\*.dll" "$(TargetDir)"</PreBuildEvent>
+  </PropertyGroup>
+</Project>
