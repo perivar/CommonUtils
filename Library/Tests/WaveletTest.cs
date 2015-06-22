@@ -112,6 +112,35 @@ namespace CommonUtils.Tests
 			
 			return mat;
 		}
+		
+		private static double[][] Get2DResultData() {
+			
+			var mat = new double[4][];
+			for(int m = 0; m < 4; m++) {
+				mat[m] = new double[4];
+			}			
+			mat[0][0] = 14.250000;
+			mat[0][1] = 0.750000;
+			mat[0][2] = 2.121320;
+			mat[0][3] = 3.181981;
+
+			mat[1][0] = 0.750000;
+			mat[1][1] = 1.250000;
+			mat[1][2] = -1.414214;
+			mat[1][3] = -3.889087;
+
+			mat[2][0] = -0.707107;
+			mat[2][1] = 4.242641;
+			mat[2][2] = -1.500000;
+			mat[2][3] = -0.500000;
+
+			mat[3][0] = -1.060660;
+			mat[3][1] = -2.474874;
+			mat[3][2] = -0.500000;
+			mat[3][3] = 1.000000;
+			
+			return mat;
+		}
 
 		public static void TestHaar1D() {
 			
@@ -143,7 +172,7 @@ namespace CommonUtils.Tests
 		public static void TestHaarWaveletTransform1D() {
 			
 			Console.WriteLine();
-			Console.WriteLine("The Haar Wavelet Transform 1D with only one iteration)");
+			Console.WriteLine("The Haar Wavelet Transform 1D (with only one iteration)");
 			
 			double[] data = Get1DTestData();
 			
@@ -165,13 +194,13 @@ namespace CommonUtils.Tests
 		public static void TestHaarWaveletTransform2D() {
 			
 			Console.WriteLine();
-			Console.WriteLine("The Haar Wavelet Transform 2D with only one iteration)");
+			Console.WriteLine("The Haar Wavelet Transform 2D (with only one iteration)");
 			
 			double[][] mat = Get2DTestData();
 			HaarWaveletTransform.HaarTransform2D(mat, 4, 4);
 
 			var result = new Matrix(mat);
-			result.PrintPretty();
+			result.PrintPretty();			
 			
 			HaarWaveletTransform.InverseHaarTransform2D(mat, 4, 4);
 			result.PrintPretty();
@@ -179,7 +208,7 @@ namespace CommonUtils.Tests
 		
 		public static void TestHaarCSharp1D() {
 			Console.WriteLine();
-			Console.WriteLine("The HaarCSharp1D with only one iteration)");
+			Console.WriteLine("The HaarCSharp1D");
 			
 			double[] data = Get1DTestData();
 			
@@ -188,29 +217,32 @@ namespace CommonUtils.Tests
 			IOUtils.Print(Console.Out, data);
 			
 			// check if it's the same as
-			double[] result = Get1DResultDataFirstIteration();
-			//Assert.That(data, Is.EqualTo(result).AsCollection.Within(0.001), "fail at [0]");
+			double[] result = Get1DResultData();
+			Assert.That(data, Is.EqualTo(result).AsCollection.Within(0.001), "fail at [0]");
 			
 			InverseWaveletTransform.Transform1D(data);
 			
 			IOUtils.Print(Console.Out, data);
 			
-			//Assert.That(data, Is.EqualTo(Get1DTestData()).AsCollection.Within(0.001), "fail at [0]");
+			Assert.That(data, Is.EqualTo(Get1DTestData()).AsCollection.Within(0.001), "fail at [0]");
 		}
 		
 		public static void TestHaarCSharp2D() {
 			
 			Console.WriteLine();
-			Console.WriteLine("The TestHaarCSharp2D");
+			Console.WriteLine("The HaarCSharp2D");
 			
 			double[][] mat = Get2DTestData();
-			ForwardWaveletTransform.Transform2D(mat, 2);
+			ForwardWaveletTransform.Transform2D(mat, 1);
 
 			var result = new Matrix(mat);
+			result.PrintPretty();			
+			Assert.That(mat, Is.EqualTo(Get2DResultData()).AsCollection.Within(0.001), "fail at [0]");
+			
+			InverseWaveletTransform.Transform2D(mat, 1);
 			result.PrintPretty();
 			
-			InverseWaveletTransform.Transform2D(mat, 2);
-			result.PrintPretty();
+			Assert.That(mat, Is.EqualTo(Get2DTestData()).AsCollection.Within(0.001), "fail at [0]");
 		}
 		
 		public static void TestHaarWaveletDecomposition() {

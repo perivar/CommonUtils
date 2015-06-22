@@ -6,6 +6,8 @@ namespace CommonUtils.CommonMath.Wavelets
 	// http://www.cs.ucf.edu/~mali/haar/haar.cpp
 	public static class Haar
 	{
+		static double SQRT2 = Math.Sqrt(2.0);
+		
 		/// <summary>
 		/// The 1D Haar Transform
 		/// </summary>
@@ -22,8 +24,8 @@ namespace CommonUtils.CommonMath.Wavelets
 				w/=2;
 				for(i = 0; i < w; i++)
 				{
-					vecp[i] = (vec[2 * i] + vec[2 * i+1]) / Math.Sqrt(2.0);
-					vecp[i+w] = (vec[2 * i] - vec[2 * i+1]) / Math.Sqrt(2.0);
+					vecp[i] = (vec[2 * i] + vec[2 * i+1]) / SQRT2;;
+					vecp[i+w] = (vec[2 * i] - vec[2 * i+1]) / SQRT2;;
 				}
 
 				for(i = 0; i < (w * 2); i++)
@@ -49,8 +51,8 @@ namespace CommonUtils.CommonMath.Wavelets
 			w/=2;
 			for(i = 0; i < w; i++)
 			{
-				vecp[i] = (vec[2 * i] + vec[2 * i+1]) / Math.Sqrt(2.0);
-				vecp[i+w] = (vec[2 * i] - vec[2 * i +1]) / Math.Sqrt(2.0);
+				vecp[i] = (vec[2 * i] + vec[2 * i+1]) / SQRT2;;
+				vecp[i+w] = (vec[2 * i] - vec[2 * i +1]) / SQRT2;;
 			}
 
 			for(i = 0; i < (w * 2); i++) {

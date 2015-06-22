@@ -11,20 +11,7 @@ namespace CommonUtils.CommonMath.Wavelets.HaarCSharp
 		// http://wavelets.pybytes.com/wavelet/haar/
 		
 		protected static double SQRT2 = Math.Sqrt(2.0);
-		
-		protected const double S0 = 0.5;
-		protected const double S1 = 0.5;
-		protected const double W0 = 0.5;
-		protected const double W1 = -0.5;
-		
-		/*
-		// sqrt(2) / 2 = 0.7071067811865476
-		protected const double S0 = 0.7071067811865476;
-		protected const double S1 = 0.7071067811865476;
-		protected const double W0 = 0.7071067811865476;
-		protected const double W1 = -0.7071067811865476;
-		 */		
-		
+				
 		protected WaveletTransform(int iterations)
 		{
 			this.Iterations = iterations;

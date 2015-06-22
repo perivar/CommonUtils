@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 
 namespace CommonUtils.CommonMath.Wavelets.HaarCSharp
 {
@@ -25,25 +24,47 @@ namespace CommonUtils.CommonMath.Wavelets.HaarCSharp
 			}
 		}
 
-		public static void Transform1D(double[] data)
-		{
-			var temp = new double[data.Length];
-
-			var h = data.Length >> 1;
-			for (var i = 0; i < h; i++)
+		/// <summary>
+		/// A 1D Haar forward transform using all levels
+		/// </summary>
+		/// <param name="data">data</param>
+		public static void Transform1D(double[] data) {
+			
+			int h = data.Length;
+			while (h > 1)
 			{
-				var k = i << 1;
-				temp[i] = (data[k] * S0) + (data[k + 1] * S1);
-				temp[i + h] = (data[k] * W0) + (data[k + 1] * W1);
+				Transform1DStep(data, h);
+				h /= 2;
+			}
+		}
+		
+		/// <summary>
+		/// A Modified version of 1D Haar Transform, used by the 2D Haar Transform function
+		/// </summary>
+		/// <param name="data"></param>
+		public static void Transform1DStep(double[] data, int h)
+		{
+			var temp = new double[h];
+
+			h /= 2;
+			for (int i = 0; i < h; i++)
+			{
+				temp[i] = (data[2 * i] + data[(2 * i) + 1]) / SQRT2;
+				temp[i + h] = (data[2 * i] - data[(2 * i) + 1]) / SQRT2;
 			}
 
-			for (var i = 0; i < data.Length; i++)
+			for (int i = 0; i < (h * 2); i++)
 			{
-				data[i] = temp[i] * SQRT2; // PIN: added multiply with SQRT2 to make this a haar transform
+				data[i] = temp[i];
 			}
 		}
 
-		public static void Transform2D(double[][] data, int iterations)
+		/// <summary>
+		/// Standard 2D Transform. One iteration here gives the standard transform
+		/// </summary>
+		/// <param name="data">data</param>
+		/// <param name="iterations">number of iterations, 1 is standard</param>
+		public static void Transform2D(double[][] data, int iterations = 1)
 		{
 			var rows = data.Length;
 			var cols = data[0].Length;
@@ -84,5 +105,6 @@ namespace CommonUtils.CommonMath.Wavelets.HaarCSharp
 				}
 			}
 		}
+
 	}
 }

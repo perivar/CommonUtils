@@ -222,7 +222,7 @@ namespace CommonUtils
 		public static void Print(TextWriter pw, double[] data) {
 			for(int i = 0; i < data.Length; i++)
 			{
-				pw.Write("{0}", data[i].ToString("F3", CultureInfo.InvariantCulture).PadLeft(10) + " ");
+				pw.Write("{0}", data[i].ToString("F4", CultureInfo.InvariantCulture).PadLeft(10) + " ");
 				pw.Write("\r");
 			}
 			pw.WriteLine();
