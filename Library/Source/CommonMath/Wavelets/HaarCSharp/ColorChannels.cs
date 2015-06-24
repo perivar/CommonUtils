@@ -6,6 +6,7 @@ namespace CommonUtils.CommonMath.Wavelets.HaarCSharp
 {
 	/// <summary>
 	/// Created by Hovhannes Bantikyan under the The Code Project Open License
+	/// Heavily modified by Per Ivar Nerseth
 	/// </summary>
 	public abstract class ColorChannels
 	{
@@ -43,18 +44,7 @@ namespace CommonUtils.CommonMath.Wavelets.HaarCSharp
 				return 0;
 			}
 
-			var value = ((toMax - toMin) * (x - fromMin)) / (fromMax - fromMin) + toMin;
-			if (value > toMax)
-			{
-				value = toMax;
-			}
-
-			if (value < toMin)
-			{
-				value = toMin;
-			}
-
-			return value;
+			return MathUtils.ConvertAndMainainRatio(x, fromMin, fromMax, toMin, toMax);
 		}
 	}
 }

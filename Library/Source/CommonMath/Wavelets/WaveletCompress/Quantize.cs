@@ -16,20 +16,16 @@ namespace CommonUtils.CommonMath.Wavelets.Compress
 		/// <param name="threshold">threshold where any absolute value less than this is set to zero</param>
 		public static void DataQuantize2D(double[][] data_input, int height, int width, int threshold)
 		{
-			int i;
-			int j;
-			double temp;
-
 			//if (threshold > 255)
 			//	threshold = 255;
 			if (threshold < 0)
 				threshold = 0;
 
-			for (i = 0; i < height; i++)
+			for (int i = 0; i < height; i++)
 			{
-				for (j = 0; j < width; j++)
+				for (int j = 0; j < width; j++)
 				{
-					temp = data_input[i][j];
+					double temp = data_input[i][j];
 					if (Math.Abs(temp) <= threshold)
 						data_input[i][j] = 0.0;
 				}
@@ -46,23 +42,18 @@ namespace CommonUtils.CommonMath.Wavelets.Compress
 		/// <param name="threshold">threshold where any absolute value less than this is set to zero</param>
 		public static void DataQuantize3D(double[][][] data_input, int length, int width, int height, int threshold)
 		{
-			int i;
-			int j;
-			int k;
-			double temp;
-
 			//if (threshold > 255)
 			//	threshold = 255;
 			if (threshold < 0)
 				threshold = 0;
 
-			for (i = 0; i < length; i++)
+			for (int i = 0; i < length; i++)
 			{
-				for (j = 0; j < width; j++)
+				for (int j = 0; j < width; j++)
 				{
-					for (k = 0; k < height; k++)
+					for (int k = 0; k < height; k++)
 					{
-						temp = data_input[i][j][k];
+						double temp = data_input[i][j][k];
 						if (Math.Abs(temp) <= threshold)
 							data_input[i][j][k] = 0.0;
 					}

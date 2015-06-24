@@ -1,6 +1,7 @@
 ﻿using System;
 using CommonUtils.CommonMath.Comirva;
 
+using CommonUtils.CommonMath.Wavelets.Compress;
 using CommonUtils.CommonMath.Wavelets;
 using CommonUtils;
 
@@ -341,11 +342,11 @@ namespace CommonUtils.CommonMath.MFCC
 		/// <param name="m">matrix (logSpectrogram)</param>
 		/// <returns>matrix wavelet'ed</returns>
 		public Matrix ApplyWaveletCompression(ref Matrix m, out int lastHeight, out int lastWidth) {
-			using (new DebugTimer("ApplyWaveletCompression(m)")) {
+			using (new DebugTimer("ApplyWaveletCompression(matrix)")) {
 				
 				// Wavelet Transform
 				Matrix wavelet = m.Copy();
-				CommonUtils.CommonMath.Wavelets.Compress.WaveletCompress.HaarTransform2D(wavelet.MatrixData, numberWaveletTransforms, out lastHeight, out lastWidth);
+				WaveletCompress.HaarTransform2D(wavelet.MatrixData, numberWaveletTransforms, out lastHeight, out lastWidth);
 				
 				// Compress
 				Matrix waveletCompressed = wavelet.Resize(numberCoefficients, wavelet.Columns);
@@ -367,7 +368,7 @@ namespace CommonUtils.CommonMath.MFCC
 
 				// 6. Perform the Inverse Wavelet Transform
 				Matrix m = wavelet.Copy();
-				CommonUtils.CommonMath.Wavelets.Compress.WaveletDecompress.Decompress2D(m.MatrixData, numberWaveletTransforms, firstHeight, firstWidth);
+				WaveletDecompress.Decompress2D(m.MatrixData, numberWaveletTransforms, firstHeight, firstWidth);
 				
 				return m;
 			}

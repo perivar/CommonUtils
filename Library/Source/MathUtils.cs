@@ -1359,7 +1359,7 @@ namespace CommonUtils
 		/// </summary>
 		/// <param name="data">data</param>
 		/// <returns>max</returns>
-		public static double Max(double[][] data) {
+		public static double MaxAbs(double[][] data) {
 			double max = data.Max((b) => b.Max((v) => Math.Abs(v)));
 			return max;
 		}
@@ -1369,53 +1369,131 @@ namespace CommonUtils
 		/// </summary>
 		/// <param name="data">data</param>
 		/// <returns>min</returns>
-		public static double Min(double[][] data) {
+		public static double MinAbs(double[][] data) {
 			double min = data.Min((b) => b.Min((v) => Math.Abs(v)));
 			return min;
 		}
 		
 		/// <summary>
-		/// Max returns the largest of two int's.
+		/// Find maximum number
 		/// </summary>
-		/// <param name="i1">integer to be compared.</param>
-		/// <param name="i2">integer to be compared.</param>
-		/// <returns>the largest of i1 and i2.</returns>
-		public static int Max(int i1, int i2)
+		/// <param name="twoDimensional">data</param>
+		/// <returns>max</returns>
+		public static double Max(double[][] twoDimensional)
 		{
-			int value;
-
-			if (i2 < i1)
-			{
-				value = i1;
-			}
-			else
-			{
-				value = i2;
-			}
-			return value;
+			double[] flattened = twoDimensional.SelectMany(x=>x).ToArray();
+			return flattened.Max();
 		}
 
 		/// <summary>
-		/// Min returns the minimum of two int's.
+		/// Find minimum number
 		/// </summary>
-		/// <param name="i1">integer to be compared.</param>
-		/// <param name="i2">integer to be compared.</param>
-		/// <returns>the smallest of i1 and i2.</returns>
-		public static int Min(int i1, int i2)
+		/// <param name="twoDimensional">data</param>
+		/// <returns>min</returns>
+		public static double Min(double[][] twoDimensional)
 		{
-			int value;
-
-			if (i1 < i2)
-			{
-				value = i1;
-			}
-			else
-			{
-				value = i2;
-			}
-			return value;
+			double[] flattened = twoDimensional.SelectMany(x=>x).ToArray();
+			return flattened.Min();
 		}
 		
+		/// <summary>
+		/// Find maximum number
+		/// </summary>
+		/// <param name="array">array</param>
+		/// <returns>max</returns>
+		public static double Max(double[] array)
+		{
+			return array.Max();
+		}
+
+		/// <summary>
+		/// Find minimum number
+		/// </summary>
+		/// <param name="array">array</param>
+		/// <returns>min</returns>
+		public static double Min(double[] array)
+		{
+			return array.Min();
+		}
+		
+		/// <summary>
+		/// Returns the larger of two specified numbers.
+		/// This method only exists for consistency, so you can *always* call
+		/// MathUtils.Max instead of alternating between MathUtils.Max and Math.Max
+		/// depending on your argument count.
+		/// </summary>
+		/// <param name="x">The first of two integers to compare.</param>
+		/// <param name="y">The second of two integers to compare.</param>
+		/// <returns>x or y, whichever is larger.</returns>
+		public static int Max(int x, int y)
+		{
+			return Math.Max(x, y);
+		}
+
+		/// <summary>
+		/// Returns the larger of three specified numbers.
+		/// </summary>
+		/// <param name="x">The first of three integers to compare.</param>
+		/// <param name="y">The second of three integers to compare.</param>
+		/// <param name="z">The third of three integers to compare.</param>
+		/// <returns>x, y or z, whichever is larger.</returns>
+		public static int Max(int x, int y, int z)
+		{
+			return Math.Max(x, Math.Max(y, z));
+		}
+
+		/// <summary>
+		/// Returns the larger of four specified numbers.
+		/// </summary>
+		/// <param name="w">The first of four integers to compare.</param>
+		/// <param name="x">The second of four integers to compare.</param>
+		/// <param name="y">The third of four integers to compare.</param>
+		/// <param name="z">The fourth of four integers to compare.</param>
+		/// <returns>w, x, y or z, whichever is larger.</returns>
+		public static int Max(int w, int x, int y, int z)
+		{
+			return Math.Max(w, Math.Max(x, Math.Max(y, z)));
+		}
+
+		/// <summary>
+		/// Returns the smaller of two specified numbers.
+		/// This method only exists for consistency, so you can *always* call
+		/// MathUtils.Min instead of alternating between MathUtils.Min and Math.Min
+		/// depending on your argument count.
+		/// </summary>
+		/// <param name="x">The first of two integers to compare.</param>
+		/// <param name="y">The second of two integers to compare.</param>
+		/// <returns>x or y, whichever is smaller.</returns>
+		public static int Min(int x, int y)
+		{
+			return Math.Min(x, y);
+		}
+
+		/// <summary>
+		/// Returns the smaller of three specified numbers.
+		/// </summary>
+		/// <param name="x">The first of three integers to compare.</param>
+		/// <param name="y">The second of three integers to compare.</param>
+		/// <param name="z">The third of three integers to compare.</param>
+		/// <returns>x, y or z, whichever is smaller.</returns>
+		public static int Min(int x, int y, int z)
+		{
+			return Math.Min(x, Math.Min(y, z));
+		}
+
+		/// <summary>
+		/// Returns the smaller of four specified numbers.
+		/// </summary>
+		/// <param name="w">The first of four integers to compare.</param>
+		/// <param name="x">The second of four integers to compare.</param>
+		/// <param name="y">The third of four integers to compare.</param>
+		/// <param name="z">The fourth of four integers to compare.</param>
+		/// <returns>w, x, y or z, whichever is smaller.</returns>
+		public static int Min(int w, int x, int y, int z)
+		{
+			return Math.Min(w, Math.Min(x, Math.Min(y, z)));
+		}
+
 		#endregion
 		
 		#region Extension method (IndexesWhere and 2D Row and Column accessors and 2D Array Deep Copy)
@@ -1582,10 +1660,10 @@ namespace CommonUtils
 		/// <summary>
 		/// Flatten Jagged Array (i.e. convert from double[][] to double[])
 		/// </summary>
-		/// <param name="data">jagged array</param>
+		/// <param name="twoDimensional">jagged array</param>
 		/// <returns>flattened array</returns>
-		public static double[] Flatten(double[][] data) {
-			return data.SelectMany((b) => (b)).ToArray();
+		public static double[] Flatten(double[][] twoDimensional) {
+			return twoDimensional.SelectMany((b) => (b)).ToArray();
 		}
 		
 		/// <summary>

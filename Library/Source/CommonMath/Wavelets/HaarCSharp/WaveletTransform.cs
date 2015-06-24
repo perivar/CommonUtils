@@ -4,6 +4,7 @@ namespace CommonUtils.CommonMath.Wavelets.HaarCSharp
 {
 	/// <summary>
 	/// Created by Hovhannes Bantikyan under the The Code Project Open License
+	/// Heavily modified by Per Ivar Nerseth
 	/// </summary>
 	public abstract class WaveletTransform
 	{

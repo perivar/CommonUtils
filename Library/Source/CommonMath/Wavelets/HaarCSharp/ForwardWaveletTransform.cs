@@ -3,6 +3,7 @@ namespace CommonUtils.CommonMath.Wavelets.HaarCSharp
 {
 	/// <summary>
 	/// Created by Hovhannes Bantikyan under the The Code Project Open License
+	/// Heavily modified by Per Ivar Nerseth
 	/// </summary>
 	public class ForwardWaveletTransform : WaveletTransform
 	{
@@ -20,21 +21,26 @@ namespace CommonUtils.CommonMath.Wavelets.HaarCSharp
 		{
 			foreach (var color in new[] { channels.Red, channels.Green, channels.Blue })
 			{
-				Transform2D(color, this.Iterations);
+				Transform2D(color, false, this.Iterations);
 			}
 		}
 
 		/// <summary>
-		/// A 1D Haar forward transform using all levels
+		/// A 1D Haar forward transform optionally using all levels
 		/// </summary>
 		/// <param name="data">data</param>
-		public static void Transform1D(double[] data) {
+		/// <param name="doAllLevels">determine whether to transform all levels</param>
+		public static void Transform1D(double[] data, bool doAllLevels=false) {
 			
-			int h = data.Length;
-			while (h > 1)
-			{
-				Transform1DStep(data, h);
-				h /= 2;
+			if (doAllLevels) {
+				int h = data.Length;
+				while (h > 1)
+				{
+					Transform1DStep(data, h);
+					h /= 2;
+				}
+			} else {
+				Transform1DStep(data, data.Length);
 			}
 		}
 		
@@ -42,6 +48,7 @@ namespace CommonUtils.CommonMath.Wavelets.HaarCSharp
 		/// A Modified version of 1D Haar Transform, used by the 2D Haar Transform function
 		/// </summary>
 		/// <param name="data"></param>
+		/// <param name="h">length of transform</param>
 		public static void Transform1DStep(double[] data, int h)
 		{
 			var temp = new double[h];
@@ -63,8 +70,9 @@ namespace CommonUtils.CommonMath.Wavelets.HaarCSharp
 		/// Standard 2D Transform. One iteration here gives the standard transform
 		/// </summary>
 		/// <param name="data">data</param>
+		/// <param name="doAllLevels">determine whether to transform all levels</param>
 		/// <param name="iterations">number of iterations, 1 is standard</param>
-		public static void Transform2D(double[][] data, int iterations = 1)
+		public static void Transform2D(double[][] data, bool doAllLevels=true, int iterations = 1)
 		{
 			var rows = data.Length;
 			var cols = data[0].Length;
@@ -81,7 +89,7 @@ namespace CommonUtils.CommonMath.Wavelets.HaarCSharp
 						row[j] = data[i][j];
 					}
 
-					Transform1D(row);
+					Transform1D(row, doAllLevels);
 
 					for (var j = 0; j < row.Length; j++)
 					{
@@ -96,7 +104,7 @@ namespace CommonUtils.CommonMath.Wavelets.HaarCSharp
 						col[i] = data[i][j];
 					}
 
-					Transform1D(col);
+					Transform1D(col, doAllLevels);
 
 					for (var i = 0; i < col.Length; i++)
 					{

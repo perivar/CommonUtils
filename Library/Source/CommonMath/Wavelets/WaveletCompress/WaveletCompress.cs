@@ -16,7 +16,7 @@ namespace CommonUtils.CommonMath.Wavelets.Compress
 		/// <param name="lastHeight">return last height processed</param>
 		/// <param name="lastWidth">return last width processed</param>
 		public static void HaarTransform2D(double[][] data_input, int level, out int lastHeight, out int lastWidth) {
-			Compress2D(data_input, level, 0, out lastHeight, out lastWidth, false);
+			Compress2D(data_input, level, 0, out lastHeight, out lastWidth);
 		}
 		
 		/// <summary>
@@ -24,11 +24,10 @@ namespace CommonUtils.CommonMath.Wavelets.Compress
 		/// </summary>
 		/// <param name="data_input">data matrix</param>
 		/// <param name="level">number of wavelet levels</param>
-		/// <param name="threshold">threshold where all absolute values less than this is set to zero (if compression is true)</param>
+		/// <param name="threshold">threshold where all absolute values less than this is set to zero (set to 0 to avoid compression)</param>
 		/// <param name="lastHeight">return last height processed</param>
 		/// <param name="lastWidth">return last width processed</param>
-		/// <param name="doCompression">whether to appy compression</param>
-		public static void Compress2D(double[][] data_input, int level, int threshold, out int lastHeight, out int lastWidth, bool doCompression=true)
+		public static void Compress2D(double[][] data_input, int level, int threshold, out int lastHeight, out int lastWidth)
 		{
 			int temp_level = level;
 
@@ -50,7 +49,7 @@ namespace CommonUtils.CommonMath.Wavelets.Compress
 				temp_level--;
 			}
 
-			if (doCompression) Quantize.DataQuantize2D(data_input, temp_ex_height, temp_ex_width, threshold);
+			if (threshold > 0) Quantize.DataQuantize2D(data_input, temp_ex_height, temp_ex_width, threshold);
 			
 			lastHeight = ex_height;
 			lastWidth = ex_width;
@@ -88,7 +87,7 @@ namespace CommonUtils.CommonMath.Wavelets.Compress
 				temp_level--;
 			}
 
-			Quantize.DataQuantize3D(data_input, temp_ex_length, temp_ex_width, temp_ex_height, threshold);
+			if (threshold > 0) Quantize.DataQuantize3D(data_input, temp_ex_length, temp_ex_width, temp_ex_height, threshold);
 		}
 	}
 }

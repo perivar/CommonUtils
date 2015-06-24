@@ -1939,7 +1939,17 @@ namespace CommonUtils.CommonMath.Comirva
 			#endif
 		}
 
-		/// <summary>Writes the Matrix to a comma separated file that can be read by Excel.
+		/// <summary>
+		/// Writes the Matrix to a comma separated file
+		/// </summary>
+		/// <param name="filename">the name of the csv file to create, e.g. "C:\\temp\\matrix.csv"</param>
+		public void WriteCSV(string filename) {
+			WriteCSV(filename, ",");
+		}
+		
+		/// <summary>
+		/// Writes the Matrix to a text delimited file where the separator character can be specified
+		/// </summary>
 		/// <param name="filename">the name of the csv file to create, e.g. "C:\\temp\\matrix.csv"</param>
 		/// <param name="columnSeparator">the separator character to use</param>
 		public void WriteCSV(string filename, string columnSeparator)
@@ -1949,7 +1959,7 @@ namespace CommonUtils.CommonMath.Comirva
 			{
 				for(int j = 0; j < columnCount; j++)
 				{
-					pw.Write("\"{0}\"{1}", matrixData[i][j].ToString(), columnSeparator);
+					pw.Write("\"{0}\"{1}", matrixData[i][j].ToString("##.####"), columnSeparator);
 				}
 				pw.Write("\r");
 			}

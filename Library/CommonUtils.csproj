@@ -214,6 +214,11 @@
       <DependentUpon>WaveDisplayUserControl.Designer.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="Tests\lena.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>xcopy /ey "$(ProjectDir)NativeLibraries\Bass.x86\*.dll" "$(TargetDir)"

@@ -26,7 +26,7 @@ namespace CommonUtils.Tests
 	public class WaveletTest
 	{
 		[Test]
-		public void TestMethod()
+		public void TestWaveletTransforms()
 		{
 			TestHaar1D();
 			TestHaarWaveletTransform1D();
@@ -36,6 +36,12 @@ namespace CommonUtils.Tests
 			TestHaarCSharp2D();
 			TestHaarWaveletDecomposition();
 			TestHaarTransform();
+		}
+		
+		[Test]
+		public void TestWaveletImageProcessing() {
+			string inputPath = @"Tests\lena.png";
+			TestHaarInputOutput(inputPath);
 		}
 		
 		#region Simple Wavelet Test Methods
@@ -118,7 +124,7 @@ namespace CommonUtils.Tests
 			var mat = new double[4][];
 			for(int m = 0; m < 4; m++) {
 				mat[m] = new double[4];
-			}			
+			}
 			mat[0][0] = 14.250000;
 			mat[0][1] = 0.750000;
 			mat[0][2] = 2.121320;
@@ -142,6 +148,36 @@ namespace CommonUtils.Tests
 			return mat;
 		}
 
+		private static double[][] Get2DResultDataFirstIteration() {
+			
+			var mat = new double[4][];
+			for(int m = 0; m < 4; m++) {
+				mat[m] = new double[4];
+			}
+			
+			mat[0][0] =  8.500000;
+			mat[0][1] =  6.500000;
+			mat[0][2] =  0.500000;
+			mat[0][3] = -0.500000;
+
+			mat[1][0] =  6.500000;
+			mat[1][1] =  7.000000;
+			mat[1][2] =  2.500000;
+			mat[1][3] =  5.000000;
+
+			mat[2][0] =  2.500000;
+			mat[2][1] = -3.500000;
+			mat[2][2] = -1.500000;
+			mat[2][3] = -0.500000;
+
+			mat[3][0] = -2.500000;
+			mat[3][1] =  1.000000;
+			mat[3][2] = -0.500000;
+			mat[3][3] =  1.000000;
+			
+			return mat;
+		}
+		
 		public static void TestHaar1D() {
 			
 			Console.WriteLine();
@@ -187,7 +223,6 @@ namespace CommonUtils.Tests
 			HaarWaveletTransform.InverseHaarTransform1D(data, data.Length);
 			
 			IOUtils.Print(Console.Out, data);
-			
 			Assert.That(data, Is.EqualTo(Get1DTestData()).AsCollection.Within(0.001), "fail at [0]");
 		}
 		
@@ -200,10 +235,12 @@ namespace CommonUtils.Tests
 			HaarWaveletTransform.HaarTransform2D(mat, 4, 4);
 
 			var result = new Matrix(mat);
-			result.PrintPretty();			
+			result.PrintPretty();
+			Assert.That(mat, Is.EqualTo(Get2DResultDataFirstIteration()).AsCollection.Within(0.001), "fail at [0]");
 			
 			HaarWaveletTransform.InverseHaarTransform2D(mat, 4, 4);
 			result.PrintPretty();
+			Assert.That(mat, Is.EqualTo(Get2DTestData()).AsCollection.Within(0.001), "fail at [0]");
 		}
 		
 		public static void TestHaarCSharp1D() {
@@ -212,7 +249,7 @@ namespace CommonUtils.Tests
 			
 			double[] data = Get1DTestData();
 			
-			ForwardWaveletTransform.Transform1D(data);
+			ForwardWaveletTransform.Transform1D(data, true);
 
 			IOUtils.Print(Console.Out, data);
 			
@@ -220,10 +257,9 @@ namespace CommonUtils.Tests
 			double[] result = Get1DResultData();
 			Assert.That(data, Is.EqualTo(result).AsCollection.Within(0.001), "fail at [0]");
 			
-			InverseWaveletTransform.Transform1D(data);
+			InverseWaveletTransform.Transform1D(data, true);
 			
 			IOUtils.Print(Console.Out, data);
-			
 			Assert.That(data, Is.EqualTo(Get1DTestData()).AsCollection.Within(0.001), "fail at [0]");
 		}
 		
@@ -233,15 +269,14 @@ namespace CommonUtils.Tests
 			Console.WriteLine("The HaarCSharp2D");
 			
 			double[][] mat = Get2DTestData();
-			ForwardWaveletTransform.Transform2D(mat, 1);
+			ForwardWaveletTransform.Transform2D(mat);
 
 			var result = new Matrix(mat);
-			result.PrintPretty();			
+			result.PrintPretty();
 			Assert.That(mat, Is.EqualTo(Get2DResultData()).AsCollection.Within(0.001), "fail at [0]");
 			
-			InverseWaveletTransform.Transform2D(mat, 1);
+			InverseWaveletTransform.Transform2D(mat);
 			result.PrintPretty();
-			
 			Assert.That(mat, Is.EqualTo(Get2DTestData()).AsCollection.Within(0.001), "fail at [0]");
 		}
 		
@@ -270,7 +305,7 @@ namespace CommonUtils.Tests
 			var resultNonStandard = new Matrix(mat);
 			resultNonStandard.PrintPretty();
 		}
-				
+		
 		public static void TestHaarTransform() {
 			
 			double[][] mat = Get2DTestData();
@@ -314,11 +349,12 @@ namespace CommonUtils.Tests
 			}
 			
 			var inputMatrix = new Matrix(image);
-			//inputMatrix.WriteCSV("haar-before.csv", ";");
+			inputMatrix.WriteCSV("haar-before.csv");
 
-			//CommonUtils.CommonMath.Wavelets.Compress.WaveletComDec.CompressDecompress2D(image, 3, 0);
-			//inputMatrix.DrawMatrixImage("haar-transform-back.png", -1, -1, false);
-			//return;
+			WaveletComDec.CompressDecompress2D(image, 8, 0);
+			inputMatrix.DrawMatrixImage("haar-transform-back.png", -1, -1, false);
+			inputMatrix.WriteCSV("haar-after.csv");
+			return;
 			
 			// Haar Wavelet Transform
 			//Matrix haarMatrix = HaarWaveletTransform(inputMatrix.MatrixData);
