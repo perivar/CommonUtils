@@ -714,10 +714,10 @@ namespace CommonUtils
 		}
 		
 		/// <summary>
-		///   Get corresponding grey pallet color of the spectrogram
+		/// Get corresponding grey pallet color of the spectrogram
 		/// </summary>
-		/// <param name = "value">Value</param>
-		/// <param name = "maxValue">Max range of the values</param>
+		/// <param name="value">Value</param>
+		/// <param name="maxValue">Max range of the values</param>
 		/// <returns>Grey color corresponding to the value</returns>
 		/// <remarks>This is a copy of the method with the same name from
 		/// Soundfingerprinting.SoundTools.Imaging.cs in
@@ -725,9 +725,25 @@ namespace CommonUtils
 		/// </remarks>
 		public static Color ValueToBlackWhiteColor(double value, double maxValue)
 		{
-			if (double.IsNaN(value)) return Color.Black;
+			if (double.IsNaN(value))  {
+				return Color.Black;
+			}
 			
-			int color = (int) (Math.Abs(value)*255/Math.Abs(maxValue));
+			double colorDouble = Math.Abs(value) * 255.0 / Math.Abs(maxValue);
+			int color = 0;
+			
+			checked
+			{
+				try
+				{
+					color = (int) colorDouble;
+				}
+				catch (OverflowException)
+				{
+					// do nothing 
+				}
+			}
+			
 			if (color > 255) {
 				color = 255;
 			} else if (color < 0) {

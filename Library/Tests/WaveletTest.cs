@@ -4,8 +4,7 @@ using NUnit.Framework;
 using System.Drawing;
 using System.Linq;
 using System.Diagnostics;
-using System.Globalization;
-using System.IO;
+
 using CommonUtils.CommonMath.Comirva;
 using CommonUtils.CommonMath.Wavelets.HaarCSharp;
 using CommonUtils.CommonMath.Wavelets.Compress;
@@ -42,10 +41,41 @@ namespace CommonUtils.Tests
 		public void TestWaveletImageProcessing() {
 			string inputPath = @"Tests\lena.png";
 			TestHaarInputOutput(inputPath);
+			TestDenoise(inputPath);
 		}
 		
-		#region Simple Wavelet Test Methods
+		[Test]
+		public void TestWaveletForwardTransformImage() {
+			
+			string inputPath = @"Tests\lena.png";
+			var image = ReadImageGrayscale(inputPath);
+			var orig = new Matrix(image);
+			
+			Matrix m1 = GetWaveletTransformedMatrix(orig.GetArrayCopy(), WaveletMethod.Haar);
+			m1.DrawMatrixImage("haar-transform-1.png", -1, -1, false);
+			
+			Matrix m2 = GetWaveletTransformedMatrix(orig.GetArrayCopy(), WaveletMethod.HaarCSharp);
+			m2.DrawMatrixImage("haar-transform-2.png", -1, -1, false);
+
+			Matrix m3 = GetWaveletTransformedMatrix(orig.GetArrayCopy(), WaveletMethod.HaarTransformTensor);
+			m3.DrawMatrixImage("haar-transform-3.png", -1, -1, false);
+
+			Matrix m4 = GetWaveletTransformedMatrix(orig.GetArrayCopy(), WaveletMethod.HaarWaveletCompress);
+			m4.DrawMatrixImage("haar-transform-4.png", -1, -1, false);
+
+			Matrix m5 = GetWaveletTransformedMatrix(orig.GetArrayCopy(), WaveletMethod.HaarWaveletDecompositionTensor);
+			m5.DrawMatrixImage("haar-transform-5.png", -1, -1, false);
+
+			Matrix m6 = GetWaveletTransformedMatrix(orig.GetArrayCopy(), WaveletMethod.NonStandardHaarWaveletDecomposition);
+			m6.DrawMatrixImage("haar-transform-6.png", -1, -1, false);
+		}
 		
+		[Test]
+		public void TestThresholding() {
+			Thresholding.RunTests();
+		}
+		
+		#region Test Wavelet Transforms using data arrays (no images)
 		/// <summary>
 		/// Return 1D test data vector
 		/// </summary>
@@ -326,17 +356,12 @@ namespace CommonUtils.Tests
 		}
 		#endregion
 		
-		#region More Advanced Wavelet Test Methods
-		public static void TestHaarInputOutput(string imageInPath) {
-
+		#region Wavelet Test Methods using images
+		private static double[][] ReadImageGrayscale(string imageInPath) {
 			// read image
 			Image img = Image.FromFile(imageInPath);
 			
-			// make sure it's square and power of two
-			//int size = (img.Height > img.Width ? img.Height : img.Width);
-			//int sizePow2 = MathUtils.NextPowerOfTwo(size);
-			//img = ImageUtils.Resize(img, sizePow2, sizePow2, false);
-			
+			// read image as grayscale
 			var bmp = new Bitmap(img);
 			var image = new double[bmp.Height][];
 			for (int i = 0; i < bmp.Height; i++)
@@ -347,91 +372,75 @@ namespace CommonUtils.Tests
 					image[i][j] = (C.R + C.G + C.B ) / 3;
 				}
 			}
+			return image;
+		}
+
+		public static void TestHaarInputOutput(string imageInPath) {
+
+			var image = ReadImageGrayscale(imageInPath);
 			
+			#region Wavelet Compress Methods
+			// Test HaarWaveletTransform
 			var inputMatrix = new Matrix(image);
 			inputMatrix.WriteCSV("haar-before.csv");
+			HaarWaveletTransform.HaarTransform2D(image, inputMatrix.Rows, inputMatrix.Columns);
+			
+			Matrix haarMatrixInverse = inputMatrix.Copy();
+			HaarWaveletTransform.InverseHaarTransform2D(haarMatrixInverse.MatrixData, haarMatrixInverse.Rows, haarMatrixInverse.Columns);
+			haarMatrixInverse.WriteCSV("haar-after.csv");
+			haarMatrixInverse.DrawMatrixImage("haar-transform-forward-and-backward.png", -1, -1, false);
 
-			WaveletComDec.CompressDecompress2D(image, 8, 0);
-			inputMatrix.DrawMatrixImage("haar-transform-back.png", -1, -1, false);
-			inputMatrix.WriteCSV("haar-after.csv");
-			return;
-			
-			// Haar Wavelet Transform
-			//Matrix haarMatrix = HaarWaveletTransform(inputMatrix.MatrixData);
-			
-			//CommonUtils.CommonMath.Wavelets.Compress.HaarWaveletTransform.HaarTransform2D(image, inputMatrix.Rows, inputMatrix.Columns);
+			// Test Wavelet Compress and Decompress in one step
+			const int compLevels = 8;
+			const int compTreshold = 150;
+
+			Matrix haarMatrixCompDecomp = haarMatrixInverse.Copy();
+			WaveletComDec.CompressDecompress2D(haarMatrixCompDecomp.MatrixData, compLevels, compTreshold);
+			haarMatrixCompDecomp.DrawMatrixImage("haar-compress-and-decompress-combined.png", -1, -1, false);
+
+			// Test Compress and Decompress in two steps
 			int lastHeight = 0;
 			int lastWidth = 0;
-			int levels = 3;
-			//CommonUtils.CommonMath.Wavelets.Compress.WaveletCompress.Compress2D(image, levels, 500, out lastHeight, out lastWidth);
-			WaveletCompress.HaarTransform2D(image, levels, out lastHeight, out lastWidth);
-			Matrix haarMatrix = inputMatrix.Copy();
+			Matrix haarMatrixComp = haarMatrixInverse.Copy();
+			WaveletCompress.Compress2D(haarMatrixComp.MatrixData, compLevels, compTreshold, out lastHeight, out lastWidth);
+			WaveletDecompress.Decompress2D(haarMatrixComp.MatrixData, compLevels, lastHeight, lastWidth);
+			haarMatrixComp.DrawMatrixImage("haar-compress-and-decompress.png", -1, -1, false);
+			#endregion
 			
-			//Wavelets.Dwt dwt = new Wavelets.Dwt(2);
-			//Matrix haarMatrix = dwt.Transform(normalizedMatrix);
+			#region Test using HaarCSharp
 			
-			/*
-			WaveletInterface wavelet = new Haar02();
-			TransformInterface bWave = new FastWaveletTransform(wavelet);
-			Transform t = new Transform(bWave); // perform all steps
-			double[][] dwtArray = t.forward(normalizedMatrix.MatrixData);
-			Matrix haarMatrix = new Matrix(dwtArray);
-			 */
-			//int oldRows = haarMatrix.Rows;
-			//int oldColumns = haarMatrix.Columns;
-			//haarMatrix = haarMatrix.Resize(20, oldColumns);
-			haarMatrix.WriteCSV("haar.csv", ";");
+			// Test HaarCSharp using iterations
+			const int haarCSharpIterations = 3;
+			Matrix haarMatrixCSharp = haarMatrixInverse.Copy();
+			ForwardWaveletTransform.Transform2D(haarMatrixCSharp.MatrixData, false, haarCSharpIterations);
+			haarMatrixCSharp.DrawMatrixImage("haar-forward.png", -1, -1, false);
+			InverseWaveletTransform.Transform2D(haarMatrixCSharp.MatrixData, false, haarCSharpIterations);
+			haarMatrixCSharp.DrawMatrixImage("haar-inverse.png", -1, -1, false);
 			
-			// Inverse 2D Haar Wavelet Transform
-			//Matrix haarMatrixInverse = InverseHaarWaveletTransform(haarMatrix.MatrixData);
-			
-			Matrix haarMatrixInverse = haarMatrix.Copy();
-			//haarMatrixInverse = haarMatrixInverse.Resize(oldRows, oldColumns);
-			//CommonUtils.CommonMath.Wavelets.Compress.HaarWaveletTransform.InverseHaarTransform2D(haarMatrixInverse.MatrixData, haarMatrixInverse.Rows, haarMatrixInverse.Columns);
-			WaveletDecompress.Decompress2D(haarMatrixInverse.MatrixData, levels, lastHeight, lastWidth);
-			
-			//Matrix haarMatrixInverse = dwt.TransformBack(haarMatrix);
-			
-			//double[][] dwtArrayInverse = t.reverse(haarMatrix.MatrixData);
-			//Matrix haarMatrixInverse = new Matrix(dwtArrayInverse);
-			
-			//haarMatrixInverse.WriteCSV("haar-inverse.csv", ";");
-			
-			// Output the image
-			//haarMatrix.DrawMatrixImageLogValues("haar-transform.png");
-			haarMatrixInverse.DrawMatrixImage("haar-transform-back.png", -1, -1, false);
+			// Test HaarCSharp using all levels and only 1 iteration
+			Matrix haarMatrixCSharpAll = haarMatrixInverse.Copy();
+			ForwardWaveletTransform.Transform2D(haarMatrixCSharpAll.MatrixData, true, 1);
+			haarMatrixCSharpAll.DrawMatrixImage("haar-forward-all.png", -1, -1, false);
+			InverseWaveletTransform.Transform2D(haarMatrixCSharpAll.MatrixData, true, 1);
+			haarMatrixCSharpAll.DrawMatrixImage("haar-inverse-all.png", -1, -1, false);
+			#endregion
 		}
 		
 		public static void TestDenoise(string imageInPath) {
 			
-			// Read Image
-			Image img = Image.FromFile(imageInPath);
-			var bmp = new Bitmap(img);
-			var image = new double[bmp.Height][];
-			for (int i = 0; i < bmp.Height; i++)
-			{
-				image[i] = new double[bmp.Width];
-				for (int j = 0; j < bmp.Width; j++) {
-					//image[i][j] = bmp.GetPixel(j, i).ToArgb();
-					image[i][j] = bmp.GetPixel(j, i).B; // use only blue channel
-				}
-			}
-
-			//Matrix imageMatrix = new Matrix(image);
-			//imageMatrix.WriteCSV("lena-blue.csv", ";");
+			var image = ReadImageGrayscale(imageInPath);
 
 			// Normalize the pixel values to the range 0..1.0. It does this by dividing all pixel values by the max value.
 			double max = image.Max((b) => b.Max((v) => Math.Abs(v)));
 			double[][] imageNormalized = image.Select(i => i.Select(j => j/max).ToArray()).ToArray();
 			
 			var normalizedMatrix = new Matrix(imageNormalized);
-			//normalizedMatrix.WriteCSV("lena-normalized.csv", ";");
 			normalizedMatrix.DrawMatrixImage("lena-original.png", -1, -1, false);
 
 			// Add Noise using normally distributed pseudorandom numbers
 			// image_noisy = image_normalized + 0.1 * randn(size(image_normalized));
 			RandomUtils.Seed(Guid.NewGuid().GetHashCode());
-			double[][] imageNoisy = imageNormalized.Select(i => i.Select(j => j + (0.1 * RandomUtils.NextDouble())).ToArray()).ToArray();
+			double[][] imageNoisy = imageNormalized.Select(i => i.Select(j => j + (0.2 * RandomUtils.NextDouble())).ToArray()).ToArray();
 			var matrixNoisy = new Matrix(imageNoisy);
 			matrixNoisy.DrawMatrixImage("lena-noisy.png", -1, -1, false);
 
@@ -439,12 +448,12 @@ namespace CommonUtils.Tests
 			Matrix haarMatrix = WaveletUtils.HaarWaveletTransform2D(imageNoisy);
 
 			// Thresholding
-			const double threshold = 0.15; // 0.15 seems to work well with the noise added above, 0.1
+			const double threshold = 0.10; // 0.15 seems to work well with the noise added above, 0.1
 			var yHard = Thresholding.PerformHardThresholding(haarMatrix.MatrixData, threshold);
 			var ySoft = Thresholding.PerformSoftThresholding(haarMatrix.MatrixData, threshold);
 			var ySemisoft = Thresholding.PerformSemisoftThresholding(haarMatrix.MatrixData, threshold, threshold*2);
 			var ySemisoft2 = Thresholding.PerformSemisoftThresholding(haarMatrix.MatrixData, threshold, threshold*4);
-			var yStrict = Thresholding.PerformStrictThresholding(haarMatrix.MatrixData, 10);
+			var yStrict = Thresholding.PerformStrictThresholding(haarMatrix.MatrixData, 100);
 			
 			// Inverse 2D Haar Wavelet Transform
 			Matrix zHard = WaveletUtils.InverseHaarWaveletTransform2D(yHard);
@@ -453,43 +462,12 @@ namespace CommonUtils.Tests
 			Matrix zSemisoft2 = WaveletUtils.InverseHaarWaveletTransform2D(ySemisoft2);
 			Matrix zStrict = WaveletUtils.InverseHaarWaveletTransform2D(yStrict);
 			
-			//zHard.WriteCSV("lena-thresholding-hard.csv", ";");
-
 			// Output the images
 			zHard.DrawMatrixImage("lena-thresholding-hard.png", -1, -1, false);
 			zSoft.DrawMatrixImage("lena-thresholding-soft.png", -1, -1, false);
 			zSemisoft.DrawMatrixImage("lena-thresholding-semisoft.png", -1, -1, false);
 			zSemisoft2.DrawMatrixImage("lena-thresholding-semisoft2.png", -1, -1, false);
 			zStrict.DrawMatrixImage("lena-thresholding-strict.png", -1, -1, false);
-		}
-
-		public static void SaveWaveletImage(string imageInPath, string imageOutPath, WaveletMethod waveletMethod) {
-
-			// Read Image
-			Image img = Image.FromFile(imageInPath);
-			var bmp = new Bitmap(img);
-			var image = new double[bmp.Height][];
-			for (int i = 0; i < bmp.Height; i++)
-			{
-				image[i] = new double[bmp.Width];
-				for (int j = 0; j < bmp.Width; j++) {
-					//image[i][j] = bmp.GetPixel(j, i).ToArgb();
-					image[i][j] = bmp.GetPixel(j, i).B; // use only blue channel
-				}
-			}
-
-			// Normalize the pixel values to the range 0..1.0. It does this by dividing all pixel values by the max value.
-			double max = image.Max((b) => b.Max((v) => (v)));
-			double[][] imageNormalized = image.Select(i => i.Select(j => j/max).ToArray()).ToArray();
-			//Matrix normalizedMatrix = new Matrix(imageNormalized);
-			//normalizedMatrix.WriteCSV("ImageNormalized.csv", ";");
-			
-			Matrix bitmap = GetWaveletTransformedMatrix(imageNormalized, waveletMethod);
-			bitmap.DrawMatrixImage(imageOutPath, -1, -1, false);
-
-			img.Dispose();
-			bmp.Dispose();
-			bitmap = null;
 		}
 		
 		public static Matrix GetWaveletTransformedMatrix(double[][] image, WaveletMethod waveletMethod)
@@ -520,6 +498,10 @@ namespace CommonUtils.Tests
 					haarNonStandard.DecomposeImageInPlace(image);
 					dwtMatrix = new Matrix(image);
 					break;
+				case WaveletMethod.HaarCSharp:
+					ForwardWaveletTransform.Transform2D(image, false, 2);
+					dwtMatrix = new Matrix(image);
+					break;
 				case WaveletMethod.HaarWaveletCompress:
 					int lastHeight = 0;
 					int lastWidth = 0;
@@ -532,13 +514,10 @@ namespace CommonUtils.Tests
 
 			long endS = stopWatch.ElapsedTicks;
 			Console.WriteLine("WaveletMethod: {0} Time in ticks: {1}", Enum.GetName(typeof(WaveletMethod), waveletMethod), (endS - startS));
-
-			//dwtMatrix.WriteCSV("HaarImageNormalized.csv", ";");
 			
 			// increase all values
-			double[][] haarImageNormalized5k = dwtMatrix.MatrixData.Select(i => i.Select(j => j*5000).ToArray()).ToArray();
-			//Matrix haarImageNormalized5kMatrix = new Matrix(haarImageNormalized5k);
-			//haarImageNormalized5kMatrix.WriteCSV("HaarImageNormalized5k.csv", ";");
+			const int mul = 50;
+			double[][] haarImageNormalized5k = dwtMatrix.MatrixData.Select(i => i.Select(j => j*mul).ToArray()).ToArray();
 			
 			// convert to byte values (0 - 255)
 			// duplicate the octave/ matlab method uint8
@@ -558,10 +537,8 @@ namespace CommonUtils.Tests
 			}
 			
 			var uint8Matrix = new Matrix(uint8);
-			//uint8Matrix.WriteCSV("Uint8HaarImageNormalized5k.csv", ";");
 			return uint8Matrix;
 		}
 		#endregion
-		
 	}
 }

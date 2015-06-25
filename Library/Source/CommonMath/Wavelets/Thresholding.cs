@@ -69,7 +69,7 @@ namespace CommonUtils.CommonMath.Wavelets
 				thresh = (low+high)/2.0;
 				loss = PercentUnder(data, thresh);
 
-				Console.Write("binary search: " + "iteration={0,4:D}, thresh={1,4:f}, loss={2,3:f2}%\r", i+1, thresh, loss);
+				//Console.Write("binary search: " + "iteration={0,4:D}, thresh={1,4:f}, loss={2,3:f2}%\r", i+1, thresh, loss);
 				
 				if (loss < percentage) {
 					low = thresh;
@@ -91,8 +91,13 @@ namespace CommonUtils.CommonMath.Wavelets
 
 		}
 		#endregion
-
-		// Keep only the s largest coefficients in each column of X
+		
+		/// <summary>
+		/// Keep only the s largest coefficients in each column of X
+		/// </summary>
+		/// <param name="x">data</param>
+		/// <param name="s">the number of coefficients to keep</param>
+		/// <returns>data after thresholding</returns>
 		public static double[][] PerformStrictThresholding(double[][] x, int s) {
 			// Copyright (c) 2006 Gabriel Peyre
 			// v = sort(abs(x)); v = v(end:-1:1,:);
@@ -126,7 +131,12 @@ namespace CommonUtils.CommonMath.Wavelets
 			return y;
 		}
 
-		// Hard thresholding sets any coefficient less than or equal to the threshold to zero.
+		/// <summary>
+		/// Hard thresholding sets any coefficient less than or equal to the threshold to zero.
+		/// </summary>
+		/// <param name="x">data</param>
+		/// <param name="thresh">threshold where coefficient less than or equal will be set to zero</param>
+		/// <returns>data after thresholding</returns>
 		public static double[][] PerformHardThresholding(double[][] x, double thresh) {
 			// Hard thresholding can be described as the usual process of setting to zero the elements whose absolute values are lower than the threshold.
 			// The hard threshold signal is x if |x| > t, and is 0 if |x| <= t.
@@ -148,9 +158,14 @@ namespace CommonUtils.CommonMath.Wavelets
 			return y;
 		}
 
-		// Soft thresholding sets any coefficient less than or equal to the threshold to zero.
-		// The threshold is subtracted from any coefficient that is greater than the threshold.
-		// This moves the time series toward zero.
+		/// <summary>
+		/// Soft thresholding sets any coefficient less than or equal to the threshold to zero.
+		/// The threshold is subtracted from any coefficient that is greater than the threshold.
+		/// This moves the time series toward zero.
+		/// </summary>
+		/// <param name="x">data</param>
+		/// <param name="thresh">threshold</param>
+		/// <returns>data after thresholding</returns>
 		public static double[][] PerformSoftThresholding(double[][] x, double thresh) {
 			// Soft thresholding is an extension of hard thresholding, first setting to zero the elements whose absolute values are lower than the threshold,
 			// and then shrinking the nonzero coefficients towards 0
@@ -183,11 +198,21 @@ namespace CommonUtils.CommonMath.Wavelets
 			return y;
 		}
 		
+		/// <summary>
+		/// Semi-soft thresholding is a family of non-linearities that interpolates between soft and hard thresholding.
+		/// It uses both a main threshold T and a secondary threshold T1=mu*T.
+		/// When mu=1, the semi-soft thresholding performs a hard thresholding,
+		/// whereas when mu=infinity, it performs a soft thresholding.
+		/// </summary>
+		/// <param name="x">data</param>
+		/// <param name="thresh1">main threshold</param>
+		/// <param name="thresh2">secondary threshold</param>
+		/// <returns>data after thresholding</returns>
 		public static double[][] PerformSemisoftThresholding(double[][] x, double thresh1, double thresh2) {
 			// Semi-soft thresholding is a family of non-linearities that interpolates between soft and hard thresholding.
 			// It uses both a main threshold T and a secondary threshold T1=mu*T.
 			// When mu=1, the semi-soft thresholding performs a hard thresholding,
-			//vwhereas when mu=infinity, it performs a soft thresholding.
+			// whereas when mu=infinity, it performs a soft thresholding.
 			
 			// Copyright (c) 2006 Gabriel Peyre
 			// if length(t)==1
@@ -262,19 +287,10 @@ namespace CommonUtils.CommonMath.Wavelets
 			// legend('hard', 'soft', 'semisoft, \mu=2', 'semisoft, \mu=4', 'strict, 400');
 			// hold('off');
 			
-			// linspace in c#
 			const double start = -5;
 			const double end = 5;
 			const double totalCount = 1024;
-			
-			var v = new double[1][];
-			v[0] = new double[(int) totalCount];
-			
-			int count = 0;
-			for(double i = start; i < end; i += (end-start)/totalCount) {
-				v[0][count] = i;
-				count++;
-			}
+			var v = MathUtils.Linspace(start, end, totalCount);
 			
 			// perform thresholding and plot
 			const int T = 1;

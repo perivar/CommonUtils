@@ -10,10 +10,12 @@ namespace CommonUtils
 	/// </summary>
 	public static class MathUtils
 	{
+		
+		#region static Log and Exp methods
+
 		// use in calculating log base 10. A log times this is a log base 10.
 		private static double LOG10SCALE = 1 / Math.Log(10);
-		
-		// handy static methods
+
 		public static double Log10(double val)
 		{
 			return Math.Log10(val);
@@ -30,6 +32,7 @@ namespace CommonUtils
 		{
 			return (float)Exp10(val);
 		}
+		#endregion
 		
 		#region PowerOfTwo
 		/// <summary>
@@ -1154,7 +1157,30 @@ namespace CommonUtils
 		}
 		#endregion
 		
-		#region FindClosest
+		#region Find Methods
+		
+		/// <summary>
+		/// Find all numbers that are within x of target
+		/// Use like this:
+		/// List<float> list = new List<float> { 10f, 20f, 22f, 30f };
+		/// float target = 21f;
+		/// float within = 1;
+		/// var result = FindWithinTarget(list, target, within);
+		/// </summary>
+		/// <param name="numbers"></param>
+		/// <param name="x"></param>
+		/// <returns></returns>
+		public static IEnumerable<float> FindWithinTarget(IEnumerable<float> numbers, float target, float within) {
+			// http://stackoverflow.com/questions/3723321/linq-to-get-closest-value
+			
+			//gets any that are within x of target
+			var withins = numbers.Select( n => new { n, distance = Math.Abs( n - target ) } )
+				.Where( p => p.distance <= within )
+				.Select( p => p.n );
+			
+			return withins;
+		}
+		
 		/// <summary>
 		/// Find the closest number in a list of numbers
 		/// Use like this:
@@ -1232,7 +1258,7 @@ namespace CommonUtils
 		}
 		#endregion
 		
-		#region Calculus
+		#region Calculus (Hypot, Multiply etc)
 		/// <summary>
 		/// Perform a hypot calculation
 		/// </summary>
@@ -1322,7 +1348,65 @@ namespace CommonUtils
 		}
 		#endregion
 		
-		#region MinMaxAbs
+		#region Median and Average
+		/// <summary>
+		/// Calculate averages on data using start and end index
+		/// </summary>
+		/// <param name="data">float array with data</param>
+		/// <param name="startIndex">start index</param>
+		/// <param name="endIndex">end index</param>
+		/// <param name="posAvg">output positive average</param>
+		/// <param name="negAvg">output negative average</param>
+		public static void Averages(float[] data, int startIndex, int endIndex, out float posAvg, out float negAvg)
+		{
+			posAvg = 0.0f;
+			negAvg = 0.0f;
+
+			int posCount = 0, negCount = 0;
+
+			for (int i = startIndex; i < endIndex; i++)
+			{
+				if (data[i] > 0)
+				{
+					posCount++;
+					posAvg += data[i];
+				}
+				else
+				{
+					negCount++;
+					negAvg += data[i];
+				}
+			}
+
+			if (posCount != 0) {
+				posAvg /= posCount;
+			}
+			if (negCount != 0) {
+				negAvg /= negCount;
+			}
+		}
+		
+		/// <summary>
+		/// Return Median of a int array.
+		/// NB! The array need to be sorted first
+		/// </summary>
+		/// <param name="pNumbers"></param>
+		/// <returns></returns>
+		public static double GetMedian(int[] pNumbers)  {
+
+			int size = pNumbers.Length;
+
+			int mid = size /2;
+
+			double median = (size % 2 != 0) ? (double)pNumbers[mid] :
+				((double)pNumbers[mid] + (double)pNumbers[mid-1]) / 2;
+
+			return median;
+		}
+
+		#endregion
+		
+		#region Min Max Abs
 		
 		/// <summary>
 		/// Perform a Math.Abs on a full array
@@ -1493,7 +1577,38 @@ namespace CommonUtils
 		{
 			return Math.Min(w, Math.Min(x, Math.Min(y, z)));
 		}
-
+		
+		/// <summary>
+		/// Return smalles non negative number
+		/// (almost like Math.Min just doesn't return negative numbers)
+		/// </summary>
+		/// <param name="a">The first of two integers to compare.</param>
+		/// <param name="b">The first of two integers to compare.</param>
+		/// <returns>Parameter val1 or val2, whichever is smaller and non-negative.</returns>
+		public static int GetSmallestNonNegative(int a, int b)
+		{
+			if (a >= 0 && b >= 0) {
+				return Math.Min(a,b);
+			} else if (a >= 0 && b < 0) {
+				return a;
+			} else if (a < 0 && b >= 0) {
+				return b;
+			} else {
+				return 0;
+			}
+		}
+		
+		/// <summary>
+		/// Return smalles non negative number
+		/// (almost like Math.Min just doesn't return negative numbers)
+		/// </summary>
+		/// <param name="a">The first of two integers to compare.</param>
+		/// <param name="b">The first of two integers to compare.</param>
+		/// <returns>Parameter val1 or val2, whichever is smaller and non-negative.</returns>
+		public static int MinNonNegative(int a, int b) {
+			return GetSmallestNonNegative(a, b);
+		}
+		
 		#endregion
 		
 		#region Extension method (IndexesWhere and 2D Row and Column accessors and 2D Array Deep Copy)
@@ -1585,47 +1700,7 @@ namespace CommonUtils
 		}
 		#endregion
 		
-		/// <summary>
-		/// Return Median of a int array.
-		/// NB! The array need to be sorted first
-		/// </summary>
-		/// <param name="pNumbers"></param>
-		/// <returns></returns>
-		public static double GetMedian(int[] pNumbers)  {
-
-			int size = pNumbers.Length;
-
-			int mid = size /2;
-
-			double median = (size % 2 != 0) ? (double)pNumbers[mid] :
-				((double)pNumbers[mid] + (double)pNumbers[mid-1]) / 2;
-
-			return median;
-
-		}
-		
-		/// <summary>
-		/// Find all numbers that are within x of target
-		/// Use like this:
-		/// List<float> list = new List<float> { 10f, 20f, 22f, 30f };
-		/// float target = 21f;
-		/// float within = 1;
-		/// var result = FindWithinTarget(list, target, within);
-		/// </summary>
-		/// <param name="numbers"></param>
-		/// <param name="x"></param>
-		/// <returns></returns>
-		public static IEnumerable<float> FindWithinTarget(IEnumerable<float> numbers, float target, float within) {
-			// http://stackoverflow.com/questions/3723321/linq-to-get-closest-value
-			
-			//gets any that are within x of target
-			var withins = numbers.Select( n => new { n, distance = Math.Abs( n - target ) } )
-				.Where( p => p.distance <= within )
-				.Select( p => p.n );
-			
-			return withins;
-		}
-		
+		#region PreEmphase
 		/// <summary>
 		/// The goal of pre-emphasis is to compensate the high-frequency part
 		/// that was suppressed during the sound production mechanism of humans.
@@ -1656,16 +1731,9 @@ namespace CommonUtils
 			const float PREEMPHASISALPHA = 0.95f;
 			return PreEmphase(samples, PREEMPHASISALPHA);
 		}
+		#endregion
 		
-		/// <summary>
-		/// Flatten Jagged Array (i.e. convert from double[][] to double[])
-		/// </summary>
-		/// <param name="twoDimensional">jagged array</param>
-		/// <returns>flattened array</returns>
-		public static double[] Flatten(double[][] twoDimensional) {
-			return twoDimensional.SelectMany((b) => (b)).ToArray();
-		}
-		
+		#region Interpolate
 		/// <summary>
 		/// Linear Interpolation
 		/// </summary>
@@ -1688,6 +1756,7 @@ namespace CommonUtils
 		{
 			return y0 + (y1 - y0) * fraction;
 		}
+		#endregion
 		
 		#region Limit methods
 		/// <summary>
@@ -1722,92 +1791,6 @@ namespace CommonUtils
 			return value;
 		}
 		#endregion
-		
-		/// <summary>
-		/// Pad array with zeros
-		/// </summary>
-		/// <param name="data">data array to be padded</param>
-		/// <param name="length">new length</param>
-		/// <returns>padded array</returns>
-		public static double[] PadZeros(double[] data, int length) {
-			var returnArray = new double[length];
-			
-			if (length < data.Length) {
-				// shorten?
-				Array.Copy(data, 0, returnArray, 0, length);
-			} else {
-				Array.Copy(data, 0, returnArray, 0, data.Length);
-			}
-			return returnArray;
-		}
-		
-		/// <summary>
-		/// Calculate averages on data using start and end index
-		/// </summary>
-		/// <param name="data">float array with data</param>
-		/// <param name="startIndex">start index</param>
-		/// <param name="endIndex">end index</param>
-		/// <param name="posAvg">output positive average</param>
-		/// <param name="negAvg">output negative average</param>
-		public static void Averages(float[] data, int startIndex, int endIndex, out float posAvg, out float negAvg)
-		{
-			posAvg = 0.0f;
-			negAvg = 0.0f;
-
-			int posCount = 0, negCount = 0;
-
-			for (int i = startIndex; i < endIndex; i++)
-			{
-				if (data[i] > 0)
-				{
-					posCount++;
-					posAvg += data[i];
-				}
-				else
-				{
-					negCount++;
-					negAvg += data[i];
-				}
-			}
-
-			if (posCount != 0) {
-				posAvg /= posCount;
-			}
-			if (negCount != 0) {
-				negAvg /= negCount;
-			}
-		}
-		
-		/// <summary>
-		/// Return smalles non negative number
-		/// (almost like Math.Min just doesn't return negative numbers)
-		/// </summary>
-		/// <param name="a">The first of two integers to compare.</param>
-		/// <param name="b">The first of two integers to compare.</param>
-		/// <returns>Parameter val1 or val2, whichever is smaller and non-negative.</returns>
-		public static int GetSmallestNonNegative(int a, int b)
-		{
-			if (a >= 0 && b >= 0) {
-				return Math.Min(a,b);
-			} else if (a >= 0 && b < 0) {
-				return a;
-			} else if (a < 0 && b >= 0) {
-				return b;
-			} else {
-				return 0;
-			}
-		}
-		
-		/// <summary>
-		/// Return smalles non negative number
-		/// (almost like Math.Min just doesn't return negative numbers)
-		/// </summary>
-		/// <param name="a">The first of two integers to compare.</param>
-		/// <param name="b">The first of two integers to compare.</param>
-		/// <returns>Parameter val1 or val2, whichever is smaller and non-negative.</returns>
-		public static int MinNonNegative(int a, int b) {
-			return GetSmallestNonNegative(a, b);
-		}
 		
 		#region Distribute items in columns evenly
 		/// <summary>
@@ -1954,5 +1937,55 @@ namespace CommonUtils
 		}
 		#endregion
 		
+		#region Array methods (like array initialising ala Matlab), Zero padding methods and flatten
+		/// <summary>
+		/// Flatten Jagged Array (i.e. convert from double[][] to double[])
+		/// </summary>
+		/// <param name="twoDimensional">jagged array</param>
+		/// <returns>flattened array</returns>
+		public static double[] Flatten(double[][] twoDimensional) {
+			return twoDimensional.SelectMany((b) => (b)).ToArray();
+		}
+		
+		/// <summary>
+		/// Pad array with zeros
+		/// </summary>
+		/// <param name="data">data array to be padded</param>
+		/// <param name="length">new length</param>
+		/// <returns>padded array</returns>
+		public static double[] PadZeros(double[] data, int length) {
+			var returnArray = new double[length];
+			
+			if (length < data.Length) {
+				// shorten?
+				Array.Copy(data, 0, returnArray, 0, length);
+			} else {
+				Array.Copy(data, 0, returnArray, 0, data.Length);
+			}
+			return returnArray;
+		}
+		
+		/// <summary>
+		/// linspace in c#
+		/// </summary>
+		/// <param name="start"></param>
+		/// <param name="end"></param>
+		/// <param name="totalCount"></param>
+		/// <returns></returns>
+		public static double[][] Linspace(double start, double end, double totalCount) {
+			
+			var v = new double[1][];
+			v[0] = new double[(int) totalCount];
+			
+			int count = 0;
+			for(double i = start; i < end; i += (end-start)/totalCount) {
+				v[0][count] = i;
+				count++;
+			}
+			
+			return v;
+		}
+		
+		#endregion
 	}
 }

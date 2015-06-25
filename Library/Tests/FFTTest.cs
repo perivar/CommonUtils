@@ -16,11 +16,11 @@ namespace CommonUtils.Tests
 		const int OVERLAP = WINDOW_SIZE/2;
 		
 		[Test]
-		public void TestMethod()
+		public void TestFFTAudioMethod()
 		{
 			// test variables
-			string inputFilePath = AppDomain.CurrentDomain.BaseDirectory + "test.wav";
-			string outputFilePath = AppDomain.CurrentDomain.BaseDirectory + "test";
+			string inputFilePath = @"Tests\test.wav";
+			string outputFilePath = "test";
 			var audioSystem = BassProxy.Instance;
 
 			// 0. Get Audio Data
@@ -48,10 +48,10 @@ namespace CommonUtils.Tests
 			//stftdata.WriteCSV(outputFilePath + "_stftdata.csv", ";");
 			
 			// same as specgram(audio*32768, 2048, 44100, hanning(2048), 1024);
-			//stftdata.DrawMatrixImageLogValues(outputFilePath + "_specgram.png", true);
+			stftdata.DrawMatrixImageLogValues(outputFilePath + "_specgram.png", true);
 			
 			// spec gram with log values for the y axis (frequency)
-			//stftdata.DrawMatrixImageLogY(outputFilePath + "_specgramlog.png", SAMPLING_RATE, 20, SAMPLING_RATE/2, 120, WINDOW_SIZE);
+			stftdata.DrawMatrixImageLogY(outputFilePath + "_specgramlog.png", SAMPLING_RATE, 20, SAMPLING_RATE/2, 120, WINDOW_SIZE);
 			
 			double[] audiodata_inverse_stft = stft.InverseStft(stftdata);
 			
@@ -59,8 +59,8 @@ namespace CommonUtils.Tests
 			//MathUtils.Divide(ref audiodata_inverse_stft, AUDIO_MULTIPLIER);
 			MathUtils.Normalize(ref audiodata_inverse_stft);
 
-			Export.WriteAscii(audiodata_inverse_stft, outputFilePath + "_audiodata_inverse_stft.ascii");
-			Export.WriteF3Formatted(audiodata_inverse_stft, outputFilePath + "_audiodata_inverse_stft.txt");
+			//Export.WriteAscii(audiodata_inverse_stft, outputFilePath + "_audiodata_inverse_stft.ascii");
+			//Export.WriteF3Formatted(audiodata_inverse_stft, outputFilePath + "_audiodata_inverse_stft.txt");
 			Export.DrawGraph(audiodata_inverse_stft, outputFilePath + "_audiodata_inverse_stft.png");
 			
 			float[] audiodata_inverse_float = MathUtils.DoubleToFloat(audiodata_inverse_stft);
