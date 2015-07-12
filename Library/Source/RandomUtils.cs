@@ -38,7 +38,7 @@ namespace CommonUtils
 		/// Return a random number between -1 and 1
 		/// </summary>
 		/// <returns>a random number between -1 and 1</returns>
-		internal static double NextDoubleMinus1ToPlus1()
+		public static double NextDoubleMinus1ToPlus1()
 		{
 			if (random == null)
 				Seed();
@@ -54,7 +54,7 @@ namespace CommonUtils
 		/// Return a random number between 0 and 1
 		/// </summary>
 		/// <returns>a random number between 0 and 1</returns>
-		internal static double NextDouble()
+		public static double NextDouble()
 		{
 			if (random == null)
 				Seed();
@@ -70,7 +70,7 @@ namespace CommonUtils
 		/// Returns a non-negative random integer.
 		/// </summary>
 		/// <returns>A 32-bit signed integer that is greater than or equal to 0 and less than MaxValue.</returns>
-		internal static int NextInt()
+		public static int NextInt()
 		{
 			if (random == null)
 				Seed();
@@ -87,7 +87,7 @@ namespace CommonUtils
 		/// <example>
 		/// NextInt(2) will return either 0 or 1's
 		/// </example>
-		internal static int NextInt(int ceiling)
+		public static int NextInt(int ceiling)
 		{
 			if (random == null)
 				Seed();
@@ -105,7 +105,7 @@ namespace CommonUtils
 		/// <example>
 		/// NextInt(1,11) will return a number between 1 and 10
 		/// </example>
-		internal static int NextInt(int minValue, int ceiling)
+		public static int NextInt(int minValue, int ceiling)
 		{
 			if (random == null)
 				Seed();
@@ -118,7 +118,7 @@ namespace CommonUtils
 		/// <summary>
 		/// Initializes a new instance of the Random class, using a time-dependent default seed value.
 		/// </summary>
-		internal static void Seed()
+		public static void Seed()
 		{
 			// new Random() already uses the current time. It is equivalent to new Random(Environment.TickCount)
 			// but this might change in later version of .NET
@@ -133,7 +133,7 @@ namespace CommonUtils
 		/// RandomUtils.Seed(Guid.NewGuid().GetHashCode()); // supposedly the best option
 		/// RandomUtils.Seed(DateTime.Now.Millisecond);
 		/// </example>
-		internal static void Seed(int seed)
+		public static void Seed(int seed)
 		{
 			random = new Random(seed);
 		}
