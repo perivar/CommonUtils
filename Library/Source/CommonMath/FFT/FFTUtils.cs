@@ -13,8 +13,9 @@ namespace CommonUtils.CommonMath.FFT
 	/// perivar@nerseth.com
 	/// </summary>
 	public static class FFTUtils
-	{
-		#region fft and ifft methods
+	{		
+		
+		#region FFT and IFFT methods
 		/// <summary>
 		/// This method duplicates exactly the function
 		/// abs(fft(input)) in MATLAB
@@ -422,7 +423,7 @@ namespace CommonUtils.CommonMath.FFT
 			
 			return complex_coefficient;
 		}
-		#endregion
+		#endregion		
 	}
 }
 

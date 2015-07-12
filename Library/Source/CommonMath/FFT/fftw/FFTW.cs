@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 
 namespace CommonUtils.CommonMath.FFT
 {
-	internal static class FFTW {
+	public static class FFTW {
 		
 		[Flags]
 		internal enum Flags {
@@ -55,16 +55,16 @@ namespace CommonUtils.CommonMath.FFT
 		}
 
 		public static void BackwardTransform(FFTW.ComplexArray input, FFTW.DoubleArray output) {
-			// TODO: make sure to use input.Length and not the output.Length ?!
-			IntPtr plan = FFTW.dft_c2r_1d(input.Length, input.Handle, output.Handle, Flags.Estimate);
+			// TODO: will there be a time where input.Length should be used instead?
+			IntPtr plan = FFTW.dft_c2r_1d(output.Length, input.Handle, output.Handle, Flags.Estimate);
 
 			//FFTW.print_plan(plan);
 			FFTW.execute(plan);
 			FFTW.destroy_plan(plan);
 		}
 
-
-		internal class ComplexArray {
+		#region Array Types
+		public class ComplexArray {
 			public IntPtr Handle { get; private set; }
 			public int Length { get; private set; }
 
@@ -148,6 +148,17 @@ namespace CommonUtils.CommonMath.FFT
 			}
 			
 			/// <summary>
+			/// Return a complex double array (alternating between real and imaginary values)
+			/// </summary>
+			public double[] ComplexValues {
+				get {
+					var buffer = new double[Length * 2];
+					Marshal.Copy(Handle, buffer, 0, Length * 2);
+					return buffer;
+				}
+			}
+
+			/// <summary>
 			/// FFTW tries to take advantage of the fact that if the input array is real (not complex),
 			/// then there is some redundancy in the output vector.
 			/// In fact, if the input array is real, the fourier component of a frequency
@@ -186,13 +197,28 @@ namespace CommonUtils.CommonMath.FFT
 				// Update length to reflect a N/2+1 input
 				Length = (realData.Length - 1) * 2;
 			}
+
+			/// <summary>
+			/// Initialize a complex array using a complex double array (alternating between real and imaginary values)
+			/// that has the length of N/2+1.
+			/// </summary>
+			public ComplexArray(double[] complexArray) {
+
+				// make sure to have room for both arrays
+				int length = complexArray.Length;
+				Handle = FFTW.malloc(Marshal.SizeOf(typeof(double)) * length);
+				Marshal.Copy(complexArray, 0, Handle, length);
+				
+				// Update length to reflect a N/2+1 input
+				Length = length;
+			}
 			
 			~ComplexArray() {
 				FFTW.free(Handle);
 			}
 		}
 
-		internal class DoubleArray {
+		public class DoubleArray {
 			public IntPtr Handle { get; private set; }
 			public int Length { get; private set; }
 
@@ -239,5 +265,6 @@ namespace CommonUtils.CommonMath.FFT
 				FFTW.free(Handle);
 			}
 		}
+		#endregion
 	}
 }

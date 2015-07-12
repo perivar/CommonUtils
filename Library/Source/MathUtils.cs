@@ -748,6 +748,16 @@ namespace CommonUtils
 		public static double RoundUp(double number) {
 			return Math.Ceiling(number);
 		}
+		
+		/// <summary>
+		/// Summary: Rounds a double-precision floating-point value to the nearest integer away from zero
+		/// </summary>
+		/// <param name="number">A double-precision floating-point number.</param>
+		/// <returns>The integral value that is the nearest integer away from zero</returns>
+		public static int RoundAwayFromZero(double number) {
+			return (int) Math.Round( number, MidpointRounding.AwayFromZero );
+		}
+		
 		#endregion
 		
 		#region ComputeMinAndMax

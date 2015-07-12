@@ -68,5 +68,10 @@ namespace CommonUtils.Tests
 			
 			Assert.Pass("This test was succesful.");
 		}
+		
+		[Test]
+		public void TestFFTMethods() {
+			FFTTesting.TestAll();
+		}
 	}
 }

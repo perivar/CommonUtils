@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text;
 using System.Linq;
 using System.Globalization;
 using System.Text.RegularExpressions;
@@ -12,6 +13,8 @@ namespace CommonUtils
 	/// </summary>
 	public static class IOUtils
 	{
+		static readonly Encoding _isoLatin1Encoding = Encoding.GetEncoding("ISO-8859-1");
+		const string columnSeparator = ",";
 		
 		#region Get/ Search for Files
 		/// <summary>
@@ -316,6 +319,102 @@ namespace CommonUtils
 			}
 			return correctFiles.ToArray();
 		}
+		
+		#region Read and Write CSV files
+		public delegate object MyParser(string[] splittedLine);
+		public delegate string MyFormatter(object line, int lineCounter, string columnSeparator);
+		
+		/// <summary>
+		/// Read a CSV file and use delegate method to parse the lines
+		/// </summary>
+		/// <example>
+		/// public static object CsvDoubleParser(string[] splittedLine)
+		/// {
+		/// 	// only store the second element (the first is a counter)
+		/// 	return double.Parse(splittedLine[1]);
+		/// }
+		/// var objects = IOUtils.ReadCSV("input.csv", false, CsvDoubleParser);
+		/// var doubles = objects.Cast<double>().ToArray();
+		/// </example>
+		/// <param name="filePath">file path</param>
+		/// <param name="hasHeader">whether we should skip the first header row</param>
+		/// <param name="parser">a parser delegate method</param>
+		/// <returns>a list of objects that can be casted to whatever</returns>
+		public static List<object> ReadCSV(string filePath, bool hasHeader, MyParser parser) {
+
+			int lineCounter = 0;
+			var list = new List<object>();
+			
+			// read in the dictionary file in the ord10k.csv format
+			foreach (var line in File.ReadLines(filePath, _isoLatin1Encoding)) {
+				lineCounter++;
+				
+				// skip header
+				if (hasHeader && lineCounter == 1) continue;
+				
+				// ignore blank lines
+				if (string.IsNullOrEmpty(line))
+					continue;
+				
+				// parse
+				var elements = line.Split(new String[] {
+				                          	columnSeparator
+				                          }, StringSplitOptions.RemoveEmptyEntries);
+				
+				
+				list.Add(parser(elements));
+				
+				//word.Place = int.Parse(elements[0]);
+				//word.Frequency = int.Parse(elements[1]);
+				//word.Word = elements[4];
+			}
+			return list;
+			
+		}
+		
+		/// <summary>
+		/// Write a CSV file and and use delegate method to format the lines
+		/// </summary>
+		/// <example>
+		/// public static string CvsComplexFormatter(object line, int lineCounter, string columnSeparator)
+		/// {
+		///     var elements = new List<string>();
+		///     var complex = (CommonUtils.CommonMath.FFT.Complex) line;
+		///
+		///     elements.Add(String.Format("{0,4}", lineCounter));
+		///     elements.Add(String.Format("{0,12:N6}", complex.Re));
+		///     elements.Add(String.Format("{0,12:N6}", complex.Im));
+		///
+		///     return string.Join(columnSeparator, elements);
+		/// }
+		/// 
+		/// Complex[] spectrum = SpectrogramUtils.padded_FFT(ref signal);
+		/// List<object> lines = spectrum.Cast<object>().ToList();
+		/// IOUtils.WriteCSV("output.csv", lines, CvsComplexFormatter);
+		/// </example>
+		/// <param name="filePath">file path</param>
+		/// <param name="lines">a list of objects</param>
+		/// <param name="formatter">a formatter delegate method</param>
+		public static void WriteCSV(string filePath, List<object> lines, MyFormatter formatter) {
+			
+			int lineCounter = 0;
+			TextWriter pw = new StreamWriter(filePath, false, _isoLatin1Encoding);
+			
+			// rows and columns
+			if (lines != null) {
+				foreach(var line in lines) {
+					lineCounter++;
+
+					// write data
+					var columns = formatter(line, lineCounter, columnSeparator);
+					pw.Write("{0}\r\n", columns);
+				}
+			}
+			pw.Close();
+		}
+
+		#endregion
+		
 	}
 }
 
