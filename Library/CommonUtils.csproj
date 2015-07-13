@@ -179,6 +179,7 @@
     <Compile Include="Source\ObjectUtils.cs" />
     <Compile Include="Source\RandomUtils.cs" />
     <Compile Include="Source\StringUtils.cs" />
+    <Compile Include="Source\TimerUtils.cs" />
     <Compile Include="Source\VST\AudioOutput.cs" />
     <Compile Include="Source\VST\VstHost.cs" />
     <Compile Include="Source\VST\VstPlaybackNAudio.cs" />
