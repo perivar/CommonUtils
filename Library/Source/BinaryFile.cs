@@ -946,5 +946,16 @@ namespace CommonUtils
 		}
 		#endregion
 		
+		public override string ToString()
+		{
+			if (this.fs != null) {
+				return string.Format("Filestream: {1}/{0}", fs.Length, fs.Position);
+			} else if (this.memStream != null) {
+				return string.Format("Memstream: {1}/{0}", memStream.Length, memStream.Position);
+			} else {
+				return string.Format("BinaryFile");
+			}
+		}
+
 	}
 }

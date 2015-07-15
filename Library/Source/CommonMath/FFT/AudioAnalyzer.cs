@@ -583,6 +583,7 @@ namespace CommonUtils.CommonMath.FFT
 				spectrogram = CreateLogSpectrogramLomont(audioData, fftWindowsSize, fftOverlap, logBins, logFrequenciesIndex, logFrequencies);
 			}
 			
+			if (width < 0 ) width = spectrogram.Length + 2*60; // the margins used
 			return GetSpectrogramImage(spectrogram, width, height, seconds*1000, sampleRate, colorPalette, doLogScale, logFrequenciesIndex, logFrequencies);
 		}
 
@@ -799,7 +800,7 @@ namespace CommonUtils.CommonMath.FFT
 			
 			if (drawLabels) {
 				// Label for vertical axis
-				StringFormat format = new StringFormat();
+				var format = new StringFormat();
 				format.Alignment = StringAlignment.Center;
 				g.TranslateTransform(g.VisibleClipBounds.Width, 0);
 				g.RotateTransform(270);

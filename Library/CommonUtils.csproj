@@ -185,6 +185,7 @@
     <Compile Include="Source\VST\VstPlaybackNAudio.cs" />
     <Compile Include="Source\XmlUtils.cs" />
     <Compile Include="Tests\FFTTest.cs" />
+    <Compile Include="Tests\ImageTests.cs" />
     <Compile Include="Tests\WaveletTest.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -222,6 +223,22 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Tests\test.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Tests\harmor_HQ.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Tests\harmor_LQ.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Tests\10x10black24bit.bmp">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Tests\10x10white24bit.bmp">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

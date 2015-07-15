@@ -2,6 +2,7 @@
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
+using System.IO;
 
 namespace CommonUtils
 {
@@ -53,6 +54,7 @@ namespace CommonUtils
 			g.Dispose();
 		}
 
+		#region Convert to Grayscale
 		/// <summary>
 		/// Slow grayscale conversion method from
 		/// http://www.switchonthecode.com/tutorials/csharp-tutorial-convert-a-color-image-to-grayscale
@@ -193,7 +195,9 @@ namespace CommonUtils
 		{
 			return MakeGrayscaleFastest(original);
 		}
+		#endregion
 		
+		#region Resize
 		/// <summary>
 		/// Resize an image using high quality scaling (with smoothing and high quality bilinear interpolation)
 		/// </summary>
@@ -248,7 +252,9 @@ namespace CommonUtils
 			}
 			return newImage;
 		}
+		#endregion
 		
+		#region Convert Back and Forth to Byte Arrays
 		/// <summary>
 		/// Get the image's color pixels as a byte array
 		/// </summary>
@@ -413,6 +419,7 @@ namespace CommonUtils
 			averageValue /= (uint)(bmp.Width * bmp.Height);
 			return grayscaleByteArray;
 		}
+		#endregion
 		
 		/// <summary>
 		/// Convert a double array with values between [0 - 1] to an image
@@ -451,6 +458,156 @@ namespace CommonUtils
 			Image.UnlockBits(bitmapData);
 			return Image;
 		}
+		
+		#region Read and Write BMP files to arrays
+		public static double[][] ReadBMPGrayscale(string filePath)
+		{
+			double[][] image;
+			var bmpfile = new BinaryFile(filePath);
+			
+			// "BM" format tag check
+			if (!"BM".Equals(bmpfile.ReadString(2))) {
+				Console.Error.WriteLine("This file is not in BMP format");
+				return null;
+			}
+
+			bmpfile.Seek(8, SeekOrigin.Current); // skipping useless tags
+			
+			int offset = (int) bmpfile.ReadUInt32() - 54; // header offset
+			
+			bmpfile.Seek(4, SeekOrigin.Current); // skipping useless tags
+			
+			int x = (int) bmpfile.ReadUInt32();
+			int y = (int) bmpfile.ReadUInt32();
+			
+			bmpfile.Seek(2, SeekOrigin.Current); // skipping useless tags
+			
+			int bitDepth = bmpfile.ReadUInt16();
+			int numBytes = bitDepth / 8;
+
+			bmpfile.Seek(24+offset, SeekOrigin.Current); // skipping useless tags
+
+			// image allocation
+			image = new double[y][];
+			
+			// initialise jagged array
+			for (int iy = 0; iy < y; iy++) {
+				image[iy] = new double[x];
+			}
+
+			// calculate zero bytes (bytes to skip at the end of each bitmap line)
+			int zerobytes = (byte)(4 - ((x * numBytes) & numBytes));
+			if (zerobytes == 4) {
+				zerobytes = 0;
+			}
+
+			// backwards reading
+			for (int iy = y-1; iy != -1; iy--) {
+				for (int ix = 0; ix < x; ix++) {
+					for (int ic = numBytes - 1; ic != -1; ic--) {
+						int val = bmpfile.ReadByte();
+						if (ic == 0 && numBytes == 4) {
+							// if reading 32 bit, ignore the alpha bit
+						} else {
+							// Conversion to grey by averaging the three channels
+							image[iy][ix] += (double) val * (1.0/(255.0 * 3.0));
+						}
+					}
+				}
+
+				bmpfile.Seek(zerobytes, SeekOrigin.Current); // skipping padding bytes
+			}
+
+			bmpfile.Close();
+			return image;
+		}
+
+		public static void WriteBMPGrayscale(string filePath, double[][] image, int bitDepth=24)
+		{
+			var bmpfile = new BinaryFile(filePath, BinaryFile.ByteOrder.LittleEndian, true);
+			
+			int y = image.Length;
+			int x = image[0].Length;
+			
+			const byte zerobyte = 255; // what byte should we pad with
+			int numBytes = bitDepth / 8;
+			
+			// calculate zero bytes (bytes to skip at the end of each bitmap line)
+			int zerobytes = (byte)(4 - ((x * numBytes) & numBytes));
+			if (zerobytes == 4) {
+				zerobytes = 0;
+			}
+
+			#region Tags
+			int filesize = 54 + ((x * numBytes) + zerobytes) * y;
+			int imagesize = ((x * numBytes) + zerobytes) * y;
+
+			bmpfile.Write("BM");
+
+			bmpfile.Write((UInt32)filesize);	// filesize
+			bmpfile.Write((UInt32)0);			// reserved
+			bmpfile.Write((UInt32)54);			// off bits
+			bmpfile.Write((UInt32)40);			// bitmap info header size
+			bmpfile.Write((UInt32)x);			// width
+			bmpfile.Write((UInt32)y);			// height
+			bmpfile.Write((UInt16)1); 			// planes
+			bmpfile.Write((UInt32)bitDepth); 	// bit depth
+			bmpfile.Write((UInt16)0);			// compression
+			
+			bmpfile.Write((UInt32) imagesize);
+			//bmpfile.Write((UInt32) 0);
+			
+			// There are at least three kind value of PelsPerMeter used for 96 DPI bitmap:
+			//   0    - the bitmap just simply doesn't set this value
+			//   2834 - 72 DPI
+			//   3780 - 96 DPI
+			const UInt32 pelsPerMeter = 0;//3780;
+			bmpfile.Write((UInt32)pelsPerMeter);	// XPelsPerMeter
+			bmpfile.Write((UInt32)pelsPerMeter);	// YPelsPerMeter
+			bmpfile.Write((UInt32)0);	// clr used
+			bmpfile.Write((UInt32)0);	// clr important
+			#endregion Tags
+
+			// backwards writing
+			for (int iy = y - 1; iy != -1; iy--) {
+				for (int ix = 0; ix < x; ix++) {
+					
+					// define color (grayscale)
+					double vald = image[iy][ix] * 255.0;
+
+					if (vald > 255.0) {
+						vald = 255.0;
+					}
+
+					if (vald < 0.0) {
+						vald = 0.0;
+					}
+					
+					byte val = Convert.ToByte(vald);
+
+					for (int ic = numBytes - 1; ic != -1; ic--) {
+						if (ic == 0 && numBytes == 4) {
+							bmpfile.Write((byte)0); // alpha bit
+						} else {
+							bmpfile.Write(val);
+						}
+					}
+				}
+				
+				// write padding bytes
+				for (int i = 0; i < zerobytes; i++) {
+					bmpfile.Write(zerobyte);
+				}
+			}
+
+			//bmpfile.Write((UInt16)0);
+			bmpfile.Close();
+
+			#if DEBUG
+			Console.Write("Image size : {0:D}x{1:D}\n", x, y);
+			#endif
+		}
+		#endregion
 	}
 	
 	/// <summary>
