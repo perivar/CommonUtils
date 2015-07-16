@@ -111,6 +111,37 @@ namespace CommonUtils.CommonMath.FFT
 			}
 		}
 		
+		public static void FFTWTestUsingDoubleFFTWLIBPadded(string CSVFilePath=null, double[] audio_data=null, int testLoopCount=1) {
+			
+			if (audio_data == null) {
+				audio_data = GetSignalTestData();
+			}
+			
+			double[] complexOutput = null;
+			
+			for (int i = 0; i < testLoopCount; i++) {
+				// perform the FFT
+				complexOutput = FFTUtils.FFTWPaddedFFT(ref audio_data);
+			}
+			
+			// get the result
+			var spectrum_fft_real = FFTUtils.Real(complexOutput);
+			var spectrum_fft_imag = FFTUtils.Imag(complexOutput);
+			var spectrum_fft_abs = FFTUtils.Abs(complexOutput);
+			
+			// pad for output
+			if (spectrum_fft_real.Length != audio_data.Length) Array.Resize(ref spectrum_fft_real, audio_data.Length);
+			if (spectrum_fft_imag.Length != audio_data.Length) Array.Resize(ref spectrum_fft_imag, audio_data.Length);
+			if (spectrum_fft_abs.Length != audio_data.Length) Array.Resize(ref spectrum_fft_abs, audio_data.Length);
+			
+			var spectrum_inverse_real = FFTUtils.FFTWPaddedIFFT(ref complexOutput);
+			if (spectrum_inverse_real .Length != audio_data.Length) Array.Resize(ref spectrum_inverse_real, audio_data.Length);
+			
+			if (CSVFilePath!=null) {
+				Export.ExportCSV(CSVFilePath, audio_data, spectrum_fft_real, spectrum_fft_imag, spectrum_fft_abs, spectrum_inverse_real);
+			}
+		}
+		
 		public enum FFTMethod : int {
 			DFT = 0,
 			IDFT = 1,
@@ -735,6 +766,11 @@ namespace CommonUtils.CommonMath.FFT
 			Console.Out.WriteLine("FFTWTestUsingDoubleFFTWLIB: Time used: {0} ms",sw.Elapsed.TotalMilliseconds);
 
 			sw.Restart();
+			FFTTesting.FFTWTestUsingDoubleFFTWLIBPadded(null, null, testLoopCount);
+			sw.Stop();
+			Console.Out.WriteLine("FFTWTestUsingDoubleFFTWLIBPadded: Time used: {0} ms",sw.Elapsed.TotalMilliseconds);
+			
+			sw.Restart();
 			FFTTesting.FFTWTestUsingDoubleFFTWLIBR2R_INPLACE(null, null, testLoopCount);
 			sw.Stop();
 			Console.Out.WriteLine("FFTWTestUsingDoubleFFTWLIBR2R_INPLACE: Time used: {0} ms",sw.Elapsed.TotalMilliseconds);
@@ -781,7 +817,12 @@ namespace CommonUtils.CommonMath.FFT
 			FFTTesting.FFTWTestUsingDoubleFFTWLIB(null, audio_data, testLoopCount);
 			sw.Stop();
 			Console.Out.WriteLine("FFTWTestUsingDoubleFFTWLIB: Time used: {0} ms",sw.Elapsed.TotalMilliseconds);
-
+			
+			sw.Restart();
+			FFTTesting.FFTWTestUsingDoubleFFTWLIBPadded(null, audio_data, testLoopCount);
+			sw.Stop();
+			Console.Out.WriteLine("FFTWTestUsingDoubleFFTWLIBPadded: Time used: {0} ms",sw.Elapsed.TotalMilliseconds);
+			
 			sw.Restart();
 			FFTTesting.FFTWTestUsingDoubleFFTWLIBR2R_INPLACE(null, audio_data, testLoopCount);
 			sw.Stop();
@@ -822,6 +863,7 @@ namespace CommonUtils.CommonMath.FFT
 			FFTTesting.OctaveFFTWOuput("OctaveFFTWOuput.csv");
 			FFTTesting.FFTWTestUsingDouble("FFTWTestUsingDouble.csv");
 			FFTTesting.FFTWTestUsingDoubleFFTWLIB("FFTWTestUsingDoubleFFTWLIB.csv");
+			FFTTesting.FFTWTestUsingDoubleFFTWLIBPadded("FFTWTestUsingDoubleFFTWLIBPadded.csv");
 			FFTTesting.FFTWTestUsingDoubleFFTWLIBR2R_INPLACE("FFTWTestUsingDoubleFFTWLIBR2R_INPLACE.csv");
 			FFTTesting.FFTWTestUsingDoubleFFTWLIBR2R("FFTWTestUsingDoubleFFTWLIBR2R.csv");
 			FFTTesting.LomontFFTTestUsingDouble("LomontFFTTestUsingDouble.csv");

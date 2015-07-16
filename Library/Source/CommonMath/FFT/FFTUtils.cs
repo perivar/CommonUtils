@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using Lomont;
 
 namespace CommonUtils.CommonMath.FFT
@@ -13,7 +14,7 @@ namespace CommonUtils.CommonMath.FFT
 	/// perivar@nerseth.com
 	/// </summary>
 	public static class FFTUtils
-	{		
+	{
 		
 		#region FFT and IFFT methods
 		/// <summary>
@@ -423,7 +424,208 @@ namespace CommonUtils.CommonMath.FFT
 			
 			return complex_coefficient;
 		}
-		#endregion		
+		#endregion
+		
+		#region Spectrogram and Spectrum
+		/// <summary>
+		/// Generate a spectrogram array spaced linearily
+		/// </summary>
+		/// <param name="samples">audio data</param>
+		/// <param name="fftWindowsSize">fft window size</param>
+		/// <param name="fftOverlap">overlap in number of samples (normaly half of the fft window size) [low number = high overlap]</param>
+		/// <returns>spectrogram jagged array</returns>
+		public static double[][] CreateSpectrogramLomont(float[] samples, int fftWindowsSize, int fftOverlap)
+		{
+			var fft = new LomontFFT();
+			
+			int numberOfSamples = samples.Length;
+
+			// overlap must be an integer smaller than the window size
+			// half the windows size is quite normal
+			double[] windowArray = FFTWindowFunctions.GetWindowFunction(FFTWindowFunctions.HANNING, fftWindowsSize);
+			
+			// width of the segment - e.g. split the file into 78 time slots (numberOfSegments) and do analysis on each slot
+			int numberOfSegments = (numberOfSamples - fftWindowsSize)/fftOverlap;
+			var frames = new double[numberOfSegments][];
+			
+			// even - Re, odd - Img
+			var complexSignal = new double[2*fftWindowsSize];
+			double lengthSqrt = Math.Sqrt(fftWindowsSize);
+			for (int i = 0; i < numberOfSegments; i++)
+			{
+				// apply Hanning Window
+				for (int j = 0; j < fftWindowsSize; j++)
+				{
+					// Weight by Hann Window
+					complexSignal[2*j] = (double) (windowArray[j] * samples[i * fftOverlap + j]);
+					
+					// need to clear out as fft modifies buffer (phase)
+					complexSignal[2*j + 1] = 0;
+				}
+
+				// FFT transform for gathering the spectrum
+				fft.FFT(complexSignal, true);
+
+				// get the ABS of the complex signal
+				var band = new double[fftWindowsSize/2];
+				for (int j = 0; j < fftWindowsSize/2; j++)
+				{
+					double re = complexSignal[2*j];// * lengthSqrt;
+					double img = complexSignal[2*j + 1];// * lengthSqrt;
+					
+					// do the Abs calculation and add with Math.Sqrt(audio_data.Length);
+					// i.e. the magnitude spectrum
+					band[j] = (double) (Math.Sqrt(re*re + img*img) * lengthSqrt);
+				}
+				frames[i] = band;
+			}
+			return frames;
+		}
+		
+		/// <summary>
+		/// Generate a spectrum graph array spaced linearily
+		/// </summary>
+		/// <param name="samples">audio data</param>
+		/// <param name="fftWindowsSize">fft window size</param>
+		/// <returns>spectrum graph array</returns>
+		public static double[] CreateSpectrumAnalysisLomont(float[] samples, int fftWindowsSize)
+		{
+			var fft = new LomontFFT();
+
+			int numberOfSamples = samples.Length;
+			
+			// overlap must be an integer smaller than the window size
+			// half the windows size is quite normal
+			double[] windowArray = FFTWindowFunctions.GetWindowFunction(FFTWindowFunctions.HANNING, fftWindowsSize);
+
+			// even - Re, odd - Img
+			var complexSignal = new double[2*fftWindowsSize];
+
+			// apply Hanning Window
+			// e.g. take 371 ms each 11.6 ms (2048 samples each 64 samples)
+			for (int j = 0; (j < fftWindowsSize) && (samples.Length > j); j++)
+			{
+				// Weight by Hann Window
+				complexSignal[2*j] = (double) (windowArray[j] * samples[j]);
+				
+				// need to clear out as fft modifies buffer (phase)
+				complexSignal[2*j + 1] = 0;
+			}
+
+			// FFT transform for gathering the spectrum
+			fft.FFT(complexSignal, true);
+
+			var band = new double[fftWindowsSize/2];
+			double lengthSqrt = Math.Sqrt(fftWindowsSize);
+			for (int j = 0; j < fftWindowsSize/2; j++)
+			{
+				double re = complexSignal[2*j] * lengthSqrt;
+				double img = complexSignal[2*j + 1] * lengthSqrt;
+				
+				// do the Abs calculation and add with Math.Sqrt(audio_data.Length);
+				// i.e. the magnitude spectrum
+				band[j] = (double) (Math.Sqrt(re*re + img*img) * lengthSqrt);
+			}
+			return band;
+		}
+
+		public static double[][] CreateSpectrogramFFTW(float[] samples, int fftWindowsSize, int fftOverlap)
+		{
+			int numberOfSamples = samples.Length;
+
+			// overlap must be an integer smaller than the window size
+			// half the windows size is quite normal
+			double[] windowArray = FFTWindowFunctions.GetWindowFunction(FFTWindowFunctions.HANNING, fftWindowsSize);
+			
+			// width of the segment - e.g. split the file into 78 time slots (numberOfSegments) and do analysis on each slot
+			int numberOfSegments = (numberOfSamples - fftWindowsSize)/fftOverlap;
+			var frames = new double[numberOfSegments][];
+			
+			// even - Re, odd - Img
+			var realSignal = new double[fftWindowsSize];
+			double lengthSqrt = Math.Sqrt(fftWindowsSize);
+			for (int i = 0; i < numberOfSegments; i++)
+			{
+				// apply Hanning Window
+				for (int j = 0; j < fftWindowsSize; j++)
+				{
+					// Weight by Hann Window
+					realSignal[j] = (double) (windowArray[j] * samples[i * fftOverlap + j]);
+				}
+
+				// FFT transform for gathering the spectrum
+				var complexOutput = FFTWPaddedFFT(ref realSignal);
+				
+				// get the result
+				var spectrum_fft_abs = FFTUtils.Abs(complexOutput);
+				frames[i] = spectrum_fft_abs;
+			}
+			return frames;
+		}
+		
+		public static double[] FFTWPaddedFFT(ref double[] @in)
+		{
+			Debug.Assert(@in.Length > 0);
+			int n = @in.Length;
+			
+			int padded = n > 256 ? MathUtils.NextLowPrimeFactorization(n) : n;
+			Array.Resize<double>(ref @in, padded);
+
+			// 4096 real numbers on input processed by FFTW dft_r2c_1d transform gives
+			// 4096/2+1 = 2049 complex numbers at output
+			// prepare the input arrays
+			var fftwInput = new FFTW.DoubleArray(@in);
+			
+			int complexSize = (padded >> 1) + 1; // this is the same as (padded / 2 + 1);
+			var fftwOutput = new FFTW.ComplexArray(complexSize);
+			
+			FFTW.ForwardTransform(fftwInput, fftwOutput);
+			
+			Array.Resize<double>(ref @in, n);
+			
+			// free up memory
+			GC.Collect();
+			
+			return fftwOutput.ComplexValues;
+		}
+
+		public static double[] FFTWPaddedIFFT(ref double[] @in, bool doProperScaling=true)
+		{
+			Debug.Assert(@in.Length > 1);
+			
+			int originalLength = @in.Length;
+			int n = @in.Length - 2;
+			
+			// the complex array should in theory always be correct size?
+			// int padded = n > 256 ? MathUtils.NextLowPrimeFactorization(n) : n;
+			int padded = n;
+			//Array.Resize<double>(ref @in, padded);
+			
+			// prepare the input arrays
+			var fftwBackwardInput = new FFTW.ComplexArray(@in);
+			var fftwBackwardOutput = new FFTW.DoubleArray(padded);
+			
+			// this method needs that the backwards transform uses the output.length as it's N
+			// i.e. FFTW.dft_c2r_1d(output.Length, input.Handle, output.Handle, Flags.Estimate);
+			FFTW.BackwardTransform(fftwBackwardInput, fftwBackwardOutput);
+			
+			double[] @out = null;
+			if (doProperScaling) {
+				@out = fftwBackwardOutput.ValuesDivedByN;
+			} else {
+				// in the original method it wasn't scaled correctly (meaning ValuesDivedByN)
+				@out = fftwBackwardOutput.Values;
+			}
+			
+			//Array.Resize<double>(ref @in, originalLength);
+			
+			// free up memory
+			GC.Collect();
+
+			return @out;
+		}
+		
+		#endregion
 	}
 }
 

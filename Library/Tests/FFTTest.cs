@@ -13,20 +13,26 @@ namespace CommonUtils.Tests
 	{
 		const int AUDIO_MULTIPLIER = 32768; // 65536
 		const int WINDOW_SIZE = 1024; // 2048; // this also decides the maximum height of the fft before log
-		const int SAMPLING_RATE = 44100; 	// Using 32000 (instead of 44100) gives us a max of 16 khz resolution, which is OK for normal adult human hearing
-		const int OVERLAP = 256; //WINDOW_SIZE/2;
+		const int SAMPLING_RATE = 33400	; 	// Using 32000 (instead of 44100) gives us a max of 16 khz resolution, which is OK for normal adult human hearing
+		//const int OVERLAP = 184; //WINDOW_SIZE/2;
 		const string WAVE_INPUT_FILEPATH = @"Tests\test.wav";
 		
 		[Test]
 		public void TestFFTAudioMatrixMethod()
 		{
+			// harmor_HQ.bmp = 1645 (width) x 511 (height) 32 bit
+			
 			// test variables
 			const string outputDirectoryFilePath = "test";
 			var audioSystem = BassProxy.Instance;
 
 			// 0. Get Audio Data
-			float[] audioSamples = BassProxy.ReadMonoFromFile(WAVE_INPUT_FILEPATH);
+			float[] audioSamples = BassProxy.ReadMonoFromFile(WAVE_INPUT_FILEPATH, SAMPLING_RATE);
 			
+			int width = 1645;
+			//int width = (audioSamples.Length - WINDOW_SIZE)/ OVERLAP;
+			int OVERLAP = (int) ((double) (audioSamples.Length - WINDOW_SIZE) / (double) width);
+
 			// 1. Explode samples to the range of 16 bit shorts (–32,768 to 32,767)
 			// Matlab multiplies with 2^15 (32768)
 			// e.g. if( max(abs(speech))<=1 ), speech = speech * 2^15; end;
@@ -35,21 +41,27 @@ namespace CommonUtils.Tests
 			// zero pad if the audio file is too short to perform a fft
 			if (audioSamples.Length < (WINDOW_SIZE + OVERLAP))
 			{
-				const int lenNew = WINDOW_SIZE + OVERLAP;
+				int lenNew = WINDOW_SIZE + OVERLAP;
 				Array.Resize<float>(ref audioSamples, lenNew);
 			}
 			
 			// 2. Windowing
 			// 3. FFT
 			var stft = new STFT(WINDOW_SIZE, OVERLAP, new HannWindow());
-			var stftdata = stft.Apply(audioSamples);
-
+			//var stftdata = stft.Apply(audioSamples);
+			//stftdata.WriteCSV(@"stft.csv");
+			
+			var spect = FFTUtils.CreateSpectrogramFFTW(audioSamples, WINDOW_SIZE, OVERLAP);
+			//var spect = FFTUtils.CreateSpectrogramLomont(audioSamples, WINDOW_SIZE, OVERLAP);
+			var stftdata = new Matrix(spect).Transpose();
+			
 			//stftdata.WriteAscii(outputFilePath + "_stftdata.ascii");
 			//stftdata.WriteCSV(outputFilePath + "_stftdata.csv", ";");
 			
 			// same as specgram(audio*32768, 2048, 44100, hanning(2048), 1024);
 			stftdata.DrawMatrixImageLogValues(outputDirectoryFilePath + "_specgram.png", true, false, -1, -1, false);
-			
+			//stftdata.DrawMatrixImage(outputDirectoryFilePath + "_specgramlin.png", -1, -1, false, true);
+			return;
 			// spec gram with log values for the y axis (frequency)
 			stftdata.DrawMatrixImageLogY(outputDirectoryFilePath + "_specgramlog.png", SAMPLING_RATE, 20, SAMPLING_RATE/2, 120, WINDOW_SIZE);
 			
@@ -104,13 +116,17 @@ namespace CommonUtils.Tests
 			spectro4.Save(@"spectrogram-log-matlab.png");
 			 */
 			
-			double minFrequency = 27.5;
-			double maxFrequency = SAMPLING_RATE / 2;
-			int logBins = 512;
-			var logFrequenciesIndex = new int[1];
-			var logFrequencies = new float[1];
+			//double minFrequency = 27.5;
+			//double maxFrequency = SAMPLING_RATE / 2;
+			//int logBins = 512;
+			//var logFrequenciesIndex = new int[1];
+			//var logFrequencies = new float[1];
 
 			// find the time
+			int wanted_width = 1645;
+			//int width = (audioSamples.Length - WINDOW_SIZE)/ OVERLAP;
+			int OVERLAP = (int) ((double) (audioSamples.Length - WINDOW_SIZE) / (double) wanted_width);
+			// int OVERLAP = WINDOW_SIZE/2;
 			int numberOfSamples = audioSamples.Length;
 			double seconds = numberOfSamples / SAMPLING_RATE;
 

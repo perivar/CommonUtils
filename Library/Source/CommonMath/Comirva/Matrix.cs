@@ -3,6 +3,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Globalization;
 
+using System.Text;
 using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
@@ -68,6 +69,9 @@ namespace CommonUtils.CommonMath.Comirva
 		//   Class variables
 		// ------------------------
 
+		// Encoding
+		static readonly Encoding _isoLatin1Encoding = Encoding.GetEncoding("ISO-8859-1");
+		
 		// Random to make sure the seed is different and we actually get real random numbers when using it
 		private static readonly Random random = new Random();
 		
@@ -1954,14 +1958,15 @@ namespace CommonUtils.CommonMath.Comirva
 		/// <param name="columnSeparator">the separator character to use</param>
 		public void WriteCSV(string filename, string columnSeparator)
 		{
-			TextWriter pw = File.CreateText(filename);
+			TextWriter pw = new StreamWriter(filename, false, _isoLatin1Encoding);
 			for(int i = 0; i< rowCount; i++)
 			{
+				var columnElements = new List<string>();
 				for(int j = 0; j < columnCount; j++)
 				{
-					pw.Write("\"{0}\"{1}", matrixData[i][j].ToString("##.####"), columnSeparator);
+					columnElements.Add(String.Format("\"{0:N6}\"", matrixData[i][j]));
 				}
-				pw.Write("\r");
+				pw.Write("{0}\r\n", string.Join(columnSeparator, columnElements));
 			}
 			pw.Close();
 		}

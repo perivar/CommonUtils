@@ -52,8 +52,8 @@ namespace CommonUtils.CommonMath.FFT
 				
 				for (int i = 0; i < hops; i++) {
 					// Lomont RealFFT seems to be the fastest option
-					//fft.ComputeComirvaMatrixUsingFftw(ref stft, i, audiodata, i*hopsize);
-					//fft.ComputeComirvaMatrixUsingLomontTableFFT(ref stft, i, audiodata, i*hopsize);
+					//fft.ComputeMatrixUsingFftw(ref stft, i, audiodata, i*hopsize);
+					//fft.ComputeMatrixUsingLomontTableFFT (ref stft, i, audiodata, i*hopsize);
 					fft.ComputeMatrixUsingLomontRealFFT(ref stft, i, audiodata, i*hopsize);
 				}
 				return stft;

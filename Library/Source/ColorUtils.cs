@@ -740,13 +740,32 @@ namespace CommonUtils
 				}
 				catch (OverflowException)
 				{
-					// do nothing 
+					// do nothing
 				}
 			}
 			
-			if (color > 255) {
-				color = 255;
-			} else if (color < 0) {
+			// using paint.NET I was able to fix the color levels by using Levels Input: 230 and 110
+			double dc = 0.0;
+			if (color > 200) {
+				dc = (double) color * 1.0;
+				if (dc > 255) {
+					color = 255;
+				} else {
+					color = (int) dc;
+				}
+			} else if (color >= 175 && color < 200) {
+				dc = (double) color * 0.8;
+				color = (int) dc;
+			} else if (color >= 150 && color < 175) {
+				dc = (double) color * 0.6;
+				color = (int) dc;
+			} else if (color >= 125 && color < 150) {
+				dc = (double) color * 0.4;
+				color = (int) dc;
+			} else if (color >= 100 && color < 125) {
+				dc = (double) color * 0.1;
+				color = (int) dc;
+			} else if (color < 100) {
 				color = 0;
 			}
 			
