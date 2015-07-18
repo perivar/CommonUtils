@@ -124,7 +124,6 @@
     <Compile Include="Source\CommonMath\FFT\ExocortexDSP\Fourier.cs" />
     <Compile Include="Source\CommonMath\FFT\ExocortexDSP\FourierDirection.cs" />
     <Compile Include="Source\CommonMath\FFT\FFT.cs" />
-    <Compile Include="Source\CommonMath\FFT\FFTTesting.cs" />
     <Compile Include="Source\CommonMath\FFT\FFTUtils.cs" />
     <Compile Include="Source\CommonMath\FFT\FFTWindows.cs" />
     <Compile Include="Source\CommonMath\FFT\fftwlib\Interop.cs" />
@@ -185,6 +184,7 @@
     <Compile Include="Source\VST\VstPlaybackNAudio.cs" />
     <Compile Include="Source\XmlUtils.cs" />
     <Compile Include="Tests\FFTTest.cs" />
+    <Compile Include="Tests\FFTTesting.cs" />
     <Compile Include="Tests\ImageTests.cs" />
     <Compile Include="Tests\WaveletTest.cs" />
   </ItemGroup>

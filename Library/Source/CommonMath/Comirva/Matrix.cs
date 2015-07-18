@@ -2264,7 +2264,7 @@ namespace CommonUtils.CommonMath.Comirva
 						val = 20 * Math.Log10(val);
 					}
 					
-					Color color = ColorUtils.ValueToBlackWhiteColor(val, maxValue);
+					Color color = ColorUtils.LogValueToBlackWhiteColor(val, maxValue);
 					Brush brush = new SolidBrush(color);
 					
 					if (flipYscale) {
@@ -2329,7 +2329,7 @@ namespace CommonUtils.CommonMath.Comirva
 				{
 					double val = avg[logBin];
 					val = 20 * Math.Log10(val);
-					Color color = ColorUtils.ValueToBlackWhiteColor(val, maxValue);
+					Color color = ColorUtils.LogValueToBlackWhiteColor(val, maxValue);
 					Brush brush = new SolidBrush(color);
 					
 					// draw a small square

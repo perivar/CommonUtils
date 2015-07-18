@@ -744,6 +744,36 @@ namespace CommonUtils
 				}
 			}
 			
+			return Color.FromArgb(color, color, color);
+		}
+		
+		/// <summary>
+		/// Get corresponding grey pallet color of the spectrogram
+		/// </summary>
+		/// <param name="value">Value</param>
+		/// <param name="maxValue">Max range of the values</param>
+		/// <returns>Grey color corresponding to the value</returns>
+		public static Color LogValueToBlackWhiteColor(double value, double maxValue)
+		{
+			if (double.IsNaN(value))  {
+				return Color.Black;
+			}
+			
+			double colorDouble = Math.Abs(value) * 255.0 / Math.Abs(maxValue);
+			int color = 0;
+			
+			checked
+			{
+				try
+				{
+					color = (int) colorDouble;
+				}
+				catch (OverflowException)
+				{
+					// do nothing
+				}
+			}
+			
 			// using paint.NET I was able to fix the color levels by using Levels Input: 230 and 110
 			double dc = 0.0;
 			if (color > 200) {

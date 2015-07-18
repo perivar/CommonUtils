@@ -3,6 +3,7 @@ using System.Drawing;
 using NUnit.Framework;
 
 using CommonUtils.Audio;
+using CommonUtils.Audio.NAudio;
 using CommonUtils.CommonMath.FFT;
 using CommonUtils.CommonMath.Comirva;
 
@@ -16,6 +17,37 @@ namespace CommonUtils.Tests
 		const int SAMPLING_RATE = 33400	; 	// Using 32000 (instead of 44100) gives us a max of 16 khz resolution, which is OK for normal adult human hearing
 		//const int OVERLAP = 184; //WINDOW_SIZE/2;
 		const string WAVE_INPUT_FILEPATH = @"Tests\test.wav";
+		
+		[Test]
+		public static void TimeSpectrograms() {
+			FFTTesting.TimeSpectrograms();
+		}
+		
+		[Test]
+		public static void TestSpectrograms() {
+			const int fftWindowSize = 4096;
+			const int overlap = 2048;
+			
+			var data = AudioUtilsNAudio.GenerateAudioTestData(44100, 10);
+			
+			double[][] spec1 = FFTUtils.CreateSpectrogramLomont(data, fftWindowSize, overlap);
+			var spec1M = new Matrix(spec1);
+			spec1M.WriteCSV("spec_lomont.csv");
+			
+			double[][] spec2 = FFTUtils.CreateSpectrogramExocortex(data, fftWindowSize, overlap);
+			var spec2M = new Matrix(spec2);
+			spec2M.WriteCSV("spec_exocortex.csv");
+			Assert.That(spec2, Is.EqualTo(spec1).AsCollection.Within(0.001), "fail at [0]");
+			
+			double[][] spec3 = FFTUtils.CreateSpectrogramFFTW(data, fftWindowSize, overlap);
+			Assert.That(spec3, Is.EqualTo(spec1).AsCollection.Within(0.001), "fail at [0]");
+			
+			double[][] spec4 = FFTUtils.CreateSpectrogramFFTWLIB(data, fftWindowSize, overlap);
+
+			double[][] spec5 = FFTUtils.CreateSpectrogramFFTWLIB_INPLACE(data, fftWindowSize, overlap);
+			
+			
+		}
 		
 		[Test]
 		public void TestFFTAudioMatrixMethod()
