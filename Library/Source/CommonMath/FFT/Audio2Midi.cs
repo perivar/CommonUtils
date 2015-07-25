@@ -253,7 +253,7 @@ namespace CommonUtils.CommonMath.FFT
 			Console.WriteLine("Start: " + fftBinStart[0] + " End: " + fftBinEnd[7] + " (" + fftSize + " total)");
 		}
 		
-		public void OpenAudioFile(string audioFile)
+		public int OpenAudioFile(string audioFile)
 		{
 			if (TRACK_LOADED)
 			{
@@ -313,6 +313,8 @@ namespace CommonUtils.CommonMath.FFT
 			TRACK_LOADED = true;
 			
 			audioSystem.Play();
+			
+			return frames;
 		}
 		
 		#region Midi
