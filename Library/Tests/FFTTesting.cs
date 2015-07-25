@@ -586,8 +586,8 @@ namespace CommonUtils.Tests
 		public static void TimeSpectrograms(float[] data=null) {
 			
 			if (data == null) {
-				Console.Out.WriteLine("Generating 120 seconds of Audio Test Data");
-				data = AudioUtilsNAudio.GenerateAudioTestData(44100, 120);
+				Console.Out.WriteLine("Generating 60 seconds of Audio Test Data");
+				data = AudioUtilsNAudio.GenerateAudioTestData(44100, 60);
 			}
 			
 			// Start the stopwatch

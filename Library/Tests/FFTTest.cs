@@ -119,6 +119,25 @@ namespace CommonUtils.Tests
 		}
 		
 		[Test]
+		public void TimeFFTWithIterations() {
+			FFTTesting.TimeAll(50);
+		}
+		
+		[Test]
+		public void TimeFFTWithSignal() {
+			// initialize the random class
+			RandomUtils.Seed(Guid.NewGuid().GetHashCode());
+
+			const int length = 4096;
+			var doubleData = new double[length];
+			for (int i = 0; i < length; i++) {
+				doubleData[i] = RandomUtils.NextDoubleMinus1ToPlus1();
+			}
+			
+			FFTTesting.TimeAll(doubleData);
+		}
+		
+		[Test]
 		public void TestSpectrogram() {
 
 			// harmor_LQ.bmp = 1645 (width) x 255 (height) 32 bit

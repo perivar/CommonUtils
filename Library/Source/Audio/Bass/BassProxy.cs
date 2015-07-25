@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices; // GCHandle
 using System.IO; // Stream
 using System.Text; // Encoding
+using CommonUtils.CommonMath.FFT;
 
 using System.Diagnostics;
 
@@ -36,7 +37,7 @@ namespace CommonUtils.Audio
 	/// Some of this originated from "Sound Fingerprinting framework" ciumac.sergiu@gmail.com
 	/// Modified heaviliy by perivar@nerseth.com
 	/// </remarks>
-	public class BassProxy : IWaveformPlayer
+	public class BassProxy : IWaveformPlayer, ISpectrumPlayer
 	{
 		#region Fields
 		const int DEFAULT_SAMPLE_RATE = 44100; // Default sample rate used at initialization
@@ -72,6 +73,10 @@ namespace CommonUtils.Audio
 		bool _canStop;
 		bool _isPlaying;
 
+		// ISpectrumPlayer
+		private readonly int _fftDataSize = (int)FFTDataSize.FFT2048;
+		private readonly int _maxFFT = (int)(BASSData.BASS_DATA_AVAILABLE | BASSData.BASS_DATA_FFT2048);
+
 		/// <summary>
 		/// Shows whether the Bass Engine (proxy) has already been disposed
 		/// </summary>
@@ -80,7 +85,7 @@ namespace CommonUtils.Audio
 		/// <summary>
 		/// Currently playing stream
 		/// </summary>
-		int _playingStream;
+		int _activeStreamHandle;
 
 		// Properties retrieved when using OpenFile
 		int _sampleRate;
@@ -101,7 +106,12 @@ namespace CommonUtils.Audio
 		int _dataBytePos; // play position in bytes when playing from memory
 		GCHandle _hGCFile; // make it global, so that the GC can not remove it
 		#endregion
-
+		
+		// DSP processing the buffer variables
+		private DSPPROC _dspProc; // make it global, so that the GC can not remove it
+		IDSPPlugin dspPlugin = null;
+		private DSP_BufferStream _bufferStream;
+		
 		#region Get Field Methods
 		public string FileFilter {
 			get {
@@ -140,7 +150,34 @@ namespace CommonUtils.Audio
 				return _waveformData != null ? _waveformData.Length : -1;
 			}
 		}
+
+		public int FftDataSize {
+			get {
+				return _fftDataSize;
+			}
+		}
+		
+		public IDSPPlugin DspPlugin {
+			get {
+				return dspPlugin;
+			}
+			set {
+				dspPlugin = value;
+			}
+		}
 		#endregion
+		
+		public int ActiveStreamHandle
+		{
+			get { return _activeStreamHandle; }
+			protected set
+			{
+				int oldValue = _activeStreamHandle;
+				_activeStreamHandle = value;
+				if (oldValue != _activeStreamHandle)
+					NotifyPropertyChanged("ActiveStreamHandle");
+			}
+		}
 		
 		#region Constructors
 		
@@ -400,7 +437,7 @@ namespace CommonUtils.Audio
 		
 		private void SetLoopRange(int startSamplePosition, int endSamplePosition) {
 			if (_loopSyncId != 0)
-				Bass.BASS_ChannelRemoveSync(_playingStream, _loopSyncId);
+				Bass.BASS_ChannelRemoveSync(ActiveStreamHandle, _loopSyncId);
 
 			if ((endSamplePosition - startSamplePosition) > LOOP_THRESHOLD_SAMPLES) {
 				// length in bytes
@@ -408,7 +445,7 @@ namespace CommonUtils.Audio
 				long endBytePosition = (endSamplePosition * BytesPerSample * Channels);
 				
 				// For Sample Accurate Looping set mixtime POS sync at loop end
-				_loopSyncId = Bass.BASS_ChannelSetSync(_playingStream,
+				_loopSyncId = Bass.BASS_ChannelSetSync(ActiveStreamHandle,
 				                                       BASSSync.BASS_SYNC_POS | BASSSync.BASS_SYNC_MIXTIME,
 				                                       endBytePosition,
 				                                       _loopSyncProc,
@@ -429,7 +466,7 @@ namespace CommonUtils.Audio
 		private void ClearLoopRange()
 		{
 			if (_loopSyncId != 0) {
-				Bass.BASS_ChannelRemoveSync(_playingStream, _loopSyncId);
+				Bass.BASS_ChannelRemoveSync(ActiveStreamHandle, _loopSyncId);
 				_loopSyncId = 0;
 			}
 		}
@@ -748,7 +785,7 @@ namespace CommonUtils.Audio
 		/// Read an audio file into a float array as a Mono file (32-bit floating-point sample data)
 		/// </summary>
 		/// <param name="fileName">Fully referenced path and file name of the Wave file to create.</param>
-		/// <returns>Array with multi channel data</returns>
+		/// <returns>Array with mono channel data</returns>
 		/// <exception cref="Exception">Thrown when an error occurs in the BASS Audio system</exception>
 		public static float[] ReadMonoFromFile(string fileName) {
 			return ReadMonoFromFile(fileName, MonoSummingType.Mix);
@@ -759,7 +796,7 @@ namespace CommonUtils.Audio
 		/// </summary>
 		/// <param name="fileName">Fully referenced path and file name of the Wave file to create.</param>
 		/// <param name="monoType">Define how converting to mono should happen (mix, left or right)</param>
-		/// <returns>Array with multi channel data</returns>
+		/// <returns>Array with mono channel data</returns>
 		/// <exception cref="Exception">Thrown when an error occurs in the BASS Audio system</exception>
 		public static float[] ReadMonoFromFile(string fileName, MonoSummingType monoType) {
 
@@ -778,7 +815,7 @@ namespace CommonUtils.Audio
 		/// <param name="bitsPerSample">Bits per sample of the wave file (must be either 8, 16, 24 or 32).</param>
 		/// <param name="byteLength">Length of file in bytes</param>
 		/// <param name="monoType">Define how converting to mono should happen (mix, left or right)</param>
-		/// <returns>Array with multi channel data</returns>
+		/// <returns>Array with mono channel data</returns>
 		/// <exception cref="Exception">Thrown when an error occurs in the BASS Audio system</exception>
 		public static float[] ReadMonoFromFile(string fileName, out int sampleRate, out int bitsPerSample, out long byteLength, MonoSummingType monoType) {
 
@@ -787,6 +824,19 @@ namespace CommonUtils.Audio
 			
 			float[] audioSamples = ReadFromFile(fileName, out sampleRate, out bitsPerSample, out channels, out byteLength, out channelSampleLength);
 
+			return GetMonoSignal(audioSamples, channels, monoType);
+		}
+		
+		/// <summary>
+		/// Take an input signal and return the mono signal as requested using the MonoSummingType
+		/// Note! Does not support more than 2 channels yet
+		/// </summary>
+		/// <param name="audioSamples">float array (mono or multi channel)</param>
+		/// <param name="channels">number of channels</param>
+		/// <param name="monoType">Define how converting to mono should happen (mix, left or right)</param>
+		/// <returns></returns>
+		public static float[] GetMonoSignal(float[] audioSamples, int channels, MonoSummingType monoType) {
+			
 			if (channels == 1) {
 				return audioSamples;
 			} else if (channels == 2) {
@@ -894,8 +944,8 @@ namespace CommonUtils.Audio
 				{
 					int lowBound = (int) freqs[i];
 					int endBound = (int) freqs[i + 1];
-					int startIndex = Un4seen.Bass.Utils.FFTFrequency2Index(lowBound, wdftsize, samplerate);
-					int endIndex = Un4seen.Bass.Utils.FFTFrequency2Index(endBound, wdftsize, samplerate);
+					int startIndex = Utils.FFTFrequency2Index(lowBound, wdftsize, samplerate);
+					int endIndex = Utils.FFTFrequency2Index(endBound, wdftsize, samplerate);
 					float sum = 0f;
 					for (int j = startIndex; j < endIndex; j++)
 					{
@@ -1020,7 +1070,7 @@ namespace CommonUtils.Audio
 		#region Event Handlers
 		void OnTimedEvent(object sender, EventArgs e)
 		{
-			if (_playingStream == 0)
+			if (ActiveStreamHandle == 0)
 			{
 				ChannelSamplePosition = 0;
 			}
@@ -1029,7 +1079,7 @@ namespace CommonUtils.Audio
 				// Make sure to not Set the position at the same time we are reading it
 				_inChannelTimerUpdate = true;
 
-				ChannelSamplePosition = GetChannelSamplePosition(_playingStream);
+				ChannelSamplePosition = GetChannelSamplePosition(ActiveStreamHandle);
 				
 				_inChannelTimerUpdate = false;
 			}
@@ -1118,7 +1168,7 @@ namespace CommonUtils.Audio
 					int samplePosition = Math.Max(0, Math.Min(value, ChannelSampleLength)); // position in samples
 					
 					if (!_inChannelTimerUpdate) {
-						SetChannelSamplePosition(_playingStream, samplePosition);
+						SetChannelSamplePosition(ActiveStreamHandle, samplePosition);
 					}
 					_currentChannelSamplePosition = samplePosition;
 					
@@ -1178,6 +1228,18 @@ namespace CommonUtils.Audio
 		}
 		#endregion
 		
+		#region ISpectrumPlayer
+		public int GetFFTFrequencyIndex(int frequency)
+		{
+			return Utils.FFTFrequency2Index(frequency, _fftDataSize, _sampleRate);
+		}
+
+		public bool GetFFTData(float[] fftDataBuffer)
+		{
+			return (Bass.BASS_ChannelGetData(ActiveStreamHandle, fftDataBuffer, _maxFFT)) > 0;
+		}
+		#endregion
+		
 		#region IDisposable implementation
 		
 		/// <summary>
@@ -1201,10 +1263,10 @@ namespace CommonUtils.Audio
 			if (!isDisposing)
 			{
 				// Free any other managed objects here.
-				if (_playingStream != 0)
+				if (ActiveStreamHandle != 0)
 				{
-					Bass.BASS_StreamFree(_playingStream);
-					_playingStream = 0;
+					Bass.BASS_StreamFree(ActiveStreamHandle);
+					ActiveStreamHandle = 0;
 				}
 				
 				_waveformData = null;
@@ -1305,11 +1367,11 @@ namespace CommonUtils.Audio
 			
 			Stop();
 
-			if (_playingStream != 0)
+			if (ActiveStreamHandle != 0)
 			{
 				ClearLoopRange();
 				ChannelSamplePosition = 0;
-				Bass.BASS_StreamFree(_playingStream);
+				Bass.BASS_StreamFree(ActiveStreamHandle);
 			}
 			
 			// set default values
@@ -1329,9 +1391,9 @@ namespace CommonUtils.Audio
 			Bass.BASS_SampleSetData(sample, data);
 			
 			// get a sample channel
-			_playingStream = Bass.BASS_SampleGetChannel(sample, false);
+			ActiveStreamHandle = Bass.BASS_SampleGetChannel(sample, false);
 
-			if (_playingStream != 0) {
+			if (ActiveStreamHandle != 0) {
 				CanPlay = true;
 				if (isCurrentlyPlaying) Play();
 			}
@@ -1350,11 +1412,11 @@ namespace CommonUtils.Audio
 
 			Stop();
 
-			if (_playingStream != 0)
+			if (ActiveStreamHandle != 0)
 			{
 				ClearLoopRange();
 				ChannelSamplePosition = 0;
-				Bass.BASS_StreamFree(_playingStream);
+				Bass.BASS_StreamFree(ActiveStreamHandle);
 			}
 			
 			// reset data byte position
@@ -1369,12 +1431,12 @@ namespace CommonUtils.Audio
 			_myStreamCreate = new STREAMPROC(BASSReadFloatArrayLoop);
 			
 			// Create playback stream
-			_playingStream = Bass.BASS_StreamCreate(_sampleRate, _channels, BASSFlag.BASS_SAMPLE_FLOAT, _myStreamCreate, IntPtr.Zero);
+			ActiveStreamHandle = Bass.BASS_StreamCreate(_sampleRate, _channels, BASSFlag.BASS_SAMPLE_FLOAT, _myStreamCreate, IntPtr.Zero);
 			
-			if (_playingStream != 0) {
+			if (ActiveStreamHandle != 0) {
 				
 				// Set the stream to call Stop() when it ends.
-				int syncHandle = Bass.BASS_ChannelSetSync(_playingStream,
+				int syncHandle = Bass.BASS_ChannelSetSync(ActiveStreamHandle,
 				                                          BASSSync.BASS_SYNC_END,
 				                                          0,
 				                                          _endTrackSyncProc,
@@ -1395,11 +1457,11 @@ namespace CommonUtils.Audio
 
 			Stop();
 
-			if (_playingStream != 0)
+			if (ActiveStreamHandle != 0)
 			{
 				ClearLoopRange();
 				ChannelSamplePosition = 0;
-				Bass.BASS_StreamFree(_playingStream);
+				Bass.BASS_StreamFree(ActiveStreamHandle);
 			}
 			
 			long byteLength = -1;
@@ -1416,13 +1478,13 @@ namespace CommonUtils.Audio
 			_hGCFile = GCHandle.Alloc( riffArray, GCHandleType.Pinned );
 
 			// create the stream (AddrOfPinnedObject delivers the necessary IntPtr)
-			_playingStream = Bass.BASS_StreamCreateFile(_hGCFile.AddrOfPinnedObject(),
-			                                            0L, byteLength, BASSFlag.BASS_SAMPLE_FLOAT);
+			ActiveStreamHandle = Bass.BASS_StreamCreateFile(_hGCFile.AddrOfPinnedObject(),
+			                                                0L, byteLength, BASSFlag.BASS_SAMPLE_FLOAT);
 			
-			if (_playingStream != 0) {
+			if (ActiveStreamHandle != 0) {
 				
 				// Set the stream to call Stop() when it ends.
-				int syncHandle = Bass.BASS_ChannelSetSync(_playingStream,
+				int syncHandle = Bass.BASS_ChannelSetSync(ActiveStreamHandle,
 				                                          BASSSync.BASS_SYNC_END,
 				                                          0,
 				                                          _endTrackSyncProc,
@@ -1443,11 +1505,11 @@ namespace CommonUtils.Audio
 			
 			Stop();
 
-			if (_playingStream != 0)
+			if (ActiveStreamHandle != 0)
 			{
 				ClearLoopRange();
 				ChannelSamplePosition = 0;
-				Bass.BASS_StreamFree(_playingStream);
+				Bass.BASS_StreamFree(ActiveStreamHandle);
 			}
 			
 			// Example:
@@ -1461,19 +1523,75 @@ namespace CommonUtils.Audio
 			//
 			// BASS_DEFAULT = 0 = default create stream: 16 Bit, stereo, no Float, hardware mixing, no Loop, no 3D, no speaker assignments...
 			
-			_playingStream = Bass.BASS_StreamCreateFile(path, 0L, 0L, BASSFlag.BASS_DEFAULT);
+			ActiveStreamHandle = Bass.BASS_StreamCreateFile(path, 0L, 0L, BASSFlag.BASS_DEFAULT);
 			
 			GenerateWaveformData(path);
 			
-			if (_playingStream != 0) {
+			if (ActiveStreamHandle != 0) {
 				
 				long byteLength = -1;
 				int channelSampleLength = -1;
-				GetChannelInformation(_playingStream, out _sampleRate, out _bitsPerSample, out _channels, out byteLength, out channelSampleLength);
+				GetChannelInformation(ActiveStreamHandle, out _sampleRate, out _bitsPerSample, out _channels, out byteLength, out channelSampleLength);
 				ChannelSampleLength = channelSampleLength; // Notify
 				
 				// Set the stream to call Stop() when it ends.
-				int syncHandle = Bass.BASS_ChannelSetSync(_playingStream,
+				int syncHandle = Bass.BASS_ChannelSetSync(ActiveStreamHandle,
+				                                          BASSSync.BASS_SYNC_END,
+				                                          0,
+				                                          _endTrackSyncProc,
+				                                          IntPtr.Zero);
+
+				if (syncHandle == 0)
+					throw new ArgumentException("Error establishing End Sync on file stream.", "path");
+				
+				_filePath = path;
+				CanPlay = true;
+			} else {
+				CanPlay = false;
+			}
+		}
+		
+		public void OpenFileUsingFileStreamDSP(string path) {
+			
+			Stop();
+
+			if (ActiveStreamHandle != 0)
+			{
+				ClearLoopRange();
+				ChannelSamplePosition = 0;
+				Bass.BASS_StreamFree(ActiveStreamHandle);
+			}
+			
+			// Example:
+			// int stream = Bass.BASS_StreamCreateFile(path, 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT | BASSFlag.BASS_STREAM_PRESCAN);
+			//
+			// BASS_STREAM_PRESCAN = Pre-scan the file for accurate seek points and length reading in
+			// MP3/MP2/MP1 files and chained OGG files (has no effect on normal OGG files).
+			// This can significantly increase the time taken to create the stream, particularly with a large file and/or slow storage media.
+			//
+			// BASS_SAMPLE_FLOAT = Use 32-bit floating-point sample data.
+			//
+			// BASS_DEFAULT = 0 = default create stream: 16 Bit, stereo, no Float, hardware mixing, no Loop, no 3D, no speaker assignments...
+			
+			ActiveStreamHandle = Bass.BASS_StreamCreateFile(path, 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT);
+			
+			GenerateWaveformData(path);
+			
+			if (ActiveStreamHandle != 0) {
+				
+				// set a DSP user callback method
+				_dspProc = new DSPPROC(DSPCallback);
+				
+				// set the user DSP callback
+				Bass.BASS_ChannelSetDSP(ActiveStreamHandle, _dspProc, IntPtr.Zero, 2);
+				
+				long byteLength = -1;
+				int channelSampleLength = -1;
+				GetChannelInformation(ActiveStreamHandle, out _sampleRate, out _bitsPerSample, out _channels, out byteLength, out channelSampleLength);
+				ChannelSampleLength = channelSampleLength; // Notify
+				
+				// Set the stream to call Stop() when it ends.
+				int syncHandle = Bass.BASS_ChannelSetSync(ActiveStreamHandle,
 				                                          BASSSync.BASS_SYNC_END,
 				                                          0,
 				                                          _endTrackSyncProc,
@@ -1494,12 +1612,12 @@ namespace CommonUtils.Audio
 		}
 		#endregion
 		
-		#region Public Play, Pause and Stop Methods
+		#region Public ISoundPlayer Play, Pause and Stop Methods
 		public void Play() {
 			if (CanPlay)
 			{
-				if (_isInitialized && _playingStream != 0) {
-					Bass.BASS_ChannelPlay(_playingStream, false);
+				if (_isInitialized && ActiveStreamHandle != 0) {
+					Bass.BASS_ChannelPlay(ActiveStreamHandle, false);
 				}
 				IsPlaying = true;
 				CanPause = true;
@@ -1512,8 +1630,8 @@ namespace CommonUtils.Audio
 		{
 			if (IsPlaying && CanPause)
 			{
-				if (_isInitialized && _playingStream != 0) {
-					Bass.BASS_ChannelPause(_playingStream);
+				if (_isInitialized && ActiveStreamHandle != 0) {
+					Bass.BASS_ChannelPause(ActiveStreamHandle);
 				}
 				IsPlaying = false;
 				CanPlay = true;
@@ -1524,9 +1642,9 @@ namespace CommonUtils.Audio
 		public void Stop()
 		{
 			ChannelSamplePosition = SelectionSampleBegin;
-			if (_isInitialized && _playingStream != 0) {
-				Bass.BASS_ChannelStop(_playingStream);
-				SetChannelSamplePosition(_playingStream, ChannelSamplePosition);
+			if (_isInitialized && ActiveStreamHandle != 0) {
+				Bass.BASS_ChannelStop(ActiveStreamHandle);
+				SetChannelSamplePosition(ActiveStreamHandle, ChannelSamplePosition);
 			}
 			IsPlaying = false;
 			CanStop = false;
@@ -1534,25 +1652,8 @@ namespace CommonUtils.Audio
 			CanPause = false;
 		}
 		#endregion
-
-		#region Callbacks
-		private void EndTrackSyncCallback(int handle, int channel, int data, IntPtr user)
-		{
-			Stop();
-		}
-
-		private void LoopSyncCallback(int handle, int channel, int data, IntPtr user)
-		{
-			//ChannelSamplePosition = SelectionSampleBegin;
-
-			// Setting the loop position using the Set property for ChannelSamplePosition does
-			// sometimes fail because of conflicting progress (timer update) at the same time
-			// therefore do it directly:
-			SetChannelSamplePosition(_playingStream, SelectionSampleBegin);
-		}
-		#endregion
 		
-		#region Public Properties
+		#region Public ISoundPlayer Properties
 		public bool CanPlay
 		{
 			get { return _canPlay; }
@@ -1615,5 +1716,49 @@ namespace CommonUtils.Audio
 			}
 		}
 		#endregion
+
+		#region End Track and Loop Callbacks
+		private void EndTrackSyncCallback(int handle, int channel, int data, IntPtr user)
+		{
+			Stop();
+		}
+
+		private void LoopSyncCallback(int handle, int channel, int data, IntPtr user)
+		{
+			//ChannelSamplePosition = SelectionSampleBegin;
+
+			// Setting the loop position using the Set property for ChannelSamplePosition does
+			// sometimes fail because of conflicting progress (timer update) at the same time
+			// therefore do it directly:
+			SetChannelSamplePosition(ActiveStreamHandle, SelectionSampleBegin);
+		}
+		#endregion
+		
+		#region DSP Callback
+		// the actual dsp processing method
+		private void DSPCallback(int handle, int channel, IntPtr buffer, int length, IntPtr user)
+		{
+			if (dspPlugin == null || length == 0 || buffer == IntPtr.Zero)
+				return;
+			
+			// number of bytes in 32-bit floats, since length is in bytes
+			int l4 = length/4;
+			var data = new float[l4];
+			
+			// copy from managed to unmanaged memory
+			Marshal.Copy(buffer, data, 0, l4);
+			
+			// assuming using 32-bit floats
+			dspPlugin.Process(ref data);
+			
+			// copy back from unmanaged to managed memory
+			Marshal.Copy(data, 0, buffer, l4);
+		}
+		#endregion
 	}
+
+	public interface IDSPPlugin {
+		void Process(ref float[] buffer);
+	}
+	
 }

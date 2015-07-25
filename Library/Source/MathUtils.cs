@@ -692,6 +692,16 @@ namespace CommonUtils
 		
 		#region Round
 		/// <summary>
+		/// Test to see if a double is a finite number (is not NaN or Infinity).
+		/// </summary>
+		/// <param name='value'>The value to test.</param>
+		/// <returns>Whether or not the value is a finite number.</returns>
+		public static bool IsFinite(double value)
+		{
+			return !double.IsNaN(value) && !double.IsInfinity(value);
+		}
+		
+		/// <summary>
 		/// Round a number to nearest double value
 		/// </summary>
 		/// <param name="number">original value</param>
@@ -753,8 +763,15 @@ namespace CommonUtils
 		/// Summary: Rounds a double-precision floating-point value to the nearest integer away from zero
 		/// </summary>
 		/// <param name="number">A double-precision floating-point number.</param>
-		/// <returns>The integral value that is the nearest integer away from zero</returns>
+		/// <returns>The integral value that is the nearest integer away from zero.
+		/// If number is equal to NaN, NegativeInfinity, or PositiveInfinity, zero is returned.</returns>
 		public static int RoundAwayFromZero(double number) {
+			
+			// If d is equal to NaN, NegativeInfinity, or PositiveInfinity, zero is returned.
+			if (!IsFinite(number)) {
+				return 0;
+			}
+			
 			return (int) Math.Round( number, MidpointRounding.AwayFromZero );
 		}
 		
@@ -1621,7 +1638,7 @@ namespace CommonUtils
 		
 		#endregion
 		
-		#region Extension method (IndexesWhere and 2D Row and Column accessors and 2D Array Deep Copy)
+		#region Extension methods (IndexesWhere, 2D Row and Column accessors, 2D Array Deep Copy and Array Splitting)
 		/// <summary>
 		/// Extension method to return indexes for linq queries
 		/// </summary>
@@ -1707,6 +1724,67 @@ namespace CommonUtils
 		public static T[][] DeepCopy<T>(this T[][] array)
 		{
 			return array.Select(a => a.ToArray()).ToArray();
+		}
+		#endregion
+		
+		#region Split array methods
+		/// <summary>
+		/// Splits an array into several smaller arrays.
+		/// </summary>
+		/// <param name="array">The array to split.</param>
+		/// <param name="size">The size of the smaller arrays.</param>
+		/// <param name="doRetainExactLength">Whether to ensure the accumlated length of the smaller arrays should match the original array length</param>
+		/// <example>
+		/// var arrayFloat = new float[] { 123.45f, 123f, 45f, 1.2f, 34.5f };
+		/// var splitted = MathUtils.Split(arrayFloat, 3, false);
+		/// </example>
+		/// <returns>A list containing smaller arrays.</returns>
+		public static List<float[]> Split(float[] array, int size, bool doRetainExactLength = true) {
+			var splitted = new List<float[]>(); // This list will contain all the splitted arrays.
+			int arrayLength = array.Length;
+			for (int i = 0; i < arrayLength; i = i + size)
+			{
+				float[] val = null;
+				// if all sub arrays should be of the given length
+				if (!doRetainExactLength) {
+					val = new float[size];
+				}
+				
+				if (arrayLength < i + size)
+				{
+					size = arrayLength - i;
+				}
+
+				// if the sub arrays should sum up to the exact length of the original array
+				if (doRetainExactLength) {
+					val = new float[size];
+				}
+
+				Array.Copy(array, i, val, 0, size);
+				splitted.Add(val);
+			}
+			return splitted;
+		}
+
+		/// <summary>
+		/// Extension Method to split an array into several smaller arrays.
+		/// Note! this solution is deferred.
+		/// </summary>
+		/// <example>
+		/// var array = new byte[] {10, 20, 30, 40, 50};
+		/// var splitArray = array.Split(2);
+		/// </example>
+		/// <remarks>use "using System.Linq;" to convert IEnumerable directly into an Array</remarks>
+		/// <typeparam name="T">The type of the array.</typeparam>
+		/// <param name="array">The array to split.</param>
+		/// <param name="size">The size of the smaller arrays.</param>
+		/// <returns>An array containing smaller arrays.</returns>
+		public static IEnumerable<IEnumerable<T>> Split<T>(this T[] array, int size)
+		{
+			for (var i = 0; i < (float)array.Length / size; i++)
+			{
+				yield return array.Skip(i * size).Take(size);
+			}
 		}
 		#endregion
 		

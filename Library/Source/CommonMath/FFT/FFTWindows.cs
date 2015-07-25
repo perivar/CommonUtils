@@ -85,13 +85,17 @@ namespace CommonUtils.CommonMath.FFT
 				case 2:
 					// Hamming
 					for (i = 0; i < fftWindowsSize; i++)
+					{
 						dataArray[i] *= (0.54 - 0.46 * Math.Cos(2 * Math.PI * i / (fftWindowsSize - 1)));
+					}
 					break;
 				case 3:
 					// Hanning
 					for (i = 0; i < fftWindowsSize; i++)
+					{
 						dataArray[i] *= (0.50 - 0.50 * Math.Cos(2 * Math.PI * i / (fftWindowsSize - 1)));
-					// this is the same as 0.5 * (1 - Math.Cos(2 * Math.PI * i / (length - 1)));
+						// this is the same as 0.5 * (1 - Math.Cos(2 * Math.PI * i / (length - 1)));
+					}
 					break;
 				case 4:
 					// Blackman
@@ -117,7 +121,7 @@ namespace CommonUtils.CommonMath.FFT
 				case 7:
 					// Gaussian (a=2.5)
 					// Precalculate some values, and simplify the fmla to try and reduce overhead
-					A = -2 *2.5 *2.5;
+					A = -2 * 2.5 * 2.5;
 					for (i = 0; i < fftWindowsSize; i++)
 					{
 						// full
@@ -128,7 +132,7 @@ namespace CommonUtils.CommonMath.FFT
 					break;
 				case 8:
 					// Gaussian (a=3.5)
-					A = -2 *3.5 *3.5;
+					A = -2 * 3.5 * 3.5;
 					for (i = 0; i < fftWindowsSize; i++)
 					{
 						// reduced
@@ -137,7 +141,7 @@ namespace CommonUtils.CommonMath.FFT
 					break;
 				case 9:
 					// Gaussian (a=4.5)
-					A = -2 *4.5 *4.5;
+					A = -2 * 4.5 * 4.5;
 					for (i = 0; i < fftWindowsSize; i++)
 					{
 						// reduced

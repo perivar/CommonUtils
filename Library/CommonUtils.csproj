@@ -115,6 +115,7 @@
     <Compile Include="Source\CommonMath\Comirva\Matrix.cs" />
     <Compile Include="Source\CommonMath\Comirva\QRDecomposition.cs" />
     <Compile Include="Source\CommonMath\Comirva\SingularValueDecomposition.cs" />
+    <Compile Include="Source\CommonMath\FFT\Audio2Midi.cs" />
     <Compile Include="Source\CommonMath\FFT\AudioAnalyzer.cs" />
     <Compile Include="Source\CommonMath\FFT\ExocortexDSP\Complex.cs" />
     <Compile Include="Source\CommonMath\FFT\ExocortexDSP\ComplexArray.cs" />
@@ -124,6 +125,7 @@
     <Compile Include="Source\CommonMath\FFT\ExocortexDSP\Fourier.cs" />
     <Compile Include="Source\CommonMath\FFT\ExocortexDSP\FourierDirection.cs" />
     <Compile Include="Source\CommonMath\FFT\FFT.cs" />
+    <Compile Include="Source\CommonMath\FFT\FFTDataSize.cs" />
     <Compile Include="Source\CommonMath\FFT\FFTUtils.cs" />
     <Compile Include="Source\CommonMath\FFT\FFTWindows.cs" />
     <Compile Include="Source\CommonMath\FFT\fftwlib\Interop.cs" />
