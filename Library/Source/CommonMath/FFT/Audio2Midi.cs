@@ -18,13 +18,13 @@ namespace CommonUtils.CommonMath.FFT
 	public class Audio2Midi : IDSPPlugin
 	{
 		
-		//int bufferSize = 32768;
-		//int bufferSize = 16384;
-		//int bufferSize = 8192;
-		//int bufferSize = 4096;
+		// const int bufferSize = 32768;
+		// const int bufferSize = 16384;
+		// const int bufferSize = 8192;
+		// const int bufferSize = 4096;
 		const int bufferSize = 2048;
-		//int bufferSize = 1024;
-		//int bufferSize = 512;
+		// const int bufferSize = 1024;
+		// const int bufferSize = 512;
 
 		// since we are dealing with small buffer sizes (1024) but are trying to detect peaks at low frequency ranges
 		// octaves 0 .. 2 for example, zero padding is nessessary to improve the interpolation resolution of the FFT
@@ -39,15 +39,16 @@ namespace CommonUtils.CommonMath.FFT
 		double[] bufferPadded = new double[fftBufferSize];
 		double[] spectrum = new double[fftSize];
 		int[] peak = new int[fftSize];
+		double[][] spectrogram;
 
-		const int PEAK_THRESHOLD = 50; // default peak threshold
+		const int PEAK_THRESHOLD = 20; // default peak threshold (default = 50)
 
 		// MIDI notes span from 0 - 128, octaves -1 -> 9. Specify start and end for piano
 		const int keyboardStart = 12; // 12 is octave C0
 		const int keyboardEnd = 108;
 
 		BassProxy audioSystem = BassProxy.Instance;
-		string[] audioFiles;
+		bool TRACK_LOADED = false;
 		string loadedAudioFile;
 		double sampleRate;
 		double audioLength;
@@ -60,11 +61,9 @@ namespace CommonUtils.CommonMath.FFT
 		int frameNumber = -1; // current audio frame
 
 		int cuePosition; // cue position in miliseconds
-		int lastPosition = 0;
 
 		double[][] pcp; // pitch class profile
 
-		//Note[][] notes;
 		List<Note>[] notes;
 
 		Note[] notesOpen = new Note[128];
@@ -72,36 +71,31 @@ namespace CommonUtils.CommonMath.FFT
 		int[] fftBinStart = new int[8];
 		int[] fftBinEnd = new int[8];
 
-		double[] scaleProfile = new double[12];
-
 		const double linearEQIntercept = 1f; // default no eq boost
 		const double linearEQSlope = 0f; // default no slope boost
 
-		bool TRACK_LOADED = false;
-
-		bool[] OCTAVE_TOGGLE = {false, true, true, true, true, true, true, true};
+		bool[] OCTAVE_TOGGLE = {true, true, true, true, true, true, true, true};
+		//bool[] OCTAVE_TOGGLE = {false, true, true, true, true, true, true, true};
 		int[] OCTAVE_CHANNEL = {0,0,0,0,0,0,0,0}; // set all octaves to channel 0 (0-indexed channel 1)
 
 		// Toggles and their defaults
 		bool LINEAR_EQ_TOGGLE = false;
-		bool PCP_TOGGLE = false; // true
+		bool PCP_TOGGLE = true;
 		bool HARMONICS_TOGGLE = true;
-		bool MIDI_TOGGLE = true;
-		bool SMOOTH_TOGGLE = true;
-		//int SMOOTH_POINTS = 3;
+		bool MIDI_TOGGLE = false; // true
 
-		bool UNIFORM_TOGGLE = true;
-		bool DISCRETE_TOGGLE = false;
-		bool LINEAR_TOGGLE = false;
-		bool QUADRATIC_TOGGLE = false;
-		bool EXPONENTIAL_TOGGLE = false;
-		
 		// smoothing
 		const int PEAK = 1;
-		const int VALLEY = 2;
 		const int HARMONIC = 3;
-		const int SLOPEUP = 4;
-		const int SLOPEDOWN = 5;
+
+		// Types of FFT bin weighting algorithms
+		const int UNIFORM = 0;
+		const int DISCRETE = 1;
+		const int LINEAR = 2;
+		const int QUADRATIC = 3;
+		const int EXPONENTIAL = 4;
+
+		int WEIGHT_TYPE = UNIFORM; // default
 
 		// UI Images
 		Image bg;
@@ -145,6 +139,8 @@ namespace CommonUtils.CommonMath.FFT
 			whiteKey = Image.FromFile(@"data\whitekey.png");
 			blackKey = Image.FromFile(@"data\blackkey.png");
 			octaveBtn = Image.FromFile(@"data\octavebutton.png");
+			
+			window.SetMode(0); // No Window
 		}
 		
 		#region Freq to Pitch or Pitch to Freq
@@ -184,15 +180,6 @@ namespace CommonUtils.CommonMath.FFT
 		#endregion
 
 		#region FFT bin weighting
-		// Types of FFT bin weighting algorithms
-		public const int UNIFORM = 0;
-		public const int DISCRETE = 1;
-		public const int LINEAR = 2;
-		public const int QUADRATIC = 3;
-		public const int EXPONENTIAL = 4;
-
-		int WEIGHT_TYPE = UNIFORM; // default
-
 		// Applies FFT bin weighting. x is the distance from a real semi-tone
 		public static double BinWeight(int type, double x)
 		{
@@ -213,7 +200,7 @@ namespace CommonUtils.CommonMath.FFT
 		}
 		#endregion
 
-		// normalize the pitch class profile
+		// Normalize the pitch class profile
 		public void NormalizePCP()
 		{
 			double pcpMax = MathUtils.Max(pcp[frameNumber]);
@@ -301,7 +288,13 @@ namespace CommonUtils.CommonMath.FFT
 			for (int i = 0; i < frames; i++) {
 				pcp[i] = new double[12];
 			}
-
+			
+			spectrogram = new double[frames][];
+			for (int i = 0; i < frames; i++) {
+				spectrogram[i] = new double[fftSize];
+			}
+			
+			
 			PrecomputeOctaveRegions();
 
 			//sliderProgress.setMax(audioLength);
@@ -414,7 +407,7 @@ namespace CommonUtils.CommonMath.FFT
 			if (frameNumber < frames - 1)
 			{
 				// need to apply the window transform before we zeropad
-				window.transform(buffer); // add window to samples
+				window.Transform(buffer); // add window to samples
 
 				Array.Copy(buffer, 0, bufferPadded, 0, buffer.Length);
 
@@ -424,13 +417,13 @@ namespace CommonUtils.CommonMath.FFT
 					frameNumber++;
 					Console.Write("Processing frame: {0}      \n", frameNumber);
 					Analyze();
-					//OutputMIDINotes();
+					OutputMIDINotes();
 				}
 			}
 			else
 			{
 				audioSystem.Pause();
-				//CloseMIDINotes();
+				CloseMIDINotes();
 			}
 		}
 
@@ -453,7 +446,6 @@ namespace CommonUtils.CommonMath.FFT
 			//Export.ExportCSV("audio_buffer_padded.csv", din);
 			//Export.ExportCSV("spectrum_fft_abs.csv", spectrum_fft_abs, fftSize);
 			
-			//smoother.apply(fft); // run the smoother on the fft spectra
 			var binDistance = new double[fftSize];
 			var freq = new double[fftSize];
 
@@ -495,7 +487,6 @@ namespace CommonUtils.CommonMath.FFT
 					binDistance[k] = 2 * Math.Abs((12 * Math.Log(freq[k]/440.0f) / Math.Log(2)) - (12 * Math.Log(closestFreq/440.0f) / Math.Log(2)));
 
 					spectrum[k] = spectrum_fft_abs[k] * BinWeight(WEIGHT_TYPE, binDistance[k]);
-					//spectrum[k] = fft.getBand(k) * binWeight(WEIGHT_TYPE, binDistance[k]);
 
 					if (LINEAR_EQ_TOGGLE)
 					{
@@ -503,7 +494,6 @@ namespace CommonUtils.CommonMath.FFT
 					}
 
 					// Sum PCP bins
-					//pcp[frameNumber][freqToPitch(freq[k]) % 12] += Math.Pow(fft.getBand(k), 2) * binWeight(WEIGHT_TYPE, binDistance[k]);
 					pcp[frameNumber][FreqToPitch(freq[k]) % 12] += Math.Pow(spectrum_fft_abs[k], 2) * BinWeight(WEIGHT_TYPE, binDistance[k]);
 				}
 			}
@@ -569,11 +559,13 @@ namespace CommonUtils.CommonMath.FFT
 						for (int f = 0; f < foundPeak.Count; f++)
 						{
 							//TODO: Cant remember why this is here
+							/*
 							if (foundPeak.Count > 2)
 							{
 								isHarmonic = true;
 								break;
 							}
+							 */
 							// If the current frequencies note has already peaked in a lower octave check to see if its level is lower probably a harmonic
 							if (FreqToPitch(freq[k]) % 12 == FreqToPitch(foundPeak[f]) % 12 && spectrum[k] < foundLevel[f])
 							{
@@ -591,17 +583,17 @@ namespace CommonUtils.CommonMath.FFT
 					{
 						peak[k] = PEAK;
 						
-						//notes[frameNumber] = (Note[])Append(notes[frameNumber], new Note(freq[k], spectrum[k]));
 						notes[frameNumber].Add(new Note(freq[k], spectrum[k]));
 
 						// Track Peaks and Levels in this pass so we can detect harmonics
-						//foundPeak = Append(foundPeak, freq[k]);
-						//foundLevel = Append(foundLevel, spectrum[k]);
 						foundPeak.Add(freq[k]);
 						foundLevel.Add(spectrum[k]);
 					}
 				}
 			}
+			
+			// add spectrum to spectrogram
+			Array.Copy(spectrum, spectrogram[frameNumber], spectrum.Length);
 		}
 
 		#region IDSPPlugin implementation
@@ -613,12 +605,18 @@ namespace CommonUtils.CommonMath.FFT
 		#endregion
 		
 		#region render methods
-		public Bitmap Render(string selectedTab)
+		public enum RenderType {
+			Windowing,
+			FFT,
+			MidiPeaks
+		}
+		
+		public Bitmap Render(RenderType type)
 		{
 			var bitmap = new Bitmap( TOTAL_WIDTH, TOTAL_HEIGHT, PixelFormat.Format32bppArgb );
 			using(Graphics g = Graphics.FromImage(bitmap))
 			{
-				g.DrawImage(bg, 0, 0); // Render the background
+				g.DrawImage(bg, 0, 0); // Render the background image
 
 				// Render octave toggle buttons for active octaves
 				for (int i = 0; i < 8; i++)
@@ -629,13 +627,17 @@ namespace CommonUtils.CommonMath.FFT
 					}
 				}
 
-				if (selectedTab == "windowing")
+				if (type == RenderType.Windowing)
 				{
 					RenderWindowCurve(bitmap);
 				}
-				else if (selectedTab == "FFT")
+				else if (type == RenderType.FFT)
 				{
-					RenderFFT(bitmap);
+					RenderFFTSpectrogram(bitmap);
+				}
+				else if (type == RenderType.MidiPeaks)
+				{
+					RenderPeaks(bitmap);
 				}
 				else
 				{
@@ -679,7 +681,7 @@ namespace CommonUtils.CommonMath.FFT
 					}
 
 					// render detected peaks
-					const int keyLength = 10;
+					const int keyLength = 15;
 					int scroll = (frameNumber * keyLength > bitmap.Width) ? frameNumber - bitmap.Width/keyLength: 0;
 
 					for (int x = frameNumber; x >= scroll; x--)
@@ -689,7 +691,7 @@ namespace CommonUtils.CommonMath.FFT
 							if (pcp[x][note.pitch % 12] == 1.0f) {
 								noteColor = Color.FromArgb(255, (int) (100 * note.amplitude / 400), 0);
 							} else {
-								noteColor = Color.FromArgb(0, (int) (255 * note.amplitude / 400), 200);
+								noteColor = Color.FromArgb(0, (int) (255 * note.amplitude / 400), 200); // blue
 							}
 							/*
 							fill(red(noteColor) / 4, green(noteColor) / 4, blue(noteColor) / 4);
@@ -699,7 +701,7 @@ namespace CommonUtils.CommonMath.FFT
 							rect(abs(x - frameNumber) * keyLength + LEFT_MARGIN, bitmap.Height - ((note.pitch - keyboardStart) * keyHeight) - 1, Math.Abs(x - frameNumber) * keyLength + keyLength + LEFT_MARGIN, bitmap.Height - ((note.pitch - keyboardStart) * keyHeight + keyHeight));
 							 */
 							//var rect = new Rectangle(Math.Abs(x - frameNumber) * keyLength + LEFT_MARGIN, bitmap.Height - ((note.pitch - keyboardStart) * keyHeight) - 1, Math.Abs(x - frameNumber) * keyLength + keyLength + LEFT_MARGIN, bitmap.Height - ((note.pitch - keyboardStart) * keyHeight + keyHeight));
-							var rect = new Rectangle(Math.Abs(x - frameNumber) * keyLength + LEFT_MARGIN, bitmap.Height - ((note.pitch - keyboardStart) * keyHeight) - 3, Math.Abs(x - frameNumber) * keyLength + keyLength + LEFT_MARGIN, keyHeight);
+							var rect = new Rectangle(Math.Abs(x - frameNumber) * keyLength + LEFT_MARGIN, bitmap.Height - ((note.pitch - keyboardStart) * keyHeight) - 3, keyLength + LEFT_MARGIN, keyHeight);
 							g.FillRectangle(new SolidBrush(noteColor), rect);
 						}
 					}
@@ -719,18 +721,18 @@ namespace CommonUtils.CommonMath.FFT
 
 		public void RenderWindowCurve(Bitmap bitmap)
 		{
-			const int windowX = 35;
-			const int windowY = 110;
+			const int windowX = 50;
+			const int windowY = 160;
 			const int windowHeight = 80;
 
-			float[] windowCurve = window.drawCurve();
+			float[] windowCurve = window.DrawCurve();
 
 			using(Graphics g = Graphics.FromImage(bitmap))
 			{
 				for (int i = 0; i < windowCurve.Length - 1; i++)
 				{
 					//line(i + windowX, windowY - windowCurve[i] * windowHeight, i+1 + windowX, windowY - windowCurve[i+1] * windowHeight);
-					g.DrawLine(Pens.Black, i + windowX, (int) (windowY - windowCurve[i] * windowHeight), i+1 + windowX, (int) (windowY - windowCurve[i+1] * windowHeight));
+					g.DrawLine(Pens.White, i + windowX, (int) (windowY - windowCurve[i] * windowHeight), i+1 + windowX, (int) (windowY - windowCurve[i+1] * windowHeight));
 				}
 			}
 		}
@@ -761,6 +763,55 @@ namespace CommonUtils.CommonMath.FFT
 						else
 						{
 							amp[currentPitch] = spectrum[k];
+							previousPitch = currentPitch;
+						}
+					}
+
+					for (int i = keyboardStart; i < keyboardEnd; i++)
+					{
+						//fill(red(noteColor)/4, green(noteColor)/4, blue(noteColor)/4);
+						//rect(LEFT_MARGIN, height - ((i - keyboardStart) * keyHeight), 25 + amp[i], height - ((i - keyboardStart) * keyHeight + keyHeight)); // shadow
+
+						//fill(noteColor);
+						//rect(LEFT_MARGIN, height - ((i - keyboardStart) * keyHeight) - 1, LEFT_MARGIN + amp[i], height - ((i - keyboardStart) * keyHeight + keyHeight));
+						//var rect = new Rectangle(LEFT_MARGIN, bitmap.Height - ((i - keyboardStart) * keyHeight) - 1, LEFT_MARGIN + (int) amp[i], bitmap.Height - ((i - keyboardStart) * keyHeight + keyHeight));
+						var rect = new Rectangle(LEFT_MARGIN, bitmap.Height - ((i - keyboardStart) * keyHeight) - 2, LEFT_MARGIN + (int) amp[i], keyHeight - 1);
+						g.FillRectangle(new SolidBrush(noteColor), rect);
+					}
+				}
+				
+				//labelThreshold.setPosition(PEAK_THRESHOLD + 26, 60);
+				//line(PEAK_THRESHOLD + LEFT_MARGIN, 0, PEAK_THRESHOLD + LEFT_MARGIN, height);
+				g.DrawLine(Pens.Black, PEAK_THRESHOLD + LEFT_MARGIN, 0, PEAK_THRESHOLD + LEFT_MARGIN, bitmap.Height);
+			}
+		}
+		
+		public void RenderFFTSpectrogram(Bitmap bitmap)
+		{
+			using(Graphics g = Graphics.FromImage(bitmap))
+			{
+				int keyHeight = bitmap.Height / (keyboardEnd - keyboardStart);
+				Color noteColor = Color.FromArgb(0, 255, 240);
+				var amp = new double[128];
+
+				int previousPitch = -1;
+				int currentPitch;
+
+				if (IsLoaded())
+				{
+					for (int k = 0; k < spectrogram[frameNumber].Length; k++)
+					{
+						double freq = k / (double)fftBufferSize * sampleRate;
+
+						currentPitch = FreqToPitch(freq);
+
+						if (currentPitch == previousPitch)
+						{
+							amp[currentPitch] = amp[currentPitch] > spectrogram[frameNumber][k] ? amp[currentPitch] : spectrogram[frameNumber][k];
+						}
+						else
+						{
+							amp[currentPitch] = spectrogram[frameNumber][k];
 							previousPitch = currentPitch;
 						}
 					}
@@ -866,37 +917,37 @@ namespace CommonUtils.CommonMath.FFT
 			private const double PI = Math.PI;
 			private const double TWO_PI = 2.0 * Math.PI;
 
-			public void setMode(int window)
+			public void SetMode(int window)
 			{
 				this.mode = window;
 			}
 
-			public void transform(float[] samples)
+			public void Transform(float[] samples)
 			{
 				switch(mode)
 				{
 					case HAMMING:
-						hammingWindow(samples);
+						HammingWindow(samples);
 						break;
 					case HANN:
-						hannWindow(samples);
+						HannWindow(samples);
 						break;
 					case COSINE:
-						cosineWindow(samples);
+						CosineWindow(samples);
 						break;
 					case TRIANGULAR:
-						triangularWindow(samples);
+						TriangularWindow(samples);
 						break;
 					case BLACKMAN:
-						blackmanWindow(samples);
+						BlackmanWindow(samples);
 						break;
 					case GAUSS:
-						gaussWindow(samples);
+						GaussWindow(samples);
 						break;
 				}
 			}
 
-			public float[] drawCurve()
+			public float[] DrawCurve()
 			{
 				var samples = new float[128];
 
@@ -908,28 +959,28 @@ namespace CommonUtils.CommonMath.FFT
 				switch(mode)
 				{
 					case HAMMING:
-						hammingWindow(samples);
+						HammingWindow(samples);
 						break;
 					case HANN:
-						hannWindow(samples);
+						HannWindow(samples);
 						break;
 					case COSINE:
-						cosineWindow(samples);
+						CosineWindow(samples);
 						break;
 					case TRIANGULAR:
-						triangularWindow(samples);
+						TriangularWindow(samples);
 						break;
 					case BLACKMAN:
-						blackmanWindow(samples);
+						BlackmanWindow(samples);
 						break;
 					case GAUSS:
-						gaussWindow(samples);
+						GaussWindow(samples);
 						break;
 				}
 				return samples;
 			}
 
-			public static void hammingWindow(float[] samples)
+			public static void HammingWindow(float[] samples)
 			{
 				for(int n = 0; n < samples.Length; n++)
 				{
@@ -937,7 +988,7 @@ namespace CommonUtils.CommonMath.FFT
 				}
 			}
 
-			public static void hannWindow(float[] samples)
+			public static void HannWindow(float[] samples)
 			{
 				for(int n = 0; n < samples.Length; n++)
 				{
@@ -945,7 +996,7 @@ namespace CommonUtils.CommonMath.FFT
 				}
 			}
 
-			public static void cosineWindow(float[] samples)
+			public static void CosineWindow(float[] samples)
 			{
 				for(int n = 0; n < samples.Length; n++)
 				{
@@ -953,7 +1004,7 @@ namespace CommonUtils.CommonMath.FFT
 				}
 			}
 
-			public static void triangularWindow(float[] samples)
+			public static void TriangularWindow(float[] samples)
 			{
 				for(int n = 0; n < samples.Length; n++)
 				{
@@ -961,7 +1012,7 @@ namespace CommonUtils.CommonMath.FFT
 				}
 			}
 
-			public static void blackmanWindow(float[] samples)
+			public static void BlackmanWindow(float[] samples)
 			{
 				for(int n = 0; n < samples.Length; n++)
 				{
@@ -969,9 +1020,9 @@ namespace CommonUtils.CommonMath.FFT
 				}
 			}
 
-			public static void gaussWindow(float[] samples)
+			public static void GaussWindow(float[] samples)
 			{
-				float a = 2.5f;
+				const float a = 2.5f;
 				for (int n = 0; n < samples.Length; n++)
 				{
 					samples[n] *= (float) Math.Pow(Math.E, -0.5f * Math.Pow((n - (samples.Length - 1) / 2) / (0.1f * (samples.Length - 1) / 2), 2));
