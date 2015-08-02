@@ -294,7 +294,6 @@ namespace CommonUtils.CommonMath.FFT
 				spectrogram[i] = new double[fftSize];
 			}
 			
-			
 			PrecomputeOctaveRegions();
 
 			//sliderProgress.setMax(audioLength);
@@ -307,7 +306,11 @@ namespace CommonUtils.CommonMath.FFT
 			
 			audioSystem.Play();
 			
-			return frames;
+			while (audioSystem.IsPlaying) {
+				System.Threading.Thread.Sleep(100);
+			}
+			
+			return frameNumber;
 		}
 		
 		#region Midi
@@ -399,6 +402,13 @@ namespace CommonUtils.CommonMath.FFT
 				//Console.Write("Processing chunk: {0}      \r", count);
 				Process(chunk.ToArray());
 				count++;
+			}
+			
+			Render(RenderType.Windowing).Save("windowing.png");
+			for (int i = 0; i < frames; i++) {
+				FrameNumber = i;
+				Render(RenderType.FFT).Save("fft_" + i + ".png");
+				Render(RenderType.MidiPeaks).Save("peaks_" + i + ".png");
 			}
 		}
 		
