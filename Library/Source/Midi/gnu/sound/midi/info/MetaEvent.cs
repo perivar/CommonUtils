@@ -147,7 +147,9 @@ namespace gnu.sound.midi.info
 					int denominator = (int)(Math.Pow(2, (data[1] & 0x00ff)));
 					int clocksPerClick = (data[2] & 0x00ff);
 					int my32ndPer4th = (data[3] & 0x00ff);
-					result[2] = numerator + "/" + denominator + " " + clocksPerClick + "Metr. " + my32ndPer4th + "N/q";
+					result[2] = numerator + "/" + denominator + " " 
+						+ clocksPerClick + " Metr. " 
+						+ my32ndPer4th + " N/q";
 					break;
 				case KEY_SIGNATURE:
 					result[0] = "M:KeySignature";

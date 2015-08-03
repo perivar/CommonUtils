@@ -176,6 +176,31 @@
     <Compile Include="Source\IOUtils.cs" />
     <Compile Include="Source\MathUtils.cs" />
     <Compile Include="Source\MidiUtils.cs" />
+    <Compile Include="Source\Midi\gnu\sound\midi\file\BinaryReaderBigEndian.cs" />
+    <Compile Include="Source\Midi\gnu\sound\midi\file\BinaryWriterBigEndian.cs" />
+    <Compile Include="Source\Midi\gnu\sound\midi\file\ExtendedMidiFileFormat.cs" />
+    <Compile Include="Source\Midi\gnu\sound\midi\file\MidiDataInputStream.cs" />
+    <Compile Include="Source\Midi\gnu\sound\midi\file\MidiDataOutputStream.cs" />
+    <Compile Include="Source\Midi\gnu\sound\midi\file\MidiFileReader.cs" />
+    <Compile Include="Source\Midi\gnu\sound\midi\file\MidiFileWriter.cs" />
+    <Compile Include="Source\Midi\gnu\sound\midi\info\Controllers.cs" />
+    <Compile Include="Source\Midi\gnu\sound\midi\info\InstrumentNames.cs" />
+    <Compile Include="Source\Midi\gnu\sound\midi\info\KeySignatures.cs" />
+    <Compile Include="Source\Midi\gnu\sound\midi\info\MetaEvent.cs" />
+    <Compile Include="Source\Midi\gnu\sound\midi\info\NoteNames.cs" />
+    <Compile Include="Source\Midi\gnu\sound\midi\info\ShortEvent.cs" />
+    <Compile Include="Source\Midi\gnu\sound\midi\InvalidMidiDataException.cs" />
+    <Compile Include="Source\Midi\gnu\sound\midi\MetaMessage.cs" />
+    <Compile Include="Source\Midi\gnu\sound\midi\MidiEvent.cs" />
+    <Compile Include="Source\Midi\gnu\sound\midi\MidiFileFormat.cs" />
+    <Compile Include="Source\Midi\gnu\sound\midi\MidiHelper.cs" />
+    <Compile Include="Source\Midi\gnu\sound\midi\MidiMessage.cs" />
+    <Compile Include="Source\Midi\gnu\sound\midi\Sequence.cs" />
+    <Compile Include="Source\Midi\gnu\sound\midi\ShortMessage.cs" />
+    <Compile Include="Source\Midi\gnu\sound\midi\spi\MidiFileReader.cs" />
+    <Compile Include="Source\Midi\gnu\sound\midi\spi\MidiFileWriter.cs" />
+    <Compile Include="Source\Midi\gnu\sound\midi\SysexMessage.cs" />
+    <Compile Include="Source\Midi\gnu\sound\midi\Track.cs" />
     <Compile Include="Source\NumberUtils.cs" />
     <Compile Include="Source\ObjectUtils.cs" />
     <Compile Include="Source\RandomUtils.cs" />
@@ -188,6 +213,7 @@
     <Compile Include="Tests\FFTTest.cs" />
     <Compile Include="Tests\FFTTesting.cs" />
     <Compile Include="Tests\ImageTests.cs" />
+    <Compile Include="Tests\MidiTests.cs" />
     <Compile Include="Tests\WaveletTest.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -195,6 +221,14 @@
     <Folder Include="Source\CommonMath\Wavelets" />
     <Folder Include="Source\CommonMath\Wavelets\HaarCSharp" />
     <Folder Include="Source\CommonMath\Wavelets\WaveletCompress" />
+    <Folder Include="Source\Midi" />
+    <Folder Include="Source\Midi\gnu" />
+    <Folder Include="Source\Midi\gnu\sound" />
+    <Folder Include="Source\Midi\gnu\sound\midi" />
+    <Folder Include="Source\Midi\gnu\sound\midi\file" />
+    <Folder Include="Source\Midi\gnu\sound\midi\info" />
+    <Folder Include="Source\Midi\gnu\sound\midi\info\resources" />
+    <Folder Include="Source\Midi\gnu\sound\midi\spi" />
     <Folder Include="Tests" />
     <Folder Include="Source" />
     <Folder Include="Source\Audio" />
@@ -243,6 +277,10 @@
     <Content Include="Tests\10x10white24bit.bmp">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Source\Midi\gnu\sound\midi\info\resources\Controllers.properties" />
+    <None Include="Source\Midi\gnu\sound\midi\info\resources\GM1Instruments.properties" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
