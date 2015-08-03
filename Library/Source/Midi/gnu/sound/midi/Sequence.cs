@@ -204,16 +204,6 @@ namespace gnu.sound.midi
 			}
 			return length;
 		}
-
-		/// <summary>
-		/// Get an array of patches used in this sequence.
-		/// @return an array of patches used in this sequence
-		/// </summary>
-		public Patch[] GetPatchList()
-		{
-			// FIXE: not quite sure how to do this yet.
-			throw new NotImplementedException("Can't get patch list yet");
-		}
 		
 		public override string ToString()
 		{

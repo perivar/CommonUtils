@@ -1,6 +1,7 @@
 // MidiDataInputStream.java -- adds variable length MIDI ints
 //   Copyright (C) 2006 Free Software Foundation, Inc.
 
+using System;
 using System.IO;
 
 namespace gnu.sound.midi.file
@@ -25,14 +26,14 @@ namespace gnu.sound.midi.file
 		/// </summary>
 		public int ReadVariableLengthInt()
 		{
-			int c = 0, value = ReadSByte();
+			int c = 0, value = ReadByte();
 
 			if ((value & 0x80) != 0)
 			{
 				value &= 0x7F;
 				do
 				{
-					value = (value << 7) + ((c = ReadSByte()) & 0x7F);
+					value = (value << 7) + ((c = ReadByte()) & 0x7F);
 				} while ((c & 0x80) != 0);
 			}
 

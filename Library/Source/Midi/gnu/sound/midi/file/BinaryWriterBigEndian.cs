@@ -8,7 +8,7 @@ namespace gnu.sound.midi.file
 	/// </summary>
 	public class BinaryWriterBigEndian : BinaryWriter {
 		
-		public BinaryWriterBigEndian(System.IO.Stream stream)  : base(stream) { }
+		public BinaryWriterBigEndian(Stream stream)  : base(stream) { }
 		
 		public override void Write(Int32 value)
 		{

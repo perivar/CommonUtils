@@ -85,7 +85,7 @@ namespace gnu.sound.midi
 		/// Get the number events in this track.
 		/// @return the number of events in this track
 		/// </summary>
-		public int Size()
+		public int EventCount()
 		{
 			return events.Count;
 		}
@@ -105,9 +105,8 @@ namespace gnu.sound.midi
 		
 		public override string ToString()
 		{
-			return string.Format("[Track Events={0}]", Size());
+			return string.Format("[Track Events={0}]", EventCount());
 		}
 
 	}
-
 }

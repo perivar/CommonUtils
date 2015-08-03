@@ -2,7 +2,7 @@
 //   Copyright (C) 2005 Free Software Foundation, Inc.
 
 using System;
-using gnu.sound.midi.file;
+using gnu.sound.midi.info;
 
 namespace gnu.sound.midi
 {
@@ -120,8 +120,7 @@ namespace gnu.sound.midi
 
 			// Now copy the real data.
 			//Array.Copy(data, 0, this.data, index, length);
-			// TODO: move Convert to util class
-			var unsigned_data = BinaryReaderBigEndian.Convert(data);
+			var unsigned_data = MidiHelper.ConvertSBytes(data);
 			Array.Copy(unsigned_data, 0, this.data, index, unsigned_data.Length);
 		}
 
@@ -164,53 +163,17 @@ namespace gnu.sound.midi
 		/// <returns>the string representation of this object</returns>
 		public override string ToString()
 		{
+			// { type name, length, value string }
+			object[] meta = MetaEvent.GetMetaStrings(this);
+			string metaStrings = string.Format("{0} '{2}' ({1} bytes)", meta[0], meta[1], meta[2]);
+			
 			int messageType = GetMetaMessageType();
 			string typeName = Enum.GetName(typeof(MetaEventType), messageType);
 			
 			byte[] messageData = GetMetaMessageData();
-			string hex = BitConverter.ToString(messageData).Replace("-", ",");
+			string hex = MidiHelper.ByteArrayToString(messageData, ",");
 
-			// TODO: move the util methods to an util class
-			string text = BinaryReaderBigEndian.GetString(messageData);
-			text = text.Replace("\r\n", string.Empty).Replace("\n", string.Empty).Replace("\r", string.Empty);
-
-			switch(messageType) {
-				case (int) MetaEventType.Sequence_Number:
-					break;
-				case (int) MetaEventType.Text_Event:
-					break;
-				case (int) MetaEventType.Copyright_Notice:
-					break;
-				case (int) MetaEventType.Sequence_Or_Track_Name:
-					return string.Format("[META] {0} ({1}) [{2}]", typeName, messageType, text);
-					break;
-				case (int) MetaEventType.Instrument_Name:
-					break;
-				case (int) MetaEventType.Lyric_Text:
-					break;
-				case (int) MetaEventType.Marker_Text:
-					break;
-				case (int) MetaEventType.Cue_Point:
-					break;
-				case (int) MetaEventType.Midi_Channel_Prefix_Assignment:
-					break;
-				case (int) MetaEventType.Midi_Port:
-					break;
-				case (int) MetaEventType.End_of_Track:
-					break;
-				case (int) MetaEventType.Tempo:
-					break;
-				case (int) MetaEventType.Smpte_Offset:
-					break;
-				case (int) MetaEventType.Time_Signature:
-					break;
-				case (int) MetaEventType.Key_Signature:
-					break;
-				case (int) MetaEventType.Sequencer_Specific_Event:
-					break;
-			}
-			return string.Format("[META] {0} ({1}) = [{2}]", typeName, messageType, hex);
+			return string.Format("{0} [{1}:{2}: {3}]", metaStrings, messageType, typeName, hex);
 		}
-		
 	}
 }

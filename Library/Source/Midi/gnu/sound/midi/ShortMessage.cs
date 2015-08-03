@@ -2,6 +2,7 @@
 //   Copyright (C) 2005 Free Software Foundation, Inc.
 
 using System;
+using gnu.sound.midi.info;
 
 namespace gnu.sound.midi
 {
@@ -244,30 +245,19 @@ namespace gnu.sound.midi
 		/// <returns>the string representation of this object</returns>
 		public override string ToString()
 		{
+			// Event, Note, Value, Patch, Text, Channel
+			object[] meta = ShortEvent.GetShortStrings(this, false);
+			string metaStrings = string.Format("{0}\t{1}\t{2}\t{3}\t{4}\t{5}", meta[0], meta[1], meta[2], meta[3], meta[4], meta[5]);
+			
 			int command = GetCommand();
 			string commandName = MidiHelper.GetEventTypeString((MidiHelper.MidiEventType)command);
 			
 			int channel = GetChannel();
 			
 			byte[] messageData = GetMessage();
-			string hex = BitConverter.ToString(messageData).Replace("-", ",");
+			string hex = MidiHelper.ByteArrayToString(messageData, ",");
 
-			/*
-			switch(command) {
-				case (int) MidiHelper.MidiEventType.None:
-				case (int) MidiHelper.MidiEventType.Note_Off:
-				case (int) MidiHelper.MidiEventType.Note_On:
-				case (int) MidiHelper.MidiEventType.Note_Aftertouch:
-				case (int) MidiHelper.MidiEventType.Controller:
-				case (int) MidiHelper.MidiEventType.Program_Change:
-				case (int) MidiHelper.MidiEventType.Channel_Aftertouch:
-				case (int) MidiHelper.MidiEventType.Pitch_Bend:
-				case (int) MidiHelper.MidiEventType.System_Exclusive:
-				case (int) MidiHelper.MidiEventType.MetaEvent:
-					break;
-			}
-			 */
-			return string.Format("[MSG] {0} ({1}) \tCh: {2} = [{3}]", commandName, command, channel, hex);
+			return string.Format("{0} [{1}:{2}: {3}]", metaStrings, command, commandName, hex);
 		}
 	}
 }

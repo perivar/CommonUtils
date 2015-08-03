@@ -114,5 +114,4 @@ namespace gnu.sound.midi
 		}
 
 	}
-
 }

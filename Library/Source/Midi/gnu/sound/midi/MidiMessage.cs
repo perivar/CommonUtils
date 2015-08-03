@@ -2,7 +2,6 @@
 //   Copyright (C) 2005 Free Software Foundation, Inc.
 
 using System;
-using gnu.sound.midi.file;
 
 namespace gnu.sound.midi
 {
@@ -94,9 +93,8 @@ namespace gnu.sound.midi
 		/// <returns>the string representation of this object</returns>
 		public override string ToString()
 		{
-			string hex = BitConverter.ToString(data).Replace("-", ",");
+			string hex = MidiHelper.ByteArrayToString(data, ",");
 			return string.Format("[{0}]", hex);
 		}
 	}
-
 }

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Text;
 using System.IO;
 using System.Linq;
 
@@ -14,7 +13,7 @@ namespace gnu.sound.midi.file
 		private byte[] a32 = new byte[4];
 		private byte[] a64 = new byte[8];
 		
-		public BinaryReaderBigEndian(System.IO.Stream stream)  : base(stream) { }
+		public BinaryReaderBigEndian(Stream stream)  : base(stream) { }
 		
 		public override int ReadInt32()
 		{
@@ -46,40 +45,8 @@ namespace gnu.sound.midi.file
 		
 		public sbyte[] ReadSBytes(int length) {
 			var bytes = base.ReadBytes(length);
-			var sbytes = Convert(bytes);
+			var sbytes = MidiHelper.ConvertBytes(bytes);
 			return sbytes;
-		}
-		
-		public static sbyte[] Convert(byte[] byteArray)
-		{
-			//sbyte[] sbytes = Array.ConvertAll(bytes, b => unchecked((sbyte)b));
-			var sbyteArray = new sbyte[byteArray.Length];
-			for (int i = 0; i < sbyteArray.Length; i++)
-			{
-				sbyteArray[i] = unchecked((sbyte) byteArray[i]);
-			}
-
-			return sbyteArray;
-		}
-
-		public static byte[] Convert(sbyte[] sbyteArray)
-		{
-			var byteArray = new byte[sbyteArray.Length];
-			for (int i = 0; i < byteArray.Length; i++)
-			{
-				byteArray[i] = unchecked((byte) sbyteArray[i]);
-			}
-			return byteArray;
-		}
-		
-		public static byte[] GetBytes(string str)
-		{
-			return Encoding.Default.GetBytes(str);
-		}
-		
-		public static string GetString(byte[] bytes)
-		{
-			return Encoding.Default.GetString(bytes);
 		}
 	}
 }

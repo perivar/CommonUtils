@@ -1,10 +1,14 @@
 ﻿using System;
+using System.Linq;
+using System.Text;
 
 namespace gnu.sound.midi
 {
 	/// <summary>
 	/// MidiHelper class originally taken from
 	/// https://searchcode.com/codesearch/view/28045005/
+	/// but extended by
+	/// perivar@nerseth.com
 	/// </summary>
 	public static class MidiHelper
 	{
@@ -38,7 +42,7 @@ namespace gnu.sound.midi
 			Program_Change = 0xC0,	// Status nibble for Program Change message.
 			Channel_Aftertouch = 0xD0, // Statue nibble for Channel Pressure message.
 			Pitch_Bend = 0xE0, 		// Status nibble for Pitch Bend message.
-			System_Exclusive = 0xF0, 
+			System_Exclusive = 0xF0,
 			MetaEvent = 0xFF
 		}
 		public enum ControllerType
@@ -135,13 +139,114 @@ namespace gnu.sound.midi
 		{
 			return Enum.GetName(typeof(MidiEventType), value);
 		}
+		
 		public static string GetControllerString(ControllerType value)
 		{
 			return Enum.GetName(typeof(ControllerType), value);
 		}
+		
 		public static string GetMetaString(MetaEventType value)
 		{
 			return Enum.GetName(typeof(MetaEventType), value);
+		}
+		
+		public static sbyte[] ConvertBytes(byte[] byteArray)
+		{
+			//sbyte[] sbytes = Array.ConvertAll(bytes, b => unchecked((sbyte)b));
+			var sbyteArray = new sbyte[byteArray.Length];
+			for (int i = 0; i < sbyteArray.Length; i++)
+			{
+				sbyteArray[i] = unchecked((sbyte) byteArray[i]);
+			}
+
+			return sbyteArray;
+		}
+
+		public static byte[] ConvertSBytes(sbyte[] sbyteArray)
+		{
+			var byteArray = new byte[sbyteArray.Length];
+			for (int i = 0; i < byteArray.Length; i++)
+			{
+				byteArray[i] = unchecked((byte) sbyteArray[i]);
+			}
+			return byteArray;
+		}
+		
+		public static byte[] GetBytes(string str)
+		{
+			return Encoding.Default.GetBytes(str);
+		}
+		
+		public static string GetString(byte[] bytes)
+		{
+			return Encoding.Default.GetString(bytes);
+		}
+
+		/// <summary>
+		/// Convert a byte array into a hex string representation
+		/// </summary>
+		/// <param name="data">byte array</param>
+		/// <param name="delimiter">delimiter</param>
+		/// <returns>a hex string in the format 0x0A,0xA5,0x4A where ',' is the delimiter</returns>
+		public static string ByteArrayToHexString(byte[] data, string delimiter=",") {
+			var sb = new StringBuilder(data.Length * 6);
+			for (int k = 0; k < data.Length; ++k)
+			{
+				int i = data[k];
+				if (k > 0)
+				{
+					sb.Append(delimiter);
+				}
+				sb.AppendFormat("0x{0:X2}", i);
+			}
+			return sb.ToString();
+		}
+		
+		/// <summary>
+		/// Convert a byte array into a hex string representation
+		/// </summary>
+		/// <param name="bytes">byte array</param>
+		/// <param name="delimiter">delimiter</param>
+		/// <returns>a hex string</returns>
+		/// <example>
+		/// byte[] {0x00,0xA0,0xBf} will return the string "00A0BF"
+		/// byte[] {0x00,0xA0,0xBf} delimiter ',' will return the string "00,A0,BF"
+		/// </example>
+		public static string ByteArrayToString(byte[] bytes, string delimiter="")
+		{
+			string hex = BitConverter.ToString(bytes);
+			return hex.Replace("-", delimiter);
+		}
+
+		/// <summary>
+		/// Convert a hex string into a byte array
+		/// </summary>
+		/// <param name="hex">hex string</param>
+		/// <param name="delimiter">delimiter</param>
+		/// <returns>a byte array</returns>
+		/// <example>
+		/// the string "00A0BF" will return byte[] {0x00,0xA0,0xBf}
+		/// the string "00,A0,BF" delimiter ',' will return byte[] {0x00,0xA0,0xBf}
+		/// </example>
+		public static byte[] StringToByteArray(String hex, string delimiter="")
+		{
+			if (delimiter != "") {
+				var elements = hex.Split(new String[]{delimiter}, StringSplitOptions.RemoveEmptyEntries);
+				int NumberBytes = elements.Length;
+				var bytes = new byte[NumberBytes];
+				for (int i = 0; i < NumberBytes; i++) {
+					bytes[i] = Convert.ToByte(elements[i], 16);
+				}
+				return bytes;
+				
+			} else {
+				int NumberChars = hex.Length;
+				var bytes = new byte[NumberChars / 2];
+				for (int i = 0; i < NumberChars; i += 2) {
+					bytes[i / 2] = Convert.ToByte(hex.Substring(i, 2), 16);
+				}
+				return bytes;
+			}
 		}
 	}
 }

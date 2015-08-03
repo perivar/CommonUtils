@@ -3,6 +3,7 @@
 
 using System;
 using System.IO;
+using System.Threading;
 
 namespace gnu.sound.midi.file
 {
@@ -41,24 +42,28 @@ namespace gnu.sound.midi.file
 		/// Write a sequence to an output stream in standard midi format.
 		/// @see gnu.sound.midi.spi.MidiFileWriter#write(javax.sound.midi.Sequence, int, java.io.Stream)
 		/// </summary>
-		public override int Write(Sequence stream, int fileType, Stream @out)
+		public override int Write(Sequence stream, int fileType, Stream outputStream)
 		{
-			var dos = new MidiDataOutputStream (@out);
+			var dos = new MidiDataOutputStream (outputStream);
 			Track[] tracks = stream.GetTracks();
-			dos.Write((int)0x4d546864); // MThd
+			dos.Write((int)0x4D546864); // MThd
 			dos.Write((int)6);
 			dos.Write((Int16)fileType);
 			dos.Write((Int16)tracks.Length);
+			
 			float divisionType = stream.GetDivisionType();
 			int resolution = stream.GetResolution();
 			// FIXME: division computation is incomplete.
 			int division = 0;
-			if (divisionType == Sequence.PPQ)
+			if (divisionType == Sequence.PPQ) {
 				division = resolution & 0x7fff;
+			}
 			dos.Write((Int16)division);
+			
 			int length = 14;
-			for (int i = 0; i < tracks.Length; i++)
+			for (int i = 0; i < tracks.Length; i++) {
 				length += WriteTrack(tracks[i], dos);
+			}
 			return length;
 		}
 
@@ -71,8 +76,11 @@ namespace gnu.sound.midi.file
 		/// </summary>
 		private int ComputeTrackLength(Track track, MidiDataOutputStream dos)
 		{
-			int length = 0, i = 0, eventCount = track.Size();
+			int length = 0;
+			int i = 0;
+			int eventCount = track.EventCount();
 			long ptick = 0;
+			
 			while (i < eventCount)
 			{
 				MidiEvent me = track.Get(i);
@@ -93,11 +101,15 @@ namespace gnu.sound.midi.file
 		/// </summary>
 		private int WriteTrack(Track track, MidiDataOutputStream dos)
 		{
-			int i = 0, elength = track.Size(), trackLength ;
+			int i = 0;
+			int elength = track.EventCount();
+			int trackLength = 0;
+
 			MidiEvent pme = null;
-			dos.Write((int)0x4d54726b); // "MTrk"
+			dos.Write((int)0x4D54726B); // "MTrk"
 			trackLength = ComputeTrackLength(track, dos);
 			dos.Write((int)trackLength);
+			
 			while (i < elength)
 			{
 				MidiEvent me = track.Get(i);
@@ -107,7 +119,7 @@ namespace gnu.sound.midi.file
 				
 				dos.WriteVariableLengthInt(dtime);
 				
-				// FIXME: use running status byte
+				// TODO: use running status byte
 				byte[] msg = me.GetMessage().GetMessage();
 				dos.Write(msg);
 				pme = me;
@@ -119,14 +131,17 @@ namespace gnu.sound.midi.file
 			if (pme != null && (pme.GetMessage() is MetaMessage))
 			{
 				var mm = (MetaMessage) pme.GetMessage();
-				if (mm.GetMetaMessageType() == 0x2f) // End of Track message
+				
+				// End of Track message
+				if (mm.GetMetaMessageType() == 0x2F) {
 					return trackLength + 8;
+				}
 			}
 
 			// Write End of Track meta message
 			dos.WriteVariableLengthInt(0); // Delta time of 0
-			dos.Write((byte)0xff); // Meta Message
-			dos.Write((byte)0x2f); // End of Track message
+			dos.Write((byte)0xFF); // Meta Message
+			dos.Write((byte)0x2F); // End of Track message
 			dos.WriteVariableLengthInt(0); // Length of 0
 
 			return trackLength + 8 + 4;
@@ -148,7 +163,5 @@ namespace gnu.sound.midi.file
 				os.Close();
 			}
 		}
-
 	}
-
 }

@@ -65,8 +65,7 @@ namespace gnu.sound.midi
 			this.data[0] = (byte) status;
 			
 			//Array.Copy(data, 0, this.data, 1, length);
-			// TODO: move Convert to util class
-			var unsigned_data = BinaryReaderBigEndian.Convert(data);
+			var unsigned_data = MidiHelper.ConvertSBytes(data);
 			Array.Copy(unsigned_data, 0, this.data, 1, length);
 			
 			this.length = length+1;
