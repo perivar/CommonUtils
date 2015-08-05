@@ -1,5 +1,5 @@
 // MidiFileWriter.java -- MIDI file writing services
-//   Copyright (C) 2005 Free Software Foundation, Inc.
+// Copyright (C) 2005 Free Software Foundation, Inc.
 
 using System.IO;
 
@@ -27,22 +27,22 @@ namespace gnu.sound.midi.spi
 	{
 		/// <summary>
 		/// Return the MIDI file types supported by this writer.
-		/// @return the MIDI file types, or an empty array
+		/// <returns>the MIDI file types, or an empty array</returns>
 		/// </summary>
 		public abstract int[] GetMidiFileTypes();
 
 		/// <summary>
 		/// Return the MIDI file types supported by this writer for the
 		/// given sequence.
-		/// @param sequence the sequence we'd like to write
-		/// @return the MIDI file types, or an empty array
+		/// <param name="sequence">the sequence we'd like to write</param>
+		/// <returns>the MIDI file types, or an empty array</returns>
 		/// </summary>
 		public abstract int[] GetMidiFileTypes(Sequence sequence);
 
 		/// <summary>
 		/// Returns true if this writer supports the given file type.
-		/// @param fileType the file type we're asking about
-		/// @return true if this writer supports fileType, false otherwise
+		/// <param name="fileType">the file type we're asking about</param>
+		/// <returns>true if this writer supports fileType, false otherwise</returns>
 		/// </summary>
 		public bool IsFileTypeSupported(int fileType)
 		{
@@ -58,9 +58,9 @@ namespace gnu.sound.midi.spi
 		/// <summary>
 		/// Returns true if this writer supports the given file type for the
 		/// given sequence.
-		/// @param fileType the file type we're asking about
-		/// @param sequence the sequence we'd like to write
-		/// @return true if this writer supports fileType, false otherwise
+		/// <param name="fileType">the file type we're asking about</param>
+		/// <param name="sequence">the sequence we'd like to write</param>
+		/// <returns>true if this writer supports fileType, false otherwise</returns>
 		/// </summary>
 		public bool IsFileTypeSupported(int fileType, Sequence sequence)
 		{
@@ -75,21 +75,21 @@ namespace gnu.sound.midi.spi
 
 		/// <summary>
 		/// Write a sequence to a stream using the specified MIDI file type.
-		/// @param in the sequence to write
-		/// @param fileType the MIDI file type to use
-		/// @param out the output stream to write to
-		/// @return the number of byte written
-		/// @throws IOException if an I/O exception happens
+		/// <param name="stream">the sequence to write</param>
+		/// <param name="fileType">the MIDI file type to use</param>
+		/// <param name="out">the output stream to write to</param>
+		/// <returns>the number of byte written</returns>
+		/// <exception cref="IOException">if an I/O exception happens</exception>
 		/// </summary>
 		public abstract int Write(Sequence stream, int fileType, Stream @out);
 
 		/// <summary>
 		/// Write a sequence to a file using the specified MIDI file type.
-		/// @param in the sequence to write
-		/// @param fileType the MIDI file type to use
-		/// @param out the file to write to
-		/// @return the number of byte written
-		/// @throws IOException if an I/O exception happens
+		/// <param name="stream">the sequence to write</param>
+		/// <param name="fileType">the MIDI file type to use</param>
+		/// <param name="out">the file to write to</param>
+		/// <returns>the number of byte written</returns>
+		/// <exception cref="IOException">if an I/O exception happens</exception>
 		/// </summary>
 		public abstract int Write(Sequence stream, int fileType, FileInfo @out);
 

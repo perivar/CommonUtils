@@ -3,7 +3,6 @@
 
 using System;
 using System.IO;
-using System.Threading;
 
 namespace gnu.sound.midi.file
 {
@@ -18,7 +17,7 @@ namespace gnu.sound.midi.file
 	{
 		/// <summary>
 		/// Return an array indicating which midi file types are supported.
-		/// @see gnu.sound.midi.spi.MidiFileWriter#getMidiFileTypes()
+		/// <see cref="gnu.sound.midi.spi.MidiFileWriter#getMidiFileTypes()"/>
 		/// </summary>
 		public override int[] GetMidiFileTypes()
 		{
@@ -28,31 +27,33 @@ namespace gnu.sound.midi.file
 		/// <summary>
 		/// Return an array indicating which midi file types are supported
 		/// for a given Sequence.
-		/// @see gnu.sound.midi.spi.MidiFileWriter#getMidiFileTypes(javax.sound.midi.Sequence)
+		/// <see cref="gnu.sound.midi.spi.MidiFileWriter#getMidiFileTypes(Sequence)"/>
 		/// </summary>
 		public override int[] GetMidiFileTypes(Sequence sequence)
 		{
-			if (sequence.GetTracks().Length == 1)
+			if (sequence.Tracks.Count == 1) {
 				return new int[]{0};
-			else
+			} else {
 				return new int[]{1};
+			}
 		}
 
 		/// <summary>
 		/// Write a sequence to an output stream in standard midi format.
-		/// @see gnu.sound.midi.spi.MidiFileWriter#write(javax.sound.midi.Sequence, int, java.io.Stream)
+		/// <see cref="gnu.sound.midi.spi.MidiFileWriter#write(Sequence, int, Stream)"/>
 		/// </summary>
 		public override int Write(Sequence stream, int fileType, Stream outputStream)
 		{
 			var dos = new MidiDataOutputStream (outputStream);
-			Track[] tracks = stream.GetTracks();
+			Track[] tracks = stream.Tracks.ToArray();
 			dos.Write((int)0x4D546864); // MThd
 			dos.Write((int)6);
 			dos.Write((Int16)fileType);
 			dos.Write((Int16)tracks.Length);
 			
-			float divisionType = stream.GetDivisionType();
-			int resolution = stream.GetResolution();
+			float divisionType = stream.DivisionType;
+			int resolution = stream.Resolution;
+			
 			// FIXME: division computation is incomplete.
 			int division = 0;
 			if (divisionType == Sequence.PPQ) {
@@ -70,9 +71,9 @@ namespace gnu.sound.midi.file
 		/// <summary>
 		/// Compute the length of a track as it will be written to the
 		/// output stream.
-		/// @param track the track to measure
-		/// @param dos a MidiDataOutputStream used for helper method
-		/// @return the length of the track
+		/// <param name="track">the track to measure</param>
+		/// <param name="dos">a MidiDataOutputStream used for helper method</param>
+		/// <returns>the length of the track</returns>
 		/// </summary>
 		private int ComputeTrackLength(Track track, MidiDataOutputStream dos)
 		{
@@ -84,10 +85,10 @@ namespace gnu.sound.midi.file
 			while (i < eventCount)
 			{
 				MidiEvent me = track.Get(i);
-				long tick = me.GetTick();
-				length += dos.VariableLengthIntLength((int)(tick - ptick));
+				long tick = me.Tick;
+				length += MidiDataOutputStream.VariableLengthIntLength((int)(tick - ptick));
 				ptick = tick;
-				length += me.GetMessage().Length;
+				length += me.Message.Length;
 				i++;
 			}
 			return length;
@@ -95,9 +96,9 @@ namespace gnu.sound.midi.file
 
 		/// <summary>
 		/// Write a track to an output stream.
-		/// @param track the track to write
-		/// @param dos a MidiDataOutputStream to write to
-		/// @return the number of bytes written
+		/// <param name="track">the track to write</param>
+		/// <param name="dos">a MidiDataOutputStream to write to</param>
+		/// <returns>the number of bytes written</returns>
 		/// </summary>
 		private int WriteTrack(Track track, MidiDataOutputStream dos)
 		{
@@ -115,12 +116,12 @@ namespace gnu.sound.midi.file
 				MidiEvent me = track.Get(i);
 				int dtime = 0;
 				if (pme != null)
-					dtime = (int)(me.GetTick() - pme.GetTick());
+					dtime = (int)(me.Tick - pme.Tick);
 				
 				dos.WriteVariableLengthInt(dtime);
 				
-				// TODO: use running status byte
-				byte[] msg = me.GetMessage().GetMessage();
+				// FIXME: use running status byte
+				byte[] msg = me.Message.GetMessage();
 				dos.Write(msg);
 				pme = me;
 				
@@ -128,9 +129,9 @@ namespace gnu.sound.midi.file
 			}
 
 			// We're done if the last event was an End of Track meta message.
-			if (pme != null && (pme.GetMessage() is MetaMessage))
+			if (pme != null && (pme.Message is MetaMessage))
 			{
-				var mm = (MetaMessage) pme.GetMessage();
+				var mm = (MetaMessage) pme.Message;
 				
 				// End of Track message
 				if (mm.GetMetaMessageType() == 0x2F) {
@@ -149,7 +150,7 @@ namespace gnu.sound.midi.file
 
 		/// <summary>
 		/// Write a Sequence to a file.
-		/// @see gnu.sound.midi.spi.MidiFileWriter#write(javax.sound.midi.Sequence, int, java.io.File)
+		/// <see cref="MidiFileWriter#Write(Sequence, int, File)"/>
 		/// </summary>
 		public override int Write(Sequence stream, int fileType, FileInfo @out)
 		{

@@ -24,7 +24,7 @@ namespace gnu.sound.midi.file
 		/// </summary>
 		/// <param name="stream"></param>
 		/// <returns></returns>
-		/// @see gnu.sound.midi.spi.MidiFileReader#GetMidiFileFormat(java.io.Stream)
+		/// <see cref="gnu.sound.midi.spi.MidiFileReader#GetMidiFileFormat(Stream)"/>
 		public override MidiFileFormat GetMidiFileFormat(Stream stream)
 		{
 			var din = new BinaryReaderBigEndian(stream);
@@ -89,7 +89,7 @@ namespace gnu.sound.midi.file
 
 		/// <summary>
 		/// Get the MidiFileFormat from the given URL.
-		/// @see gnu.sound.midi.spi.MidiFileReader#GetMidiFileFormat(java.net.URL)
+		/// <see cref="gnu.sound.midi.spi.MidiFileReader#GetMidiFileFormat(java.net.URL)"/>
 		/// </summary>
 		public override MidiFileFormat GetMidiFileFormat(string url)
 		{
@@ -106,7 +106,7 @@ namespace gnu.sound.midi.file
 
 		/// <summary>
 		/// Get the MidiFileFormat from the given file.
-		/// @see gnu.sound.midi.spi.MidiFileReader#GetMidiFileFormat(java.io.File)
+		/// <see cref="gnu.sound.midi.spi.MidiFileReader#GetMidiFileFormat(File)"/>
 		/// </summary>
 		public override MidiFileFormat GetMidiFileFormat(FileInfo file)
 		{
@@ -123,18 +123,21 @@ namespace gnu.sound.midi.file
 
 		/// <summary>
 		/// Get the MIDI Sequence found in this input stream.
-		/// @see gnu.sound.midi.spi.MidiFileReader#GetSequence(java.io.Stream)
+		/// <see cref="gnu.sound.midi.spi.MidiFileReader#GetSequence(Stream)"/>
 		/// </summary>
 		public override Sequence GetSequence(Stream stream)
 		{
+			
+			// Good midi spec:
+			// http://www.somascape.org/midi/tech/mfile.html
 			// http://www.ccarh.org/courses/253/handout/smf/
 			
 			var din = new MidiDataInputStream(stream);
 			var mff = (ExtendedMidiFileFormat) GetMidiFileFormat(din.BaseStream);
 
-			var seq = new Sequence(mff.GetDivisionType(), mff.GetResolution(), 0, mff.GetType());
+			var seq = new Sequence(mff.DivisionType, mff.Resolution, 0, mff.MidiFileType);
 
-			int ntracks = mff.GetNumberTracks();
+			int ntracks = mff.NumberOfTracks;
 
 			while (ntracks-- > 0)
 			{
@@ -162,39 +165,39 @@ namespace gnu.sound.midi.file
 					//int statusByte = din.readUnsignedByte();
 					int statusByte = din.ReadByte();
 					
-					if (statusByte < (int) MidiHelper.MidiEventType.System_Exclusive)
+					if (statusByte < (int) MidiHelper.MidiEventType.SystemExclusive)
 					{
 						ShortMessage sm;
 						switch (statusByte & 0xf0)
 						{
-							case (int) MidiHelper.MidiEventType.Note_Off:
-							case (int) MidiHelper.MidiEventType.Note_On:
-							case (int) MidiHelper.MidiEventType.Note_Aftertouch:
-							case (int) MidiHelper.MidiEventType.Controller:
-							case (int) MidiHelper.MidiEventType.Pitch_Bend:
-							case ShortMessage.SONG_POSITION_POINTER:
+							case (int) MidiHelper.MidiEventType.NoteOff:
+							case (int) MidiHelper.MidiEventType.NoteOn:
+							case (int) MidiHelper.MidiEventType.AfterTouchPoly:
+							case (int) MidiHelper.MidiEventType.ControlChange:
+							case (int) MidiHelper.MidiEventType.PitchBend:
+							case (int) MidiHelper.MidiEventType.SongPosition:
 								sm = new ShortMessage();
 								sm.SetMessage(statusByte, din.ReadSByte(), din.ReadSByte());
 								runningStatus = statusByte;
 								break;
 
-							case (int) MidiHelper.MidiEventType.Program_Change:
-							case (int) MidiHelper.MidiEventType.Channel_Aftertouch:
-							case ShortMessage.SONG_SELECT:
+							case (int) MidiHelper.MidiEventType.ProgramChange:
+							case (int) MidiHelper.MidiEventType.AfterTouchChannel:
+							case (int) MidiHelper.MidiEventType.SongSelect:
 							case 0xF5: // FIXME: unofficial bus select. Not in spec??
 								sm = new ShortMessage();
 								sm.SetMessage(statusByte, din.ReadSByte(), 0);
 								runningStatus = statusByte;
 								break;
 
-							case ShortMessage.TUNE_REQUEST:
-							case ShortMessage.END_OF_EXCLUSIVE:
-							case ShortMessage.TIMING_CLOCK:
-							case ShortMessage.START:
-							case ShortMessage.CONTINUE:
-							case ShortMessage.STOP:
-							case ShortMessage.ACTIVE_SENSING:
-							case ShortMessage.SYSTEM_RESET:
+							case (int) MidiHelper.MidiEventType.TuneRequest:
+							case (int) MidiHelper.MidiEventType.EndOfExclusive:
+							case (int) MidiHelper.MidiEventType.Clock:
+							case (int) MidiHelper.MidiEventType.Start:
+							case (int) MidiHelper.MidiEventType.Continue:
+							case (int) MidiHelper.MidiEventType.Stop:
+							case (int) MidiHelper.MidiEventType.ActiveSensing:
+							case (int) MidiHelper.MidiEventType.SystemReset:
 								sm = new ShortMessage();
 								sm.SetMessage(statusByte, 0, 0);
 								runningStatus = statusByte;
@@ -205,33 +208,32 @@ namespace gnu.sound.midi.file
 								{
 									switch (runningStatus & 0xf0)
 									{
-										case (int) MidiHelper.MidiEventType.Note_Off:
-										case (int) MidiHelper.MidiEventType.Note_On:
-										case (int) MidiHelper.MidiEventType.Note_Aftertouch:
-										case (int) MidiHelper.MidiEventType.Controller:
-										case (int) MidiHelper.MidiEventType.Pitch_Bend:
-										case ShortMessage.SONG_POSITION_POINTER:
+										case (int) MidiHelper.MidiEventType.NoteOff:
+										case (int) MidiHelper.MidiEventType.NoteOn:
+										case (int) MidiHelper.MidiEventType.AfterTouchPoly:
+										case (int) MidiHelper.MidiEventType.ControlChange:
+										case (int) MidiHelper.MidiEventType.PitchBend:
+										case (int) MidiHelper.MidiEventType.SongPosition:
 											sm = new ShortMessage();
 											sm.SetMessage(runningStatus, statusByte, din.ReadSByte());
 											break;
 
-										case (int) MidiHelper.MidiEventType.Program_Change:
-										case (int) MidiHelper.MidiEventType.Channel_Aftertouch:
-										case ShortMessage.SONG_SELECT:
-										case 0xF5: // FIXME: unofficial bus select. Not in
-											// spec??
+										case (int) MidiHelper.MidiEventType.ProgramChange:
+										case (int) MidiHelper.MidiEventType.AfterTouchChannel:
+										case (int) MidiHelper.MidiEventType.SongSelect:
+										case 0xF5: // FIXME: unofficial bus select. Not in spec??
 											sm = new ShortMessage();
 											sm.SetMessage(runningStatus, statusByte, 0);
 											continue;
 
-										case ShortMessage.TUNE_REQUEST:
-										case ShortMessage.END_OF_EXCLUSIVE:
-										case ShortMessage.TIMING_CLOCK:
-										case ShortMessage.START:
-										case ShortMessage.CONTINUE:
-										case ShortMessage.STOP:
-										case ShortMessage.ACTIVE_SENSING:
-										case ShortMessage.SYSTEM_RESET:
+										case (int) MidiHelper.MidiEventType.TuneRequest:
+										case (int) MidiHelper.MidiEventType.EndOfExclusive:
+										case (int) MidiHelper.MidiEventType.Clock:
+										case (int) MidiHelper.MidiEventType.Start:
+										case (int) MidiHelper.MidiEventType.Continue:
+										case (int) MidiHelper.MidiEventType.Stop:
+										case (int) MidiHelper.MidiEventType.ActiveSensing:
+										case (int) MidiHelper.MidiEventType.SystemReset:
 											sm = new ShortMessage();
 											sm.SetMessage(runningStatus, 0, 0);
 											continue;
@@ -258,12 +260,12 @@ namespace gnu.sound.midi.file
 						mm = sm;
 						runningStatus = - 1;
 					}
-					else if (statusByte == (int) MidiHelper.MidiEventType.MetaEvent)
+					else if (statusByte == 0xff)
 					{
 						// Meta Message
-						sbyte mtype = din.ReadSByte();
+						byte mtype = din.ReadByte();
 						int mlen = din.ReadVariableLengthInt();
-						var meta = din.ReadSBytes(mlen);
+						var meta = din.ReadBytes(mlen);
 						var metam = new MetaMessage();
 						metam.SetMessage(mtype, meta, mlen);
 						mm = metam;
@@ -287,7 +289,7 @@ namespace gnu.sound.midi.file
 		
 		/// <summary>
 		/// Get the MIDI Sequence found at the given URL.
-		/// @see gnu.sound.midi.spi.MidiFileReader#GetSequence(java.net.URL)
+		/// <see cref="gnu.sound.midi.spi.MidiFileReader#GetSequence(java.net.URL)"/>
 		/// </summary>
 		public override Sequence GetSequence(string url)
 		{
@@ -304,7 +306,7 @@ namespace gnu.sound.midi.file
 
 		/// <summary>
 		/// Get the MIDI Sequence found in the given file.
-		/// @see gnu.sound.midi.spi.MidiFileReader#GetSequence(java.io.File)
+		/// <see cref="gnu.sound.midi.spi.MidiFileReader#GetSequence(File)"/>
 		/// </summary>
 		public override Sequence GetSequence(FileInfo file)
 		{

@@ -12,21 +12,22 @@ namespace gnu.sound.midi.file
 
 		/// <summary>
 		/// Get the number of tracks for this MIDI file.
-		/// @return the number of tracks for this MIDI file
+		/// <returns>the number of tracks for this MIDI file</returns>
 		/// </summary>
-		public int GetNumberTracks()
-		{
-			return ntracks;
+		public int NumberOfTracks {
+			get {
+				return ntracks;
+			}
 		}
 
 		/// <summary>
 		/// Create an ExtendedMidiFileFormat object from the given parameters.
-		/// @param type the MIDI file type (0, 1, or 2)
-		/// @param divisionType the MIDI file division type
-		/// @param resolution the MIDI file timing resolution
-		/// @param bytes the MIDI file size in bytes
-		/// @param microseconds the MIDI file length in microseconds
-		/// @param ntracks the number of tracks
+		/// <param name="type">the MIDI file type (0, 1, or 2)</param>
+		/// <param name="divisionType">the MIDI file division type</param>
+		/// <param name="resolution">the MIDI file timing resolution</param>
+		/// <param name="bytes">the MIDI file size in bytes</param>
+		/// <param name="microseconds">the MIDI file length in microseconds</param>
+		/// <param name="ntracks">the number of tracks</param>
 		/// </summary>
 		public ExtendedMidiFileFormat(int type, float divisionType, int resolution, int bytes, long microseconds, int ntracks) : base(type, divisionType, resolution, bytes, microseconds)
 		{

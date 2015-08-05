@@ -22,7 +22,7 @@ namespace gnu.sound.midi.file
 		/// <summary>
 		/// Read an int encoded in the MIDI-style variable length
 		/// encoding format.
-		/// @return an int
+		/// <returns>an int</returns>
 		/// </summary>
 		public int ReadVariableLengthInt()
 		{

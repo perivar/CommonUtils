@@ -1,5 +1,5 @@
 // Track.java -- A track of MIDI events
-//   Copyright (C) 2005 Free Software Foundation, Inc.
+// Copyright (C) 2005 Free Software Foundation, Inc.
 
 using System;
 using System.Collections.Generic;
@@ -27,8 +27,8 @@ namespace gnu.sound.midi
 		/// Add a new event to this track.  Specific events may only be added once.
 		/// The event will be inserted into the appropriate spot in the event list
 		/// based on its timecode.
-		/// @param event the event to add
-		/// @return true if the event was added, false otherwise
+		/// <param name="event">the event to add</param>
+		/// <returns>true if the event was added, false otherwise</returns>
 		/// </summary>
 		public bool Add(MidiEvent @event)
 		{
@@ -37,9 +37,9 @@ namespace gnu.sound.midi
 				if (events.Contains(@event))
 					return false;
 
-				long targetTick = @event.GetTick();
+				long targetTick = @event.Tick;
 				int i = events.Count - 1;
-				while (i >= 0 && (((MidiEvent)events[i]).GetTick() > targetTick))
+				while (i >= 0 && (((MidiEvent)events[i]).Tick > targetTick))
 					i--;
 				events.Insert(i+1, @event);
 				return true;
@@ -48,8 +48,8 @@ namespace gnu.sound.midi
 
 		/// <summary>
 		/// Remove an event from this track.
-		/// @param event the event to remove
-		/// @return true if the event was removed, false otherwise
+		/// <param name="event">the event to remove</param>
+		/// <returns>true if the event was removed, false otherwise</returns>
 		/// </summary>
 		public bool Remove(MidiEvent @event)
 		{
@@ -61,9 +61,9 @@ namespace gnu.sound.midi
 
 		/// <summary>
 		/// Get an event idetified by its order index
-		/// @param index the location of the event to get
-		/// @return the event at index
-		/// @throws ArrayIndexOutOfBoundsException if index is out of bounds
+		/// <param name="index">the location of the event to get</param>
+		/// <returns>the event at index</returns>
+		/// <exception cref="ArrayIndexOutOfBoundsException">if index is out of bounds</exception>
 		/// </summary>
 		public MidiEvent Get(int index)
 		{
@@ -77,13 +77,15 @@ namespace gnu.sound.midi
 		/// Get the event list
 		/// </summary>
 		/// <returns>the list of events</returns>
-		public List<MidiEvent> GetEvents() {
-			return this.events;
+		public List<MidiEvent> Events {
+			get {
+				return events;
+			}
 		}
-
+		
 		/// <summary>
 		/// Get the number events in this track.
-		/// @return the number of events in this track
+		/// <returns>the number of events in this track</returns>
 		/// </summary>
 		public int EventCount()
 		{
@@ -92,14 +94,14 @@ namespace gnu.sound.midi
 
 		/// <summary>
 		/// Get the length of the track in MIDI ticks.
-		/// @return the length of the track in MIDI ticks
+		/// <returns>the length of the track in MIDI ticks</returns>
 		/// </summary>
 		public long Ticks()
 		{
 			lock (events)
 			{
 				int size = events.Count;
-				return ((MidiEvent) events[size - 1]).GetTick();
+				return ((MidiEvent) events[size - 1]).Tick;
 			}
 		}
 		

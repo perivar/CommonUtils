@@ -11,6 +11,8 @@ namespace gnu.sound.midi.info
 	{
 		private static string[] typeNames = { "SEQUENCE_NUMBER", "TEXT", "COPYRIGHT", "TRACK_NAME", "INSTRUMENT", "LYRIC", "MARKER", "CUE_POINT", "PROGRAM_NAME", "DEVICE_NAME", "END_OF_TRACK", "TEMPO", "SMPTE_OFFSET", "TIME_SIGNATURE", "KEY_SIGNATURE", "PROPRIETARY_DATA" };
 
+		// A good MIDI Files Specification: http://www.somascape.org/midi/tech/mfile.html
+		
 		// META event types
 		public const int SEQUENCE_NUMBER = 0x00; //FF 00 02 ss ss or FF 00 00
 		public const int TEXT = 0x01; //FF 01 len TEXT (arbitrary TEXT)
@@ -25,19 +27,30 @@ namespace gnu.sound.midi.info
 		public const int END_OF_TRACK = 0x2f; //FF 2F 00
 		public const int TEMPO = 0x51; //FF 51 03 tt tt tt microseconds
 		public const int SMPTE_OFFSET = 0x54; //FF 54 05 hr mn se fr ff
-
-		// nn=numerator, dd=denominator (2^dd), cc=MIDI clocks/metronome click
-		// bb=no. of notated 32nd notes per MIDI quarter note.
-		// There are 24 MIDI clocks per quarter note.
-		// No I don't understand that last one but it will almost certainly be 8.
-		// 06 03 24 08 is 6/8 time, 36 clocks/metronome (2 per bar), 8 1/32nd notes / 1/4note
+		
+		// nn is a byte specifying the numerator of the time signature (as notated).
+		// dd is a byte specifying the denominator of the time signature as a negative power of 2 (ie 2 represents a quarter-note, 3 represents an eighth-note, etc). (2^dd)
+		// cc is a byte specifying the number of MIDI clocks between metronome clicks.
+		// bb is a byte specifying the number of notated 32nd-notes in a MIDI quarter-note (24 MIDI Clocks). The usual value for this parameter is 8, though some sequencers allow the user to specify that what MIDI thinks of as a quarter note, should be notated as something else.
+		// 
+		// Examples
+		// A time signature of 4/4, with a metronome click every 1/4 note, would be encoded :
+		// FF 58 04 04 02 18 08
+		// There are 24 MIDI Clocks per quarter-note, hence cc=24 (0x18).
+		// 
+		// A time signature of 6/8, with a metronome click every 3rd 1/8 note, would be encoded :
+		// FF 58 04 06 03 24 08
+		// Remember, a 1/4 note is 24 MIDI Clocks, therefore a bar of 6/8 is 72 MIDI Clocks.
 		public const int TIME_SIGNATURE = 0x58; //FF 58 04 nn dd cc bb
+		
+		// sf is a byte specifying the number of flats (-ve) or sharps (+ve) that identifies the key signature (-7 = 7 flats, -1 = 1 flat, 0 = key of C, 1 = 1 sharp, etc).
+		// mi is a byte specifying a major (0) or minor (1) key.
 		public const int KEY_SIGNATURE = 0x59; //FF 59 02 sf mi
 		
-		// -sf=no. of flats +sf=no. of sharps mi=0=major mi=1=minor
 		public const int PROPRIETARY_DATA = 0x7f; //FF 7F len data
-		private static readonly Dictionary<string, int> mTypeNameToValue;
+		//private static readonly Dictionary<string, int> mTypeNameToValue;
 
+		/*
 		static MetaEvent()
 		{
 			mTypeNameToValue = new Dictionary<string, int>(20);
@@ -58,22 +71,27 @@ namespace gnu.sound.midi.info
 			mTypeNameToValue["KEY_SIGNATURE"] = 0x59;
 			mTypeNameToValue["PROPRIETARY_DATA"] = 0x7f;
 		}
+		 */
 		
-		// Get the list of META event type names
-		// @return the list of META event type names
+		/// <summary>
+		/// Get the list of META event type names
+		/// </summary>
+		/// <returns>the list of META event type names</returns>
 		public static string[] GetTypeNames()
 		{
 			return typeNames;
 		}
 		
-		// Get the values that represent the given META event.
-		// The returned array consists of <ol>
-		// <li>the event name as a String</li>
-		// <li>the length of the event data as an Integer</li>
-		// <li>the event data as a String</li>
-		// </ol>
-		// @param mess the META message to format
-		// @return the representation of the message
+		/// <summary>
+		/// Get the values that represent the given META event.
+		/// The returned array consists of <ol>
+		/// <li>the event name as a String</li>
+		/// <li>the length of the event data as an Integer</li>
+		/// <li>the event data as a String</li>
+		/// </ol>
+		/// </summary>
+		/// <param name="mess">the META message to format</param>
+		/// <returns>the representation of the message</returns>
 		public static object[] GetMetaStrings(MetaMessage mess)
 		{
 			// Some data is String some is a series of bytes others are neither
@@ -143,13 +161,13 @@ namespace gnu.sound.midi.info
 					break;
 				case TIME_SIGNATURE:
 					result[0] = "M:TimeSignature";
-					int numerator = (data[0] & 0x00ff);
-					int denominator = (int)(Math.Pow(2, (data[1] & 0x00ff)));
-					int clocksPerClick = (data[2] & 0x00ff);
-					int my32ndPer4th = (data[3] & 0x00ff);
-					result[2] = numerator + "/" + denominator + " " 
-						+ clocksPerClick + " Metr. " 
-						+ my32ndPer4th + " N/q";
+					int nn = (data[0] & 0x00ff); // numerator
+					int dd = (int)(Math.Pow(2, (data[1] & 0x00ff))); // denominator
+					int cc = (data[2] & 0x00ff); // midiClocksPerMetronomeClick
+					int bb = (data[3] & 0x00ff); // notated 32nd-notes in a MIDI quarter-note
+					result[2] = nn + "/" + dd + ", "
+						+ cc + " clicks per metronome, "
+						+ bb + " 32nd notes per quarter-note";
 					break;
 				case KEY_SIGNATURE:
 					result[0] = "M:KeySignature";
@@ -175,8 +193,7 @@ namespace gnu.sound.midi.info
 
 			if (dumpText)
 			{
-				string text = MidiHelper.GetString(data);
-				text = text.Replace("\r\n", string.Empty).Replace("\n", string.Empty).Replace("\r", string.Empty);
+				string text = MidiHelper.GetStringWithoutNewlines(data);
 				result[2] = text;
 			}
 
@@ -187,12 +204,14 @@ namespace gnu.sound.midi.info
 			return result;
 		}
 
-		// Methods to handle TEMPO events.
-		// Convert the given microsecond period to BeatsPerMinute
-		// @param data 3 bytes of data that specify the microsecond period.
-		// Calculated as <br>
-		// <code>data[0] &lt;&lt; 16 + data[1] &lt;&lt; 8 + data[2]</code>
-		// @return the BeatsPerMinute equivalent to the given microsecond period
+		/// <summary>
+		/// Methods to handle TEMPO events.
+		/// Convert the given microsecond period to BeatsPerMinute
+		/// </summary>
+		/// <param name="data">3 bytes of data that specify the microsecond period.
+		/// Calculated as <br>
+		/// <code>data[0] &lt;&lt; 16 + data[1] &lt;&lt; 8 + data[2]</code></param>
+		/// <returns>the BeatsPerMinute equivalent to the given microsecond period</returns>
 		public static int MicroSecsToBpm(byte[] data)
 		{
 			// Coerce the bytes into ints
@@ -205,17 +224,19 @@ namespace gnu.sound.midi.info
 			t += ints[1] << 8;
 			t += ints[2];
 
-			return (int)(60000000 / t);
+			return (int)(MidiHelper.MICRO_SECONDS_PER_MINUTE / t);
 		}
 
-		// Convert the given BeatsPerMinute to a microsecond period
-		// @param bpm the BeatsPerMinute to convert
-		// @return 3 bytes of data that specify the microsecond period.
-		// Calculated as <br>
-		// <code>data[0] &lt;&lt; 16 + data[1] &lt;&lt; 8 + data [2]</code>
+		/// <summary>
+		/// Convert the given BeatsPerMinute to a microsecond period
+		/// </summary>
+		/// <param name="bpm">the BeatsPerMinute to convert</param>
+		/// <returns>3 bytes of data that specify the microsecond period.
+		/// Calculated as <br>
+		/// <code>data[0] &lt;&lt; 16 + data[1] &lt;&lt; 8 + data [2]</code></returns>
 		public static byte[] BpmToMicroSecs(int bpm)
 		{
-			long t = 60000000 / bpm;
+			long t = MidiHelper.MICRO_SECONDS_PER_MINUTE / bpm;
 			var data = new byte[3];
 			data[0] = (byte)((t & 0xff0000) >> 16);
 			data[1] = (byte)((t & 0xff00) >> 8);
@@ -223,10 +244,12 @@ namespace gnu.sound.midi.info
 			return data;
 		}
 
-		// Parse a tempo string with an optional 'bpm' suffix e.g. 88bpm
-		// @param tempoString the string to parse
-		// @return the integer part of the string or 60 if the string does not
-		// represent a valid integer (with optional 'bpm' suffix)
+		/// <summary>
+		/// Parse a tempo string with an optional 'bpm' suffix e.g. 88bpm
+		/// </summary>
+		/// <param name="tempoString">the string to parse</param>
+		/// <returns>the integer part of the string or 60 if the string does not
+		/// represent a valid integer (with optional 'bpm' suffix)</returns>
 		public static int ParseTempo(string tempoString)
 		{
 			int bpmPos = tempoString.ToLower().IndexOf("bpm");
@@ -241,22 +264,24 @@ namespace gnu.sound.midi.info
 			{
 				t = Convert.ToInt32(tempoString);
 			}
-			catch (Exception nfe)
+			catch (Exception)
 			{
 				// DO NOTHING - just use the default
 			}
 			return t;
 		}
 
-		// Parse a time signature string in the format nn[/dd]
-		// nn=numerator, dd=denominator
-		// If only nn is given then dd defaults to 4
-		// @param timeSigString the string to parse
-		// @param ticksPerBeat used to calculate the metronome click
-		// @return the data for the event in a byte[]
+		/// <summary>
+		/// Parse a time signature string in the format nn[/dd]
+		/// nn=numerator, dd=denominator
+		/// If only nn is given then dd defaults to 4
+		/// </summary>
+		/// <param name="timeSigString">the string to parse</param>
+		/// <param name="ticksPerBeat">used to calculate the metronome click</param>
+		/// <returns>the data for the event in a byte[]</returns>
 		public static byte[] ParseTimeSignature(string timeSigString, int ticksPerBeat)
 		{
-			string[] parts = timeSigString.Split(new String [] { "/" } , StringSplitOptions.None) ;
+			string[] parts = timeSigString.Split(new String [] { "/", "," } , StringSplitOptions.None) ;
 			
 			// default to 4/4
 			byte[] result = {4, 2, (byte)(ticksPerBeat / 4), 8};
@@ -272,9 +297,11 @@ namespace gnu.sound.midi.info
 					// Beats per bar / Beat note duration
 					result[0] = GetBeatsPerBar(parts[0]);
 					result[1] = GetBeatValue(parts[1]);
-					result[2] = GetUsefulClocksPerMetronome(parts[0], parts[1]);
+					result[2] = GetUsefulClocksPerMetronome(parts[0], parts[1], ticksPerBeat);
 					break;
-				case 3:
+				default:
+					result[0] = GetBeatsPerBar(parts[0]);
+					result[1] = GetBeatValue(parts[1]);
 					break;
 			}
 			return result;
@@ -292,39 +319,51 @@ namespace gnu.sound.midi.info
 			return (byte)Math.Round(log2);
 		}
 
-		private static byte GetUsefulClocksPerMetronome(string beats, string value)
+		private static byte GetUsefulClocksPerMetronome(string beats, string value, int resolution)
 		{
-			byte beatsPerBar = GetBeatsPerBar(beats);
-			byte beatValue = GetBeatValue(value);
+			// Examples
+			// A time signature of 4/4, with a metronome click every 1/4 note, would be encoded :
+			// FF 58 04 04 02 18 08
+			// There are 24 MIDI Clocks per quarter-note, hence cc=24 (0x18).
+			// 
+			// A time signature of 6/8, with a metronome click every 3rd 1/8 note, would be encoded :
+			// FF 58 04 06 03 24 08
+			// Remember, a 1/4 note is 24 MIDI Clocks, therefore a bar of 6/8 is 72 MIDI Clocks.
+			
+			// 96 / 4 x 1 = 24	(0x18 = 24)
+			// 96 / 8 x 3 = 36 	(0x24 = 36)
+			
+			// Time Signature: 2 / 4
+			// The lower numeral indicates the note value that represents one beat (the beat unit).
+			// The upper numeral indicates how many such beats there are grouped together in a bar.
+			
+			byte beatsPerBar = GetBeatsPerBar(beats); 	// e.g. 6	nn is a byte specifying the numerator of the time signature (as notated).
+			byte beatValue = GetBeatValue(value);		// 			dd is a byte specifying the denominator of the time signature as a negative power of 2.
+			byte oneBar = SafeParseByte(value);			// e.g. 8
 			
 			// Try to generate a useful metronome click
 			// How many MIDI clocks are there in each beat
-			// (there are 24 MIDI clocks in a quarter note)
-			int clocksPerBeat = (24 * 4) / beatValue;
-			int clocksPerMetronome = clocksPerBeat;
-			if (beatsPerBar > 0)
-			{
-				if (beatsPerBar % 4 == 0)
-				{
-					clocksPerMetronome = clocksPerBeat * beatsPerBar / 4;
-				}
-				else if (beatsPerBar % 3 == 0)
-				{
-					clocksPerMetronome = clocksPerBeat * beatsPerBar / 3;
-				}
-				else if (beatsPerBar % 2 == 0)
-				{
-					clocksPerMetronome = clocksPerBeat * beatsPerBar / 2;
+			int midiClocksPerBeat = resolution / oneBar;
+			int clocksPerMetronome = midiClocksPerBeat;
+			if (beatsPerBar > 0) {
+				if (beatsPerBar % 4 == 0) {
+					clocksPerMetronome = midiClocksPerBeat * 1;
+				} else if (beatsPerBar % 3 == 0) {
+					clocksPerMetronome = midiClocksPerBeat * 3;
 				}
 			}
+			
+			// cc is a byte specifying the number of MIDI clocks between metronome clicks.
 			return (byte)clocksPerMetronome;
 		}
 		
-		// Parse an SMPTE offset string in the form
-		// "hours:minutes:seconds:frames:fields"
-		// @param smpteString the string to parse
-		// @return a byte array with elements representing
-		// hours, minutes, seconds, frames, fields
+		/// <summary>
+		/// Parse an SMPTE offset string in the form
+		/// "hours:minutes:seconds:frames:fields"
+		/// </summary>
+		/// <param name="smpteString">the string to parse</param>
+		/// <returns>a byte array with elements representing
+		///  hours, minutes, seconds, frames, fields</returns>
 		public static byte[] ParseSMPTEOffset(string smpteString)
 		{
 			string[] parts = smpteString.Split(new String [] { ":" } , StringSplitOptions.None) ;
@@ -367,61 +406,66 @@ namespace gnu.sound.midi.info
 			return result;
 		}
 
-		// test if the message data should be treated as a string
-		// @param mess the message to test
-		// @return <code>true</code> if the message data should be
-		// represented as a string
+		/// <summary>
+		/// Test if the message data should be treated as a string
+		/// </summary>
+		/// <param name="mess">the message to test</param>
+		/// <returns><code>true</code> if the message data should be represented as a string</returns>
 		public static bool IsText(MetaMessage mess)
 		{
 			int type = mess.GetMetaMessageType();
 			return (type >= 1 && type <= 9);
 		}
 
-		// test if the message data can be edited in the track editor
-		// @param mess the message to test
-		// @return <code>true</code> if the message data can be edited
+		/// <summary>
+		/// Test if the message data can be edited in the track editor
+		/// </summary>
+		/// <param name="mess">the message to test</param>
+		/// <returns><code>true</code> if the message data can be edited</returns>
 		public static bool IsEditable(MetaMessage mess)
 		{
 			int type = mess.GetMetaMessageType();
 			return ((type >= 1 && type <= 9) || type == TEMPO || type == KEY_SIGNATURE);
 		}
-
-		// Update the data content of the message
-		// @param mess the message to update
-		// @param value a String that represents the data for the event.<br>
-		// This is parsed into a <code>byte[]</code> that becomes the data of
-		// the MetaMessage.<br>
-		// Most events treat the string as a text value and just convert
-		// each character to a <code>byte</code> in the array but the
-		// following message types are handled specially
-		// <dl>
-		// <dt>TEMPO</dt>
-		// <dd>an integer value with an optional "bpm" suffix. e.g. 120bpm</dd>
-		// <dt>SMPTE_OFFSET</dt>
-		// <dd>a string in the form <code>h:m:s:f:d</code> where<br>
-		// h=hours m=minutes s=seconds f=frames d=fields<br>
-		// If fewer than 5 values are given then the parser treats them as<br>
-		// 1. <b>s</b><br>
-		// 2. <b>m:s</b><br>
-		// 3. <b>h:m:s</b><br>
-		// 4. <b>h:m:s:f</b><br>
-		// 5. <b>h:m:s:f:d</b><br>
-		// and the unspecified values are set to zero.
-		// </dd>
-		// <dt>TIME_SIGNATURE</dt>
-		// <dd>a time signature string in the format <code>n[/d]</code> where<br>
-		// n=numerator d=denominator<br>
-		// If only <code>n</code> is given then <code>d</code> defaults to 4</dd>
-		// <dt>KEY_SIGNATURE</dt>
-		// <dd>one of the following key signature strings<br>
-		// <b>Cb Gb Db Ab Eb Bb F C G D A E B F# C#</b/></dd>
-		// <dt>SEQUENCE_NUMBER and PROPRIETARY_DATA</dt>
-		// <dd>a space-separated list of values that are parsed into
-		// a <code>byte[]</code> using <code>Byte.decode()</code><br>
-		// If any value cannot be parsed into a <code>byte</code>
-		// then it is treated as zero</dd>
-		// </dl>
-		// @param ticksPerBeat the tick resolution of the sequence
+		
+		/// <summary>
+		/// Update the data content of the message
+		/// This is parsed into a <code>byte[]</code> that becomes the data of
+		/// the MetaMessage.<br>
+		/// Most events treat the string as a text value and just convert
+		/// each character to a <code>byte</code> in the array but the
+		/// following message types are handled specially
+		/// <dl>
+		/// <dt>TEMPO</dt>
+		/// <dd>an integer value with an optional "bpm" suffix. e.g. 120bpm</dd>
+		/// <dt>SMPTE_OFFSET</dt>
+		/// <dd>a string in the form <code>h:m:s:f:d</code> where<br>
+		/// h=hours m=minutes s=seconds f=frames d=fields<br>
+		/// If fewer than 5 values are given then the parser treats them as<br>
+		/// 1. <b>s</b><br>
+		/// 2. <b>m:s</b><br>
+		/// 3. <b>h:m:s</b><br>
+		/// 4. <b>h:m:s:f</b><br>
+		/// 5. <b>h:m:s:f:d</b><br>
+		/// and the unspecified values are set to zero.
+		/// </dd>
+		/// <dt>TIME_SIGNATURE</dt>
+		/// <dd>a time signature string in the format <code>n[/d]</code> where<br>
+		/// n=numerator d=denominator<br>
+		/// If only <code>n</code> is given then <code>d</code> defaults to 4</dd>
+		/// <dt>KEY_SIGNATURE</dt>
+		/// <dd>one of the following key signature strings<br>
+		/// <b>Cb Gb Db Ab Eb Bb F C G D A E B F# C#</b/></dd>
+		/// <dt>SEQUENCE_NUMBER and PROPRIETARY_DATA</dt>
+		/// <dd>a space-separated list of values that are parsed into
+		/// a <code>byte[]</code> using <code>Convert.ToByte()</code><br>
+		/// If any value cannot be parsed into a <code>byte</code>
+		/// then it is treated as zero</dd>
+		/// </dl
+		/// </summary>
+		/// <param name="mess">the message to update</param>
+		/// <param name="value">a String that represents the data for the event.<br></param>
+		/// <param name="ticksPerBeat">the tick resolution of the sequence</param>
 		public static void SetMetaData(MetaMessage mess, string value, int ticksPerBeat)
 		{
 			byte[] data;
@@ -451,51 +495,63 @@ namespace gnu.sound.midi.info
 			{
 				// treat the string as a space separated list of
 				// string representations of byte values
-				// Should handle decimal, hexadecimal and octal representations
-				// using the java.lang.Byte.decode() method
-				string[] strings = value.Split(new String[] { " " }, StringSplitOptions.None );
-				
-				// TODO: fix this
-				int len = strings.Length;
-				data = new byte[len];
-				for (int i = 0; i < len; ++i)
-				{
-					data = MidiHelper.GetBytes(strings[i]);
-				}
-				/*
-				int len = strings.Length;
-				data = new byte[len];
-				for (int i = 0; i < len; ++i)
-				{
-					//data[i] = byte.decode(strings[i]);
-				}
-				 */
+				// TODO: Should handle decimal, hexadecimal and octal representations
+				// originally using the java.lang.Byte.decode() method
+				data = MidiHelper.StringToByteArray(value, " ");
 			}
 
 			if (data != null)
 			{
-				var sbytes = MidiHelper.ConvertBytes(data);
-				mess.SetMessage(type, sbytes, sbytes.Length);
+				mess.SetMessage(type, data, data.Length);
 			}
 		}
 
-		// Create a Midi Meta event
-		// @param type the type of the event as defined by the array returned from getTypeNames()
-		// @param data a String that represents the data for the event.<br>
-		// see {@see #setMetaData} for details.
-		// @param tick the position of the event in the sequence
-		// @param ticksPerBeat the tick resolution of the sequence
-		// @return the created Midi Meta event
-		// @throws javax.sound.midi.InvalidMidiDataException if the MetaMessage.setMessage() parameters are not valid
+		public static bool TryParse<TEnum>(string value, bool ignoreCase, ref TEnum result) where TEnum : struct
+		{
+			bool parsed = false;
+			try
+			{
+				result = (TEnum)Enum.Parse(typeof(TEnum), value, ignoreCase);
+				parsed = true;
+			}
+			catch { }
+			return parsed;
+		}
+		
+		/// <summary>
+		/// Create a Midi Meta event
+		/// </summary>
+		/// <param name="type">the type of the event as defined by the array returned from getTypeNames()</param>
+		/// <param name="data">a String that represents the data for the event.</param>
+		/// <see cref="SetMetaData"/> for details.
+		/// <param name="tick">the position of the event in the sequence</param>
+		/// <param name="ticksPerBeat">the tick resolution of the sequence</param>
+		/// <returns>the created Midi Meta event</returns>
 		public static MidiEvent CreateMetaEvent(string type, string data, long tick, int ticksPerBeat)
 		{
 			var mm = new MetaMessage();
-			mm.SetMessage(mTypeNameToValue[type], null, 0);
-			SetMetaData(mm, data, ticksPerBeat);
+			
+			// TODO: warn if the enum wasn't found?
+			MidiHelper.MetaEventType e = MidiHelper.MetaEventType.None;
+			if ( TryParse(type, true, ref e) )
+			{
+				mm.SetMessage((int)e, null, 0);
+				SetMetaData(mm, data, ticksPerBeat);
+			}
+			
 			var ev = new MidiEvent(mm, tick);
 			return ev;
 		}
 
+		public static MidiEvent CreateMetaEvent(int type, string data, long tick, int ticksPerBeat)
+		{
+			var mm = new MetaMessage();
+			mm.SetMessage(type, null, 0);
+			SetMetaData(mm, data, ticksPerBeat);
+			var ev = new MidiEvent(mm, tick);
+			return ev;
+		}
+		
 		private static byte SafeParseByte(string s)
 		{
 			return SafeParseByte(s, (byte)0);

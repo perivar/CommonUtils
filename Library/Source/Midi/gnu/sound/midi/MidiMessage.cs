@@ -1,11 +1,10 @@
 // MidiMessage.java -- base class for MIDI messages.
-//   Copyright (C) 2005 Free Software Foundation, Inc.
+// Copyright (C) 2005 Free Software Foundation, Inc.
 
 using System;
 
 namespace gnu.sound.midi
 {
-
 	/// The base class for all MIDI messages.
 	/// @author Anthony Green (green@redhat.com)
 	/// @since 1.3
@@ -14,18 +13,18 @@ namespace gnu.sound.midi
 		/// <summary>
 		/// MIDI message data.
 		/// </summary>
-		protected internal byte[] data;
+		protected byte[] data;
 
 		/// <summary>
 		/// The total length of the MIDI message.
 		/// </summary>
-		protected internal int length;
+		protected int length;
 
 		/// <summary>
 		/// MidiMessage contructor.
-		/// @param data a valid MIDI message
+		/// <param name="data">a valid MIDI message</param>
 		/// </summary>
-		protected internal MidiMessage(byte[] data)
+		protected MidiMessage(byte[] data)
 		{
 			this.data = data;
 			this.length = data.Length;
@@ -33,11 +32,11 @@ namespace gnu.sound.midi
 
 		/// <summary>
 		/// Set the complete MIDI message.
-		/// @param data The complete MIDI message.
-		/// @param length The length of the MIDI message.
-		/// @throws InvalidMidiDataException Thrown when the MIDI message is invalid.
+		/// <param name="data">The complete MIDI message.</param>
+		/// <param name="length">The length of the MIDI message.</param>
+		/// <exception cref="InvalidMidiDataException">Thrown when the MIDI message is invalid.</exception>
 		/// </summary>
-		protected internal void SetMessage(byte[] data, int length)
+		protected void SetMessage(byte[] data, int length)
 		{
 			this.data = new byte[length];
 			Array.Copy(data, 0, this.data, 0, length);
@@ -46,7 +45,7 @@ namespace gnu.sound.midi
 
 		/// <summary>
 		/// Get the MIDI message data.
-		/// @return an array containing the MIDI message data
+		/// <returns>an array containing the MIDI message data</returns>
 		/// </summary>
 		public byte[] GetMessage()
 		{
@@ -57,19 +56,20 @@ namespace gnu.sound.midi
 
 		/// <summary>
 		/// Get the status byte of the MIDI message (as an int)
-		/// @return the status byte of the MIDI message (as an int), or zero if the message length is zero.
+		/// <returns>the status byte of the MIDI message (as an int), or zero if the message length is zero.</returns>
 		/// </summary>
 		public int GetStatus()
 		{
-			if (length > 0)
+			if (length > 0) {
 				return (data[0] & 0xff);
-			else
+			} else {
 				return 0;
+			}
 		}
 
 		/// <summary>
 		/// Get the length of the MIDI message.
-		/// @return the length of the MIDI messsage
+		/// <returns>the length of the MIDI messsage</returns>
 		/// </summary>
 		public int Length
 		{

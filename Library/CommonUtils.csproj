@@ -281,6 +281,18 @@
   <ItemGroup>
     <None Include="Source\Midi\gnu\sound\midi\info\resources\Controllers.properties" />
     <None Include="Source\Midi\gnu\sound\midi\info\resources\GM1Instruments.properties" />
+    <Content Include="Tests\Passacaglia, Handel-Piano-86bmp.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Tests\Passacaglia, Handel-Saw-86bmp.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Tests\Passacaglia, Handel-Sine-86bmp.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Tests\Passacaglia, Handel_Sample.mid">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

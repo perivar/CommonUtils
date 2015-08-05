@@ -1,5 +1,5 @@
 // SysexMessage.java -- System Exclusive MIDI message.
-//   Copyright (C) 2005 Free Software Foundation, Inc.
+// Copyright (C) 2005 Free Software Foundation, Inc.
 
 using System;
 using gnu.sound.midi.file; // BinaryReaderBigEndian
@@ -25,23 +25,23 @@ namespace gnu.sound.midi
 		public SysexMessage() : base(new byte[2])
 		{
 			data[0] = (byte) SYSTEM_EXCLUSIVE;
-			data[1] = (byte) ShortMessage.END_OF_EXCLUSIVE;
+			data[1] = (byte) MidiHelper.MidiEventType.EndOfExclusive;
 		}
 
 		/// <summary>
 		/// Create a SysexMessage object.
-		/// @param data a complete system exclusive message
+		/// <param name="data">a complete system exclusive message</param>
 		/// </summary>
-		protected internal SysexMessage(byte[] data) : base(data)
+		SysexMessage(byte[] data) : base(data)
 		{
 		}
 
 		/// <summary>
 		/// Set the sysex message.  The first data byte (status) must be
 		/// 0xF0 or 0xF7.
-		/// @param data the message data
-		/// @param length the length of the message data
-		/// @throws InvalidMidiDataException if the status byte is not 0xF0 or 0xF7
+		/// <param name="data">the message data</param>
+		/// <param name="length">the length of the message data</param>
+		/// <exception cref="InvalidMidiDataException">if the status byte is not 0xF0 or 0xF7</exception>
 		/// </summary>
 		public void SetMessage(byte[] data, int length)
 		{
@@ -52,10 +52,10 @@ namespace gnu.sound.midi
 
 		/// <summary>
 		/// Set the sysex message.  status must be either 0xF0 or 0xF7.
-		/// @param status the sysex statys byte (0xF0 or 0xF7)
-		/// @param data the message data
-		/// @param length the length of the message data
-		/// @throws InvalidMidiDataException if status is not 0xF0 or 0xF7
+		/// <param name="status">the sysex statys byte (0xF0 or 0xF7)</param>
+		/// <param name="data">the message data</param>
+		/// <param name="length">the length of the message data</param>
+		/// <exception cref="InvalidMidiDataException">if status is not 0xF0 or 0xF7</exception>
 		/// </summary>
 		public void SetMessage(int status, sbyte[] data, int length)
 		{
@@ -73,7 +73,7 @@ namespace gnu.sound.midi
 
 		/// <summary>
 		/// Get the data for this message, not including the status byte.
-		/// @return the message data, not including the status byte
+		/// <returns>the message data, not including the status byte</returns>
 		/// </summary>
 		public byte[] GetData()
 		{
@@ -82,9 +82,10 @@ namespace gnu.sound.midi
 			return result;
 		}
 
+		#region ICloneable implementation
 		/// <summary>
 		/// Create a deep-copy clone of this object.
-		/// @see java.lang.Object#clone()
+		/// <see cref="Clone()"/>
 		/// </summary>
 		public override object Clone()
 		{
@@ -92,6 +93,6 @@ namespace gnu.sound.midi
 			Array.Copy(data, 0, message, 0, length);
 			return new SysexMessage(message);
 		}
+		#endregion
 	}
-
 }

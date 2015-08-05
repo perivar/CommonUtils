@@ -1,5 +1,5 @@
 // ShortMessage.java -- A MIDI message no longer than 3 bytes
-//   Copyright (C) 2005 Free Software Foundation, Inc.
+// Copyright (C) 2005 Free Software Foundation, Inc.
 
 using System;
 using gnu.sound.midi.info;
@@ -11,69 +11,12 @@ namespace gnu.sound.midi
 	/// @since 1.3
 	public class ShortMessage : MidiMessage
 	{
-		#region Status Byte Constants
-		/// <summary>
-		/// Status byte for Time Code message.
-		/// </summary>
-		public const int MIDI_TIME_CODE = 0xF1;
-
-		/// <summary>
-		/// Status byte for Song Position Pointer message.
-		/// </summary>
-		public const int SONG_POSITION_POINTER = 0xF2;
-
-		/// <summary>
-		/// Status byte for Song Select message.
-		/// </summary>
-		public const int SONG_SELECT = 0xF3;
-
-		/// <summary>
-		/// Status byte for Tune Request message.
-		/// </summary>
-		public const int TUNE_REQUEST = 0xF6;
-
-		/// <summary>
-		/// Status byte for End Of Exclusive message.
-		/// </summary>
-		public const int END_OF_EXCLUSIVE = 0xF7;
-
-		/// <summary>
-		/// Status byte for Timing Clock message.
-		/// </summary>
-		public const int TIMING_CLOCK = 0xF8;
-
-		/// <summary>
-		/// Status byte for Start message.
-		/// </summary>
-		public const int START = 0xFA;
-
-		/// <summary>
-		/// Status byte for Continue message.
-		/// </summary>
-		public const int CONTINUE = 0xFB;
-
-		/// <summary>
-		/// Status byte for Stop message.
-		/// </summary>
-		public const int STOP = 0xFC;
-
-		/// <summary>
-		/// Status byte for Active Sensing message.
-		/// </summary>
-		public const int ACTIVE_SENSING = 0xFE;
-
-		/// <summary>
-		/// Status byte for System Reset message.
-		/// </summary>
-		public const int SYSTEM_RESET = 0xFF;
-		#endregion
-
 		// Create and initialize a default, arbitrary message.
 		private static byte[] defaultMessage;
 		static ShortMessage()
 		{
 			defaultMessage = new byte[1];
-			defaultMessage[0] = (byte) STOP;
+			defaultMessage[0] = (byte) MidiHelper.MidiEventType.Stop;
 		}
 
 		/// <summary>
@@ -90,18 +33,18 @@ namespace gnu.sound.midi
 		/// Create a short MIDI message.
 		/// The data argument should be a valid MIDI message.  Unfortunately the spec
 		/// does not allow us to throw an InvalidMidiDataException if data is invalid.
-		/// @param data the message data
+		/// <param name="data">the message data</param>
 		/// </summary>
-		protected internal ShortMessage(byte[] data) : base(data)
+		ShortMessage(byte[] data) : base(data)
 		{
 		}
 
 		/// <summary>
 		/// Set the MIDI message.
-		/// @param status the status byte for this message
-		/// @param data1 the first data byte for this message
-		/// @param data2 the second data byte for this message
-		/// @throws InvalidMidiDataException if status is bad, or data is out of range
+		/// <param name="status">the status byte for this message</param>
+		/// <param name="data1">the first data byte for this message</param>
+		/// <param name="data2">the second data byte for this message</param>
+		/// <exception cref="InvalidMidiDataException">if status is bad, or data is out of range</exception>
 		/// </summary>
 		public void SetMessage(int status, int data1, int data2)
 		{
@@ -133,54 +76,56 @@ namespace gnu.sound.midi
 
 		/// <summary>
 		/// Set the MIDI message to one that requires no data bytes.
-		/// @param status the status byte for this message
-		/// @throws InvalidMidiDataException if status is bad, or requires data
+		/// <param name="status">the status byte for this message</param>
+		/// <exception cref="InvalidMidiDataException">if status is bad, or requires data</exception>
 		/// </summary>
 		public void SetMessage(int status)
 		{
 			int dataLength = GetDataLength(status);
-			if (dataLength != 0)
+			if (dataLength != 0) {
 				throw new InvalidMidiDataException("Status byte 0x" + status.ToString("X4") + " requires " + dataLength + " bytes of data.");
+			}
 			SetMessage(status, 0, 0);
 		}
 
 		/// <summary>
 		/// Return the number of data bytes needed for a given MIDI status byte.
-		/// @param status the status byte for a short MIDI message
-		/// @return the number of data bytes needed for this status byte
-		/// @throws InvalidMidiDataException if status is an invalid status byte
+		/// <param name="status">the status byte for a short MIDI message</param>
+		/// <returns>the number of data bytes needed for this status byte</returns>
+		/// <exception cref="InvalidMidiDataException">if status is an invalid status byte</exception>
 		/// </summary>
 		protected static int GetDataLength(int status)
 		{
 			int originalStatus = status;
 
-			if ((status & 0xF0) != 0xF0)
+			if ((status & 0xF0) != 0xF0) {
 				status &= 0xF0;
+			}
 
 			switch (status)
 			{
-				case (int) MidiHelper.MidiEventType.Note_Off:
-				case (int) MidiHelper.MidiEventType.Note_On:
-				case (int) MidiHelper.MidiEventType.Note_Aftertouch:
-				case (int) MidiHelper.MidiEventType.Controller:
-				case (int) MidiHelper.MidiEventType.Pitch_Bend:
-				case SONG_POSITION_POINTER:
+				case (int) MidiHelper.MidiEventType.NoteOff:
+				case (int) MidiHelper.MidiEventType.NoteOn:
+				case (int) MidiHelper.MidiEventType.AfterTouchPoly:
+				case (int) MidiHelper.MidiEventType.ControlChange:
+				case (int) MidiHelper.MidiEventType.PitchBend:
+				case (int) MidiHelper.MidiEventType.SongPosition:
 					return 2;
 
-				case (int) MidiHelper.MidiEventType.Program_Change:
-				case (int) MidiHelper.MidiEventType.Channel_Aftertouch:
-				case SONG_SELECT:
+				case (int) MidiHelper.MidiEventType.ProgramChange:
+				case (int) MidiHelper.MidiEventType.AfterTouchChannel:
+				case (int) MidiHelper.MidiEventType.SongSelect:
 				case 0xF5: // FIXME: unofficial bus select. Not in spec??
 					return 1;
 
-				case TUNE_REQUEST:
-				case END_OF_EXCLUSIVE:
-				case TIMING_CLOCK:
-				case START:
-				case CONTINUE:
-				case STOP:
-				case ACTIVE_SENSING:
-				case SYSTEM_RESET:
+				case (int) MidiHelper.MidiEventType.TuneRequest:
+				case (int) MidiHelper.MidiEventType.EndOfExclusive:
+				case (int) MidiHelper.MidiEventType.Clock:
+				case (int) MidiHelper.MidiEventType.Start:
+				case (int) MidiHelper.MidiEventType.Continue:
+				case (int) MidiHelper.MidiEventType.Stop:
+				case (int) MidiHelper.MidiEventType.ActiveSensing:
+				case (int) MidiHelper.MidiEventType.SystemReset:
 					return 0;
 
 				default:
@@ -191,7 +136,7 @@ namespace gnu.sound.midi
 		/// <summary>
 		/// Get the channel information from this MIDI message, assuming it is a
 		/// MIDI channel message.
-		/// @return the MIDI channel for this message
+		/// <returns>the MIDI channel for this message</returns>
 		/// </summary>
 		public int GetChannel()
 		{
@@ -201,7 +146,7 @@ namespace gnu.sound.midi
 		/// <summary>
 		/// Get the command nibble from this MIDI message, assuming it is a MIDI
 		/// channel message.
-		/// @return the MIDI command for this message
+		/// <returns>the MIDI command for this message</returns>
 		/// </summary>
 		public int GetCommand()
 		{
@@ -211,7 +156,7 @@ namespace gnu.sound.midi
 		/// <summary>
 		/// Get the first data byte from this message, assuming it exists, and
 		/// zero otherwise.
-		/// @return the first data byte or zero if none exists.
+		/// <returns>the first data byte or zero if none exists.</returns>
 		/// </summary>
 		public int GetData1()
 		{
@@ -221,16 +166,17 @@ namespace gnu.sound.midi
 		/// <summary>
 		/// Get the second data byte from this message, assuming it exists, and
 		/// zero otherwise.
-		/// @return the second date byte or zero if none exists.
+		/// <returns>the second date byte or zero if none exists.</returns>
 		/// </summary>
 		public int GetData2()
 		{
 			return length > 2 ? data[2] : 0;
 		}
 
+		#region ICloneable implementation
 		/// <summary>
 		/// Create a deep-copy clone of this object.
-		/// @see java.lang.Object#clone()
+		/// <see cref="Clone()"/>
 		/// </summary>
 		public override object Clone()
 		{
@@ -238,6 +184,7 @@ namespace gnu.sound.midi
 			Array.Copy(data, 0, message, 0, length);
 			return new ShortMessage(message);
 		}
+		#endregion
 		
 		/// <summary>
 		/// Return the string representation of this object

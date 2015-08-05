@@ -31,9 +31,12 @@ namespace gnu.sound.midi.info
 			}
 		}
 
-		// Get the instrument (patch) name.
-		// @param num The patch number.
-		// @return The instrument (patch) name.
+		/// <summary>
+		/// Get the instrument (patch) name.
+		/// </summary>
+		/// <param name="bank">The bank number.</param>
+		/// <param name="program">The program number.</param>
+		/// <returns>The instrument (patch) name.</returns>
 		public static string GetName(int bank, int program)
 		{
 			// TODO don't ignore bank
@@ -48,34 +51,41 @@ namespace gnu.sound.midi.info
 			return value;
 		}
 
-		// Get the instrument (patch) name assuming it to be in the first bank.
-		// @param num The patch number.
-		// @return The instrument (patch) name.
+		/// <summary>
+		/// Get the instrument (patch) name assuming it to be in the first bank.
+		/// </summary>
+		/// <param name="program">The program number.</param>
+		/// <returns>The instrument (patch) name.</returns>
 		public static string GetName(int program)
 		{
 			return GetName(0, program);
 		}
 
-		// Get all the instrument names.
-		// @return The array of instrument names.
+		/// <summary>
+		/// Get all the instrument names.
+		/// </summary>
+		/// <returns>The array of instrument names.</returns>
 		public static object[] GetNameArray()
 		{
 			return properties.Values.ToArray();
 		}
 
-		//
-		// Get the instrument names for a given bank.
-		// @param bank the bank for which to get the names
-		// @return The array of instrument names.
+		/// <summary>
+		/// Get the instrument names for a given bank.
+		/// </summary>
+		/// <param name="bank">the bank for which to get the names</param>
+		/// <returns>The array of instrument names.</returns>
 		public static object[] GetNameArray(int bank)
 		{
 			// TODO don't ignore bank
 			return properties.Values.ToArray();
 		}
 
-		// Get the program number associated with the named instrument.
-		// @param name The name of the instrument.
-		// @return The patch number for the named instrument.
+		/// <summary>
+		/// Get the program number associated with the named instrument.
+		/// </summary>
+		/// <param name="name">The name of the instrument.</param>
+		/// <returns>The patch number for the named instrument.</returns>
 		public static int GetInstrumentNumber(string name)
 		{
 			// The program number is in the low order byte.
@@ -83,9 +93,11 @@ namespace gnu.sound.midi.info
 			return int.Parse(value);
 		}
 
-		// Get the program number associated with the named instrument.
-		// @param name The name of the instrument.
-		// @return The patch number for the named instrument.
+		/// <summary>
+		/// Get the program number associated with the named instrument.
+		/// </summary>
+		/// <param name="name">The name of the instrument.</param>
+		/// <returns>The patch number for the named instrument.</returns>
 		public static int GetInstrumentBank(string name)
 		{
 			throw new NotImplementedException();

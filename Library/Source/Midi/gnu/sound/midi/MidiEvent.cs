@@ -1,5 +1,5 @@
 // MidiEvent.java -- A MIDI Event
-//   Copyright (C) 2005 Free Software Foundation, Inc.
+// Copyright (C) 2005 Free Software Foundation, Inc.
 
 namespace gnu.sound.midi
 {
@@ -10,13 +10,13 @@ namespace gnu.sound.midi
 	/// @since 1.3
 	public class MidiEvent
 	{
-		private readonly MidiMessage message;
-		private long tick;
+		readonly MidiMessage message;
+		long tick;
 
 		/// <summary>
 		/// Create a MIDI event object from the given MIDI message and timestamp.
-		/// @param message the MidiMessage for this event
-		/// @param tick the timestamp for this event
+		/// <param name="message">the MidiMessage for this event</param>
+		/// <param name="tick">the timestamp for this event</param>
 		/// </summary>
 		public MidiEvent(MidiMessage message, long tick)
 		{
@@ -26,31 +26,26 @@ namespace gnu.sound.midi
 
 		/// <summary>
 		/// Get the MIDI message for this event.
-		/// @return the MidiMessage for this event
+		/// <returns>the MidiMessage for this event</returns>
 		/// </summary>
-		public MidiMessage GetMessage()
-		{
-			return message;
+		public MidiMessage Message {
+			get {
+				return message;
+			}
 		}
 
 		/// <summary>
-		/// Set the timestemp for this event in MIDI ticks.
-		/// @param tick the timestamp
+		/// The timestemp for this event in MIDI ticks.
 		/// </summary>
-		public void SetTick(long tick)
-		{
-			this.tick = tick;
+		public long Tick {
+			get {
+				return tick;
+			}
+			set {
+				tick = value;
+			}
 		}
 
-		/// <summary>
-		/// Get the timestamp for this event in MIDI ticks.
-		/// @return the timestamp for this even in MIDI ticks
-		/// </summary>
-		public long GetTick()
-		{
-			return tick;
-		}
-		
 		public override string ToString()
 		{
 			return string.Format("[{0}] {1}", tick, message);

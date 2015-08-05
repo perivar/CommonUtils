@@ -21,34 +21,34 @@ namespace gnu.sound.midi.info
 				int cmd = mess.GetCommand();
 				switch (cmd)
 				{
-					case (int) MidiHelper.MidiEventType.Channel_Aftertouch:
+					case (int) MidiHelper.MidiEventType.AfterTouchChannel:
 						result[0] = "CHANNEL_PRESSURE";
 						result[2] = Convert.ToInt32(d1); //"" + d1;
 						break;
-					case (int) MidiHelper.MidiEventType.Controller:
+					case (int) MidiHelper.MidiEventType.ControlChange:
 						result[0] = Controllers.GetControlName(d1);
 						result[2] = Controllers.GetControlValue(d2, false);
 						break;
-					case (int) MidiHelper.MidiEventType.Note_Off:
+					case (int) MidiHelper.MidiEventType.NoteOff:
 						result[0] = "NOTE_OFF";
 						result[1] = NoteNames.GetNoteName(d1, inFlats);
 						result[2] = Convert.ToInt32(d2);
 						break;
-					case (int) MidiHelper.MidiEventType.Note_On:
+					case (int) MidiHelper.MidiEventType.NoteOn:
 						result[0] = "NOTE_ON ";
 						result[1] = NoteNames.GetNoteName(d1, inFlats);
 						result[2] = Convert.ToInt32(d2);
 						break;
-					case (int) MidiHelper.MidiEventType.Pitch_Bend:
+					case (int) MidiHelper.MidiEventType.PitchBend:
 						result[0] = "PITCH_BEND";
 						result[2] = Convert.ToInt32(d1 + (d2 << 7));
 						break;
-					case (int) MidiHelper.MidiEventType.Note_Aftertouch:
+					case (int) MidiHelper.MidiEventType.AfterTouchPoly:
 						result[0] = "POLY_PRESSURE";
 						result[1] = NoteNames.GetNoteName(d1, inFlats);
 						result[2] = Convert.ToInt32(d2);
 						break;
-					case (int) MidiHelper.MidiEventType.Program_Change:
+					case (int) MidiHelper.MidiEventType.ProgramChange:
 						result[0] = "PATCH ";
 						result[3] = InstrumentNames.GetName(d2, d1);
 						break;
@@ -65,39 +65,39 @@ namespace gnu.sound.midi.info
 			{
 				switch (st)
 				{
-					case ShortMessage.ACTIVE_SENSING:
+					case (int) MidiHelper.MidiEventType.ActiveSensing:
 						result[0] = "ACTIVE_SENSING";
 						break;
-					case ShortMessage.CONTINUE:
+					case (int) MidiHelper.MidiEventType.Continue:
 						result[0] = "CONTINUE";
 						break;
-					case ShortMessage.END_OF_EXCLUSIVE:
+					case (int) MidiHelper.MidiEventType.EndOfExclusive:
 						result[0] = "END_OF_EXCLUSIVE";
 						break;
-					case ShortMessage.MIDI_TIME_CODE:
+					case (int) MidiHelper.MidiEventType.TimeCodeQuarterFrame:
 						result[0] = "MIDI_TIME_CODE";
 						break;
-					case ShortMessage.SONG_POSITION_POINTER:
+					case (int) MidiHelper.MidiEventType.SongPosition:
 						result[0] = "SONG_POSITION_POINTER";
 						result[2] = Convert.ToInt32(d1 + (d2 << 7));
 						break;
-					case ShortMessage.SONG_SELECT:
+					case (int) MidiHelper.MidiEventType.SongSelect:
 						result[0] = "SONG_SELECT";
 						result[2] = Convert.ToInt32(d1); //"" + d1;
 						break;
-					case ShortMessage.START:
+					case (int) MidiHelper.MidiEventType.Start:
 						result[0] = "START";
 						break;
-					case ShortMessage.STOP:
+					case (int) MidiHelper.MidiEventType.Stop:
 						result[0] = "STOP";
 						break;
-					case ShortMessage.SYSTEM_RESET:
+					case (int) MidiHelper.MidiEventType.SystemReset:
 						result[0] = "RESET";
 						break;
-					case ShortMessage.TIMING_CLOCK:
+					case (int) MidiHelper.MidiEventType.Clock:
 						result[0] = "TIMING_CLOCK";
 						break;
-					case ShortMessage.TUNE_REQUEST:
+					case (int) MidiHelper.MidiEventType.TuneRequest:
 						result[0] = "TUNE_REQUEST";
 						break;
 					default:

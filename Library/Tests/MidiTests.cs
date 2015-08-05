@@ -14,7 +14,7 @@ namespace CommonUtils.Tests
 		[Test]
 		public void TestReadWriteMidi()
 		{
-			string fileName = @"C:\Users\perivar.nerseth\Downloads\Passacaglia, Handel_Sample.mid";
+			string fileName = @"Tests\Passacaglia, Handel_Sample.mid";
 			
 			var fileIn = new FileInfo(fileName);
 			var sequence = new MidiFileReader().GetSequence(fileIn);
@@ -22,13 +22,13 @@ namespace CommonUtils.Tests
 			int trackno = 1;
 			string outputTextPath = fileIn.Name + ".txt";
 			using (var outfile = new StreamWriter(outputTextPath, false)) {
-				foreach (var track in sequence.tracks) {
+				foreach (var track in sequence.Tracks) {
 					outfile.WriteLine("Track {0}", trackno);
-					foreach(var ev in track.GetEvents()) {
-						long tick = ev.GetTick();
-						MidiMessage msg = ev.GetMessage();
-						int beat = (int) tick / sequence.GetResolution();
-						int tickRemainder = (int) tick % sequence.GetResolution();
+					foreach(var ev in track.Events) {
+						long tick = ev.Tick;
+						int beat = (int) tick / sequence.Resolution;
+						int tickRemainder = (int) tick % sequence.Resolution;
+						MidiMessage msg = ev.Message;
 						outfile.WriteLine("{0:0000}:{1:000} {2}", beat, tickRemainder, msg);
 					}
 					trackno++;
@@ -37,7 +37,7 @@ namespace CommonUtils.Tests
 			
 			string outputFileName = fileIn.DirectoryName + "\\" + fileIn.Name + "_generated.mid";
 			var fileOut = new FileInfo(outputFileName);
-			new MidiFileWriter().Write(sequence, sequence.type, fileOut);
+			new MidiFileWriter().Write(sequence, sequence.MidiFileType, fileOut);
 			
 			if (FileCompare(fileIn.FullName, fileOut.FullName)) {
 				Assert.Pass("The midi files are identical.");

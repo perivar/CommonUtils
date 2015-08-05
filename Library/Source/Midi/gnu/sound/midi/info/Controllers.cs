@@ -41,16 +41,18 @@ namespace gnu.sound.midi.info
 			}
 		}
 
-		// Get the name of a controller, given its numeric value.
-		// @param num The MIDI controller number.
-		// @return The name of the controller.
+		/// <summary>
+		/// Get the name of a controller, given its numeric value.
+		/// </summary>
+		/// <param name="num">The MIDI controller number.</param>
+		/// <returns>The name of the controller.</returns>
 		public static string GetControlName(int num)
 		{
 			return mNameArray[num];
 		}
 
 		// Get the array of controller names.
-		// @return The names of the controllers.
+		/// <returns>The names of the controllers.</returns>
 		public static string[] GetNameArray()
 		{
 			return mNameArray;
@@ -60,11 +62,13 @@ namespace gnu.sound.midi.info
 		// of the controller's value.
 		internal static string meter = "---------------|---------------";
 
-		// Get a String representation of the controller's value.
-		// @param val The controller's value
-		// @param graphic If true the returned string is a graphical
-		// representation of the value. e.g. value 64 gives "--------|--------"
-		// @return The value of the controller.
+		/// <summary>
+		/// Get a String representation of the controller's value.
+		/// </summary>
+		/// <param name="val">The controller's value</param>
+		/// <param name="graphic">If true the returned string is a graphical
+		// representation of the value. e.g. value 64 gives "--------|--------"</param>
+		/// <returns>The value of the controller.</returns>
 		public static string GetControlValue(int val, bool graphic)
 		{
 			string result = "";
@@ -80,9 +84,11 @@ namespace gnu.sound.midi.info
 			return result;
 		}
 
-		// Get the controller number associated with the name.
-		// @param name The name of the controller.
-		// @return The controller number for the named controller.
+		/// <summary>
+		/// Get the controller number associated with the name.
+		/// </summary>
+		/// <param name="name">The name of the controller.</param>
+		/// <returns>The controller number for the named controller.</returns>
 		public static int GetControllerNumber(string name)
 		{
 			int res = 0;

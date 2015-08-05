@@ -24,9 +24,9 @@ namespace gnu.sound.midi.file
 		/// <summary>
 		/// Return the length of a variable length encoded int
 		/// without writing it out.
-		/// @return the length of the encoding
+		/// <returns>the length of the encoding</returns>
 		/// </summary>
-		public int VariableLengthIntLength(int value)
+		public static int VariableLengthIntLength(int value)
 		{
 			int length = 0;
 			int buffer = value & 0x7F;
