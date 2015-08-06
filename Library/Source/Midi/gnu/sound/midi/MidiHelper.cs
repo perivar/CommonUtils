@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Text;
+using System.Globalization;
 
 namespace gnu.sound.midi
 {
@@ -268,6 +269,76 @@ namespace gnu.sound.midi
 				}
 				return bytes;
 			}
+		}
+		#endregion
+		
+		#region C# Generator Utils taken from the MidiSharp project
+		/// <summary>Create a string of C# code for creating a byte array containing the specified data.</summary>
+		/// <param name="data">The array of data.</param>
+		/// <returns>A string of C# code for allocating a byte array containing the specified data.</returns>
+		public static string ByteArrayCreationString(byte[] data)
+		{
+			var sb = new StringBuilder();
+			sb.AppendFormat(CultureInfo.InvariantCulture, "new byte[{0}]{{", data.Length);
+			for (int i = 0; i < data.Length; i++) {
+				sb.AppendFormat(CultureInfo.InvariantCulture, "{0}{1}", i > 0 ? "," : "", data[i]);
+			}
+			sb.Append("}");
+			return sb.ToString();
+		}
+		
+		[ThreadStatic]
+		private static StringBuilder t_cachedBuilder;
+		
+		/// <summary>
+		/// Create a C# string from text, escaping some characters as unicode to make sure it renders reasonably in the C# code while
+		/// still resulting in the same output string.
+		/// </summary>
+		/// <param name="text">The text to output.</param>
+		/// <returns>The text put into a string.</returns>
+		public static string TextString(string text)
+		{
+			bool acceptable = true;
+			foreach (char c in text) {
+				if (!IsValidInTextString(c)) {
+					acceptable = false;
+					break;
+				}
+			}
+			if (acceptable) {
+				return "\"" + text + "\"";
+			}
+
+			StringBuilder sb = t_cachedBuilder ?? (t_cachedBuilder = new StringBuilder(text.Length * 2 + 2));
+			sb.Append('\"');
+			foreach (char c in text) {
+				if (IsValidInTextString(c)) {
+					sb.Append(c);
+				}
+				else {
+					sb.AppendFormat(CultureInfo.InvariantCulture, "\\u{0:X4}", (int)c);
+				}
+			}
+			sb.Append('\"');
+			string result = sb.ToString();
+			sb.Clear();
+			return result;
+		}
+
+		/// <summary>
+		/// Gets whether a character is ok to render in a C# quoted string.
+		/// Letters and digits are ok.  A space is fine, but whitespace like new lines could
+		/// cause problems for a string, since it's not rendered as a verbatim string.
+		/// Punctuation is generally ok, but certainly punctuation has special meaning inside
+		/// a C# string and is not ok.
+		/// </summary>
+		/// <param name="c">The character to examine.</param>
+		/// <returns>true if the character is valid; otherwise, false.</returns>
+		private static bool IsValidInTextString(char c)
+		{
+			return
+				Char.IsLetterOrDigit(c) || c == ' ' ||
+				(Char.IsPunctuation(c) && c != '\\' && c != '\"' && c != '{');
 		}
 		#endregion
 

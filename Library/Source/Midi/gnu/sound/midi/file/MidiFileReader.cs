@@ -81,7 +81,6 @@ namespace gnu.sound.midi.file
 			}
 
 			// If we haven't read every byte in the header now, just skip the rest.
-			//din.skip(bytes - 6);
 			din.ReadBytes(bytes - 6);
 
 			return new ExtendedMidiFileFormat(type, divisionType, resolution, MidiFileFormat.UNKNOWN_LENGTH, MidiFileFormat.UNKNOWN_LENGTH, ntracks);
@@ -143,7 +142,7 @@ namespace gnu.sound.midi.file
 			{
 				Track track = seq.CreateTrack();
 				int Mtrk = din.ReadInt32();
-				if (Mtrk != 0x4d54726b)
+				if (Mtrk != 0x4D54726B) // "MTrk"
 					throw new InvalidMidiDataException("Invalid MIDI track header.");
 				int length = din.ReadInt32();
 
@@ -162,7 +161,6 @@ namespace gnu.sound.midi.file
 
 					// in Java bytes are signed (-128, +127)
 					// where in C# it's not (0, 255).
-					//int statusByte = din.readUnsignedByte();
 					int statusByte = din.ReadByte();
 					
 					if (statusByte < (int) MidiHelper.MidiEventType.SystemExclusive)
@@ -250,17 +248,18 @@ namespace gnu.sound.midi.file
 						}
 						mm = sm;
 					}
-					else if (statusByte == 0xf0 || statusByte == 0xf7)
+					else if (statusByte == (int) MidiHelper.MidiEventType.SystemExclusive
+					         || statusByte == (int) MidiHelper.MidiEventType.EndOfExclusive)
 					{
 						// System Exclusive event
 						int slen = din.ReadVariableLengthInt();
-						var sysex = din.ReadSBytes(slen);
+						var sysex = din.ReadBytes(slen);
 						var sm = new SysexMessage();
 						sm.SetMessage(statusByte, sysex, slen);
 						mm = sm;
 						runningStatus = - 1;
 					}
-					else if (statusByte == 0xff)
+					else if (statusByte == (int) MidiHelper.MidiEventType.SystemReset)
 					{
 						// Meta Message
 						byte mtype = din.ReadByte();

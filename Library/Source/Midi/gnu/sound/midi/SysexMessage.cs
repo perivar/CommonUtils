@@ -11,10 +11,6 @@ namespace gnu.sound.midi
 	/// @since 1.3
 	public class SysexMessage : MidiMessage
 	{
-		public const int SYSTEM_EXCLUSIVE = 0xF0;
-
-		public const int SPECIAL_SYSTEM_EXCLUSIVE = 0xF7;
-
 		/// <summary>
 		/// Create a default valid system exclusive message.
 
@@ -24,7 +20,7 @@ namespace gnu.sound.midi
 		/// </summary>
 		public SysexMessage() : base(new byte[2])
 		{
-			data[0] = (byte) SYSTEM_EXCLUSIVE;
+			data[0] = (byte) MidiHelper.MidiEventType.SystemExclusive;
 			data[1] = (byte) MidiHelper.MidiEventType.EndOfExclusive;
 		}
 
@@ -37,15 +33,14 @@ namespace gnu.sound.midi
 		}
 
 		/// <summary>
-		/// Set the sysex message.  The first data byte (status) must be
-		/// 0xF0 or 0xF7.
+		/// Set the sysex message.  The first data byte (status) must be 0xF0 or 0xF7.
 		/// <param name="data">the message data</param>
 		/// <param name="length">the length of the message data</param>
 		/// <exception cref="InvalidMidiDataException">if the status byte is not 0xF0 or 0xF7</exception>
 		/// </summary>
 		public void SetMessage(byte[] data, int length)
 		{
-			if (data[0] != SYSTEM_EXCLUSIVE && data[0] != SPECIAL_SYSTEM_EXCLUSIVE)
+			if (data[0] != (byte) MidiHelper.MidiEventType.SystemExclusive && data[0] != (byte) MidiHelper.MidiEventType.EndOfExclusive)
 				throw new InvalidMidiDataException("Sysex message starts with 0x" + data[0].ToString("X4") + " instead of 0xF0 or 0xF7");
 			base.SetMessage(data, length);
 		}
@@ -57,17 +52,14 @@ namespace gnu.sound.midi
 		/// <param name="length">the length of the message data</param>
 		/// <exception cref="InvalidMidiDataException">if status is not 0xF0 or 0xF7</exception>
 		/// </summary>
-		public void SetMessage(int status, sbyte[] data, int length)
+		public void SetMessage(int status, byte[] data, int length)
 		{
-			if (status != SYSTEM_EXCLUSIVE && status != SPECIAL_SYSTEM_EXCLUSIVE)
+			if (status != (byte) MidiHelper.MidiEventType.SystemExclusive && status != (byte) MidiHelper.MidiEventType.EndOfExclusive)
 				throw new InvalidMidiDataException("Sysex message starts with 0x" + status.ToString("X4") + " instead of 0xF0 or 0xF7");
 			this.data = new byte[length+1];
 			this.data[0] = (byte) status;
 			
-			//Array.Copy(data, 0, this.data, 1, length);
-			var unsigned_data = MidiHelper.ConvertSBytes(data);
-			Array.Copy(unsigned_data, 0, this.data, 1, length);
-			
+			Array.Copy(data, 0, this.data, 1, length);
 			this.length = length+1;
 		}
 
