@@ -90,7 +90,7 @@ namespace gnu.sound.midi.info
 		{
 			// The program number is in the low order byte.
 			var value = properties.FirstOrDefault(x => x.Value == name).Key;
-			return int.Parse(value);
+			return (value == null ? 0 : int.Parse(value));
 		}
 
 		/// <summary>

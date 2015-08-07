@@ -144,7 +144,7 @@ namespace gnu.sound.midi
 		/// <returns>the string representation of this object</returns>
 		public override string ToString()
 		{
-			// { type name, length, value string }
+			// GetMetaStrings: { type name, length, value string }
 			object[] meta = MetaEvent.GetMetaStrings(this);
 			string metaStrings = string.Format("{0} '{2}' ({1} bytes)", meta[0], meta[1], meta[2]);
 			
@@ -154,7 +154,8 @@ namespace gnu.sound.midi
 			byte[] messageData = GetMetaMessageData();
 			string hex = MidiHelper.ByteArrayToString(messageData, ",");
 
-			return string.Format("{0} [{1}:{2}: {3}]", metaStrings, messageType, typeName, hex);
+			//return string.Format("{0} [{1}:{2}: {3}]", metaStrings, messageType, typeName, hex);
+			return string.Format("{0}", metaStrings);
 		}
 	}
 }

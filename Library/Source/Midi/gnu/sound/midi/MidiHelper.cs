@@ -127,28 +127,61 @@ namespace gnu.sound.midi
 			OmniModeOn					= 0x7D
 		}
 		
+		// TimeSignature = 0x58, //FF 58 04 nn dd cc bb
+		// nn is a byte specifying the numerator of the time signature (as notated).
+		// dd is a byte specifying the denominator of the time signature as a negative power of 2 (ie 2 represents a quarter-note, 3 represents an eighth-note, etc). (2^dd)
+		// cc is a byte specifying the number of MIDI clocks between metronome clicks.
+		// bb is a byte specifying the number of notated 32nd-notes in a MIDI quarter-note (24 MIDI Clocks). The usual value for this parameter is 8, though some sequencers allow the user to specify that what MIDI thinks of as a quarter note, should be notated as something else.
+		// 
+		// Examples
+		// A time signature of 4/4, with a metronome click every 1/4 note, would be encoded :
+		// FF 58 04 04 02 18 08
+		// There are 24 MIDI Clocks per quarter-note, hence cc=24 (0x18).
+		// 
+		// A time signature of 6/8, with a metronome click every 3rd 1/8 note, would be encoded :
+		// FF 58 04 06 03 24 08
+		// Remember, a 1/4 note is 24 MIDI Clocks, therefore a bar of 6/8 is 72 MIDI Clocks.
+		
+		// KeySignature	= 0x59, //FF 59 02 sf mi
+		// sf is a byte specifying the number of flats (-ve) or sharps (+ve) that identifies the key signature (-7 = 7 flats, -1 = 1 flat, 0 = key of C, 1 = 1 sharp, etc).
+		// mi is a byte specifying a major (0) or minor (1) key.
+		
 		public enum MetaEventType
 		{
 			None = int.MinValue,
-			SequenceNumber					= 0x00,
-			TextEvent						= 0x01,
-			CopyrightNotice					= 0x02,
-			SequenceOrTrackName				= 0x03,
-			InstrumentName					= 0x04,
-			LyricText						= 0x05,
-			MarkerText						= 0x06,
-			CuePoint						= 0x07,
+			SequenceNumber					= 0x00,	//FF 00 02 ss ss or FF 00 00
+			TextEvent						= 0x01, //FF 01 len TEXT (arbitrary TEXT)
+			CopyrightNotice					= 0x02, //FF 02 len TEXT
+			SequenceOrTrackName				= 0x03, //FF 03 len TEXT
+			InstrumentName					= 0x04, //FF 04 len TEXT
+			LyricText						= 0x05, //FF 05 len TEXT
+			MarkerText						= 0x06, //FF 06 len TEXT (e.g. Loop point)
+			CuePoint						= 0x07, //FF 07 len TEXT (e.g. .wav file name)
+			ProgramName						= 0x08, //FF 08 len TEXT (PIANO, FLUTE,...)
+			DeviceName						= 0x09, //FF 09 len TEXT (MIDI Out 1, MIDI Out 2)
 			MidiChannelPrefixAssignment		= 0x20,
 			MidiPort						= 0x21,
-			EndOfTrack						= 0x2F,
-			Tempo							= 0x51,
-			SmpteOffset						= 0x54,
-			TimeSignature					= 0x58,
-			KeySignature					= 0x59,
-			SequencerSpecificEvent			= 0x7F
+			EndOfTrack						= 0x2F, //FF 2F 00
+			Tempo							= 0x51, //FF 51 03 tt tt tt microseconds
+			SmpteOffset						= 0x54, //FF 54 05 hr mn se fr ff
+			TimeSignature					= 0x58, //FF 58 04 nn dd cc bb
+			KeySignature					= 0x59, //FF 59 02 sf mi
+			SequencerSpecificEvent			= 0x7F  //FF 7F len data
 		}
 		
 		#region Enum Helper Methods
+		public static bool TryParse<TEnum>(string value, bool ignoreCase, ref TEnum result) where TEnum : struct
+		{
+			bool parsed = false;
+			try
+			{
+				result = (TEnum)Enum.Parse(typeof(TEnum), value, ignoreCase);
+				parsed = true;
+			}
+			catch { }
+			return parsed;
+		}
+		
 		public static string GetEventTypeString(MidiEventType value)
 		{
 			return Enum.GetName(typeof(MidiEventType), value);
@@ -306,11 +339,10 @@ namespace gnu.sound.midi
 				}
 			}
 			if (acceptable) {
-				return "\"" + text + "\"";
+				return text;
 			}
 
 			StringBuilder sb = t_cachedBuilder ?? (t_cachedBuilder = new StringBuilder(text.Length * 2 + 2));
-			sb.Append('\"');
 			foreach (char c in text) {
 				if (IsValidInTextString(c)) {
 					sb.Append(c);
@@ -319,7 +351,6 @@ namespace gnu.sound.midi
 					sb.AppendFormat(CultureInfo.InvariantCulture, "\\u{0:X4}", (int)c);
 				}
 			}
-			sb.Append('\"');
 			string result = sb.ToString();
 			sb.Clear();
 			return result;

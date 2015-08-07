@@ -2,7 +2,10 @@
 // Copyright (C) 2005 Free Software Foundation, Inc.
 
 using System;
+using System.IO;
 using System.Collections.Generic;
+
+using gnu.sound.midi.info;
 
 namespace gnu.sound.midi
 {
@@ -221,5 +224,80 @@ namespace gnu.sound.midi
 		{
 			return string.Format("[Type={0}, DivisionType={1}, Resolution={2}, Tracks={3}]", midiFileType, divisionType, resolution, tracks.Count);
 		}
+		
+		#region Util methods
+		public void SaveGenerateMidiCode(string outputFilePath) {
+			
+			// generate code
+			int trackno = 1;
+			using (var outfile = new StreamWriter(outputFilePath, false)) {
+
+				string midiTypeName = Enum.GetName(typeof(MidiHelper.MidiFormat), midiFileType);
+				
+				outfile.WriteLine("public static Sequence GenerateMidi() {");
+				outfile.WriteLine();
+				outfile.WriteLine("\t// Generate midi file");
+				outfile.WriteLine("\tconst int resolution = {0};", this.Resolution);
+				outfile.WriteLine("\tvar sequence = new Sequence({0}, resolution, 0, (int) MidiHelper.MidiFormat.{1});", this.DivisionType, midiTypeName);
+				
+				foreach (var track in this.Tracks) {
+					outfile.WriteLine("\n\tvar track{0} = sequence.CreateTrack();", trackno);
+					foreach(var ev in track.Events) {
+						long tick = ev.Tick;
+						int beat = (int) tick / this.Resolution;
+						int tickRemainder = (int) tick % this.Resolution;
+
+						MidiMessage msg = ev.Message;
+						if (msg is MetaMessage) {
+							int metaMessageType = ((MetaMessage)msg).GetMetaMessageType();
+							string typeName = Enum.GetName(typeof(MidiHelper.MetaEventType), metaMessageType);
+							var metaElements = MetaEvent.GetMetaStrings((MetaMessage) msg);
+							string metaCodeString = MetaEvent.CreateMetaEventGeneratedCode((MetaMessage) msg, tick, this.Resolution);
+							
+							//outfile.WriteLine("\ttrack{0}.Add(MetaEvent.CreateMetaEvent((int) MidiHelper.MetaEventType.{1}, \"{2}\", {3}, resolution));", trackno, typeName, metaElements[2], tick);
+							outfile.WriteLine("\ttrack{0}.Add({1});", trackno, metaCodeString);
+							
+						} else if (msg is ShortMessage) {
+							int shortMessageType = ((ShortMessage)msg).GetCommand();
+							string typeName = Enum.GetName(typeof(MidiHelper.MidiEventType), shortMessageType);
+							var shortElements = ShortEvent.GetShortStrings((ShortMessage) msg, false);
+							int channel = (int) shortElements[5];
+							string shortCodeString = ShortEvent.CreateShortEventGeneratedCode((ShortMessage) msg, true, tick);
+							
+							//outfile.WriteLine("\ttrack{0}.Add(ShortEvent.CreateShortEvent((int) MidiHelper.MidiEventType.{1}, {2}, NoteNames.GetNoteNumber(\"{3}\"), {4}, {5}));", trackno, typeName, channel, shortElements[1], shortElements[2], tick);
+							outfile.WriteLine("\ttrack{0}.Add({1}", trackno, shortCodeString);
+						} else if (msg is SysexMessage) {
+							outfile.WriteLine("\t// We don't support SysexMessage now");
+						}
+					}
+					trackno++;
+					
+				}
+				
+				outfile.WriteLine("\n\treturn sequence;");
+				outfile.WriteLine("}");
+			}
+		}
+		
+		public void DumpMidi(string outputFilePath) {
+			
+			int trackno = 1;
+			using (var outfile = new StreamWriter(outputFilePath, false)) {
+				foreach (var track in this.Tracks) {
+					outfile.WriteLine("Track {0}", trackno);
+					foreach(var ev in track.Events) {
+						long tick = ev.Tick;
+						int beat = (int) tick / this.Resolution;
+						int tickRemainder = (int) tick % this.Resolution;
+
+						MidiMessage msg = ev.Message;
+						outfile.WriteLine("{0:0000}:{1:000} {2}", beat, tickRemainder, msg);
+					}
+					trackno++;
+				}
+			}
+		}
+		
+		#endregion
 	}
 }

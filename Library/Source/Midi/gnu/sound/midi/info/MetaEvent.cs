@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace gnu.sound.midi.info
 {
@@ -9,69 +8,7 @@ namespace gnu.sound.midi.info
 	/// jostle@users.sourceforge.net
 	public static class MetaEvent
 	{
-		private static string[] typeNames = { "SEQUENCE_NUMBER", "TEXT", "COPYRIGHT", "TRACK_NAME", "INSTRUMENT", "LYRIC", "MARKER", "CUE_POINT", "PROGRAM_NAME", "DEVICE_NAME", "END_OF_TRACK", "TEMPO", "SMPTE_OFFSET", "TIME_SIGNATURE", "KEY_SIGNATURE", "PROPRIETARY_DATA" };
-
 		// A good MIDI Files Specification: http://www.somascape.org/midi/tech/mfile.html
-		
-		// META event types
-		public const int SEQUENCE_NUMBER = 0x00; //FF 00 02 ss ss or FF 00 00
-		public const int TEXT = 0x01; //FF 01 len TEXT (arbitrary TEXT)
-		public const int COPYRIGHT = 0x02; //FF 02 len TEXT
-		public const int TRACK_NAME = 0x03; //FF 03 len TEXT
-		public const int INSTRUMENT = 0x04; //FF 04 len TEXT
-		public const int LYRIC = 0x05; //FF 05 len TEXT
-		public const int MARKER = 0x06; //FF 06 len TEXT (e.g. Loop point)
-		public const int CUE_POINT = 0x07; //FF 07 len TEXT (e.g..wav file name)
-		public const int PROGRAM_NAME = 0x08; //FF 08 len TEXT (PIANO, FLUTE,...)
-		public const int DEVICE_NAME = 0x09; //FF 09 len TEXT (MIDI Out 1, MIDI Out 2)
-		public const int END_OF_TRACK = 0x2f; //FF 2F 00
-		public const int TEMPO = 0x51; //FF 51 03 tt tt tt microseconds
-		public const int SMPTE_OFFSET = 0x54; //FF 54 05 hr mn se fr ff
-		
-		// nn is a byte specifying the numerator of the time signature (as notated).
-		// dd is a byte specifying the denominator of the time signature as a negative power of 2 (ie 2 represents a quarter-note, 3 represents an eighth-note, etc). (2^dd)
-		// cc is a byte specifying the number of MIDI clocks between metronome clicks.
-		// bb is a byte specifying the number of notated 32nd-notes in a MIDI quarter-note (24 MIDI Clocks). The usual value for this parameter is 8, though some sequencers allow the user to specify that what MIDI thinks of as a quarter note, should be notated as something else.
-		// 
-		// Examples
-		// A time signature of 4/4, with a metronome click every 1/4 note, would be encoded :
-		// FF 58 04 04 02 18 08
-		// There are 24 MIDI Clocks per quarter-note, hence cc=24 (0x18).
-		// 
-		// A time signature of 6/8, with a metronome click every 3rd 1/8 note, would be encoded :
-		// FF 58 04 06 03 24 08
-		// Remember, a 1/4 note is 24 MIDI Clocks, therefore a bar of 6/8 is 72 MIDI Clocks.
-		public const int TIME_SIGNATURE = 0x58; //FF 58 04 nn dd cc bb
-		
-		// sf is a byte specifying the number of flats (-ve) or sharps (+ve) that identifies the key signature (-7 = 7 flats, -1 = 1 flat, 0 = key of C, 1 = 1 sharp, etc).
-		// mi is a byte specifying a major (0) or minor (1) key.
-		public const int KEY_SIGNATURE = 0x59; //FF 59 02 sf mi
-		
-		public const int PROPRIETARY_DATA = 0x7f; //FF 7F len data
-		//private static readonly Dictionary<string, int> mTypeNameToValue;
-
-		/*
-		static MetaEvent()
-		{
-			mTypeNameToValue = new Dictionary<string, int>(20);
-			mTypeNameToValue["SEQUENCE_NUMBER"] = 0x00;
-			mTypeNameToValue["TEXT"] = 0x01;
-			mTypeNameToValue["COPYRIGHT"] = 0x02;
-			mTypeNameToValue["TRACK_NAME"] = 0x03;
-			mTypeNameToValue["INSTRUMENT"] = 0x04;
-			mTypeNameToValue["LYRIC"] = 0x05;
-			mTypeNameToValue["MARKER"] = 0x06;
-			mTypeNameToValue["CUE_POINT"] = 0x07;
-			mTypeNameToValue["PROGRAM_NAME"] = 0x08;
-			mTypeNameToValue["DEVICE_NAME"] = 0x09;
-			mTypeNameToValue["END_OF_TRACK"] = 0x2f;
-			mTypeNameToValue["TEMPO"] = 0x51;
-			mTypeNameToValue["SMPTE_OFFSET"] = 0x54;
-			mTypeNameToValue["TIME_SIGNATURE"] = 0x58;
-			mTypeNameToValue["KEY_SIGNATURE"] = 0x59;
-			mTypeNameToValue["PROPRIETARY_DATA"] = 0x7f;
-		}
-		 */
 		
 		/// <summary>
 		/// Get the list of META event type names
@@ -79,7 +16,7 @@ namespace gnu.sound.midi.info
 		/// <returns>the list of META event type names</returns>
 		public static string[] GetTypeNames()
 		{
-			return typeNames;
+			return  Enum.GetNames(typeof(MidiHelper.MetaEventType));
 		}
 		
 		/// <summary>
@@ -104,52 +41,52 @@ namespace gnu.sound.midi.info
 			// The returned Object array
 			// { type name, length, value string }
 			object[] result = { "M:", null, "" };
-			result[1] = Convert.ToInt32(data.Length);
+			result[1] = data.Length;
 
 			switch (type)
 			{
-				case SEQUENCE_NUMBER:
+				case (int) MidiHelper.MetaEventType.SequenceNumber:
 					result[0] = "M:SequenceNumber";
 					dumpBytes = true;
 					break;
-				case TEXT:
-					result[0] = "M:Text";
+				case (int) MidiHelper.MetaEventType.TextEvent:
+					result[0] = "M:TextEvent";
 					dumpText = true;
 					break;
-				case COPYRIGHT:
-					result[0] = "M:Copyright";
+				case (int) MidiHelper.MetaEventType.CopyrightNotice:
+					result[0] = "M:CopyrightNotice";
 					dumpText = true;
 					break;
-				case TRACK_NAME:
-					result[0] = "M:TrackName";
+				case (int) MidiHelper.MetaEventType.SequenceOrTrackName:
+					result[0] = "M:SequenceOrTrackName";
 					dumpText = true;
 					break;
-				case INSTRUMENT:
-					result[0] = "M:Instrument";
+				case (int) MidiHelper.MetaEventType.InstrumentName:
+					result[0] = "M:InstrumentName";
 					dumpText = true;
 					break;
-				case LYRIC:
-					result[0] = "M:Lyric";
+				case (int) MidiHelper.MetaEventType.LyricText:
+					result[0] = "M:LyricText";
 					dumpText = true;
 					break;
-				case MARKER:
-					result[0] = "M:Marker";
+				case (int) MidiHelper.MetaEventType.MarkerText:
+					result[0] = "M:MarkerText";
 					dumpText = true;
 					break;
-				case CUE_POINT:
+				case (int) MidiHelper.MetaEventType.CuePoint:
 					result[0] = "M:CuePoint";
 					dumpText = true;
 					break;
-				case PROGRAM_NAME:
+				case (int) MidiHelper.MetaEventType.ProgramName:
 					result[0] = "M:ProgramName";
 					dumpText = true;
 					break;
-				case DEVICE_NAME:
+				case (int) MidiHelper.MetaEventType.DeviceName:
 					result[0] = "M:DeviceName";
 					dumpText = true;
 					break;
-				case SMPTE_OFFSET:
-					result[0] = "M:SMPTEOffset";
+				case (int) MidiHelper.MetaEventType.SmpteOffset:
+					result[0] = "M:SmpteOffset";
 					// Hour, Minute, Second, Frame, Field
 					// hr mn se fr ff
 					result[2] = string.Format("{0:00}:{1:00}:{2:00}:{3:00}:{4:00}",
@@ -159,7 +96,7 @@ namespace gnu.sound.midi.info
 					                          data[3] & 0x00ff,
 					                          data[4] & 0x00ff);
 					break;
-				case TIME_SIGNATURE:
+				case (int) MidiHelper.MetaEventType.TimeSignature:
 					result[0] = "M:TimeSignature";
 					int nn = (data[0] & 0x00ff); // numerator
 					int dd = (int)(Math.Pow(2, (data[1] & 0x00ff))); // denominator
@@ -169,20 +106,20 @@ namespace gnu.sound.midi.info
 						+ cc + " clicks per metronome, "
 						+ bb + " 32nd notes per quarter-note";
 					break;
-				case KEY_SIGNATURE:
+				case (int) MidiHelper.MetaEventType.KeySignature:
 					result[0] = "M:KeySignature";
 					result[2] = KeySignatures.GetKeyName(data);
 					break;
-				case TEMPO:
+				case (int) MidiHelper.MetaEventType.Tempo:
 					result[0] = "M:Tempo";
 					int bpm = MicroSecsToBpm(data);
 					result[2] = string.Format("{0}", bpm);
 					break;
-				case END_OF_TRACK:
+				case (int) MidiHelper.MetaEventType.EndOfTrack:
 					result[0] = "M:EndOfTrack";
 					break;
-				case PROPRIETARY_DATA:
-					result[0] = "M:ProprietaryData";
+				case (int) MidiHelper.MetaEventType.SequencerSpecificEvent:
+					result[0] = "M:SequencerSpecificEvent";
 					dumpBytes = true;
 					break;
 				default:
@@ -193,8 +130,7 @@ namespace gnu.sound.midi.info
 
 			if (dumpText)
 			{
-				string text = MidiHelper.GetStringWithoutNewlines(data);
-				result[2] = text;
+				result[2] = MidiHelper.GetStringWithoutNewlines(data);
 			}
 
 			if (dumpBytes)
@@ -341,6 +277,8 @@ namespace gnu.sound.midi.info
 			byte beatValue = GetBeatValue(value);		// 			dd is a byte specifying the denominator of the time signature as a negative power of 2.
 			byte oneBar = SafeParseByte(value);			// e.g. 8
 			
+			resolution = 96;
+			
 			// Try to generate a useful metronome click
 			// How many MIDI clocks are there in each beat
 			int midiClocksPerBeat = resolution / oneBar;
@@ -425,7 +363,7 @@ namespace gnu.sound.midi.info
 		public static bool IsEditable(MetaMessage mess)
 		{
 			int type = mess.GetMetaMessageType();
-			return ((type >= 1 && type <= 9) || type == TEMPO || type == KEY_SIGNATURE);
+			return ((type >= 1 && type <= 9) || type == (int) MidiHelper.MetaEventType.Tempo || type == (int) MidiHelper.MetaEventType.KeySignature);
 		}
 		
 		/// <summary>
@@ -436,9 +374,9 @@ namespace gnu.sound.midi.info
 		/// each character to a <code>byte</code> in the array but the
 		/// following message types are handled specially
 		/// <dl>
-		/// <dt>TEMPO</dt>
+		/// <dt>Tempo</dt>
 		/// <dd>an integer value with an optional "bpm" suffix. e.g. 120bpm</dd>
-		/// <dt>SMPTE_OFFSET</dt>
+		/// <dt>SmpteOffset</dt>
 		/// <dd>a string in the form <code>h:m:s:f:d</code> where<br>
 		/// h=hours m=minutes s=seconds f=frames d=fields<br>
 		/// If fewer than 5 values are given then the parser treats them as<br>
@@ -449,14 +387,14 @@ namespace gnu.sound.midi.info
 		/// 5. <b>h:m:s:f:d</b><br>
 		/// and the unspecified values are set to zero.
 		/// </dd>
-		/// <dt>TIME_SIGNATURE</dt>
+		/// <dt>TimeSignature</dt>
 		/// <dd>a time signature string in the format <code>n[/d]</code> where<br>
 		/// n=numerator d=denominator<br>
 		/// If only <code>n</code> is given then <code>d</code> defaults to 4</dd>
-		/// <dt>KEY_SIGNATURE</dt>
+		/// <dt>KeySignature</dt>
 		/// <dd>one of the following key signature strings<br>
 		/// <b>Cb Gb Db Ab Eb Bb F C G D A E B F# C#</b/></dd>
-		/// <dt>SEQUENCE_NUMBER and PROPRIETARY_DATA</dt>
+		/// <dt>SequenceNumber and SequencerSpecificEvent</dt>
 		/// <dd>a space-separated list of values that are parsed into
 		/// a <code>byte[]</code> using <code>Convert.ToByte()</code><br>
 		/// If any value cannot be parsed into a <code>byte</code>
@@ -474,20 +412,20 @@ namespace gnu.sound.midi.info
 			{
 				data = MidiHelper.GetBytes(value);
 			}
-			else if (type == TEMPO)
+			else if (type == (int) MidiHelper.MetaEventType.Tempo)
 			{
 				int bpm = ParseTempo(value);
 				data = BpmToMicroSecs(bpm);
 			}
-			else if (type == TIME_SIGNATURE)
+			else if (type == (int) MidiHelper.MetaEventType.TimeSignature)
 			{
 				data = ParseTimeSignature(value, ticksPerBeat);
 			}
-			else if (type == KEY_SIGNATURE)
+			else if (type == (int) MidiHelper.MetaEventType.KeySignature)
 			{
 				data = MidiHelper.ConvertSBytes(KeySignatures.GetKeyValues(value));
 			}
-			else if (type == SMPTE_OFFSET)
+			else if (type == (int) MidiHelper.MetaEventType.SmpteOffset)
 			{
 				data = ParseSMPTEOffset(value);
 			}
@@ -505,23 +443,11 @@ namespace gnu.sound.midi.info
 				mess.SetMessage(type, data, data.Length);
 			}
 		}
-
-		public static bool TryParse<TEnum>(string value, bool ignoreCase, ref TEnum result) where TEnum : struct
-		{
-			bool parsed = false;
-			try
-			{
-				result = (TEnum)Enum.Parse(typeof(TEnum), value, ignoreCase);
-				parsed = true;
-			}
-			catch { }
-			return parsed;
-		}
 		
 		/// <summary>
 		/// Create a Midi Meta event
 		/// </summary>
-		/// <param name="type">the type of the event as defined by the array returned from getTypeNames()</param>
+		/// <param name="type">the type of the event as defined by the array returned from GetTypeNames()</param>
 		/// <param name="data">a String that represents the data for the event.</param>
 		/// <see cref="SetMetaData"/> for details.
 		/// <param name="tick">the position of the event in the sequence</param>
@@ -531,18 +457,28 @@ namespace gnu.sound.midi.info
 		{
 			var mm = new MetaMessage();
 			
-			// TODO: warn if the enum wasn't found?
 			MidiHelper.MetaEventType e = MidiHelper.MetaEventType.None;
-			if ( TryParse(type, true, ref e) )
+			if ( MidiHelper.TryParse(type, true, ref e) )
 			{
 				mm.SetMessage((int)e, null, 0);
 				SetMetaData(mm, data, ticksPerBeat);
+			} else {
+				throw new InvalidProgramException(string.Format("Could not parse the passed meta event {0}", type));
 			}
 			
 			var ev = new MidiEvent(mm, tick);
 			return ev;
 		}
 
+		/// <summary>
+		/// Create a Midi Meta event
+		/// </summary>
+		/// <param name="type">the type of the event as an int</param>
+		/// <param name="data">a String that represents the data for the event.</param>
+		/// <see cref="SetMetaData"/> for details.
+		/// <param name="tick">the position of the event in the sequence</param>
+		/// <param name="ticksPerBeat">the tick resolution of the sequence</param>
+		/// <returns>the created Midi Meta event</returns>
 		public static MidiEvent CreateMetaEvent(int type, string data, long tick, int ticksPerBeat)
 		{
 			var mm = new MetaMessage();
@@ -550,6 +486,73 @@ namespace gnu.sound.midi.info
 			SetMetaData(mm, data, ticksPerBeat);
 			var ev = new MidiEvent(mm, tick);
 			return ev;
+		}
+		
+		/// <summary>
+		/// Create a C# code line for this meta event
+		/// </summary>
+		/// <param name="mess">the META message to process</param>
+		/// <param name="tick">the position of the event in the sequence</param>
+		/// <param name="ticksPerBeat">the tick resolution of the sequence</param>
+		/// <returns>a C# code line</returns>
+		public static string CreateMetaEventGeneratedCode(MetaMessage mess, long tick, int ticksPerBeat) {
+			
+			int type = mess.GetMetaMessageType();
+			string typeName = Enum.GetName(typeof(MidiHelper.MetaEventType), type);
+			byte[] data = mess.GetMetaMessageData();
+			int dataLength = data.Length;
+
+			string value = "";
+			
+			switch (type)
+			{
+					// First handle the text based events (0x01 - 0x09)
+				case (int) MidiHelper.MetaEventType.TextEvent:
+				case (int) MidiHelper.MetaEventType.CopyrightNotice:
+				case (int) MidiHelper.MetaEventType.SequenceOrTrackName:
+				case (int) MidiHelper.MetaEventType.InstrumentName:
+				case (int) MidiHelper.MetaEventType.LyricText:
+				case (int) MidiHelper.MetaEventType.MarkerText:
+				case (int) MidiHelper.MetaEventType.CuePoint:
+				case (int) MidiHelper.MetaEventType.ProgramName:
+				case (int) MidiHelper.MetaEventType.DeviceName:
+					string text = MidiHelper.GetString(data);
+					value = MidiHelper.TextString(text);
+					break;
+					
+					// And then the special events
+				case (int) MidiHelper.MetaEventType.SmpteOffset:
+					// Hour, Minute, Second, Frame, Field
+					// hr mn se fr ff
+					value = string.Format("{0:00}:{1:00}:{2:00}:{3:00}:{4:00}",
+					                      data[0] & 0x00ff,
+					                      data[1] & 0x00ff,
+					                      data[2] & 0x00ff,
+					                      data[3] & 0x00ff,
+					                      data[4] & 0x00ff);
+					break;
+				case (int) MidiHelper.MetaEventType.TimeSignature:
+					int nn = (data[0] & 0x00ff); // numerator
+					int dd = (int)(Math.Pow(2, (data[1] & 0x00ff))); // denominator
+					int cc = (data[2] & 0x00ff); // midiClocksPerMetronomeClick
+					int bb = (data[3] & 0x00ff); // notated 32nd-notes in a MIDI quarter-note
+					value = nn + "/" + dd;
+					break;
+				case (int) MidiHelper.MetaEventType.KeySignature:
+					value = KeySignatures.GetKeyName(data);
+					break;
+				case (int) MidiHelper.MetaEventType.Tempo:
+					int bpm = MicroSecsToBpm(data);
+					value = string.Format("{0}", bpm);
+					break;
+				case (int) MidiHelper.MetaEventType.EndOfTrack:
+					break;
+				default:
+					value = MidiHelper.ByteArrayToString(data, " ");
+					break;
+			}
+			
+			return string.Format("MetaEvent.CreateMetaEvent((int) MidiHelper.MetaEventType.{0}, \"{1}\", {2}, {3})", typeName, value, tick, ticksPerBeat);
 		}
 		
 		private static byte SafeParseByte(string s)

@@ -50,18 +50,21 @@ namespace gnu.sound.midi
 		{
 			length = GetDataLength(status);
 			length++;
-			if (data == null || data.Length < length)
+			if (data == null || data.Length < length) {
 				data = new byte[length];
+			}
+			
 			data[0] = (byte) status;
-			if (length > 1)
-			{
-				if (data1 < 0 || data1 > 127)
+			if (length > 1) {
+				if (data1 < 0 || data1 > 127) {
 					throw new InvalidMidiDataException("data1 (" + data1 + ") must be between 0 and 127.");
+				}
 				data[1] = (byte) data1;
-				if (length > 2)
-				{
-					if (data2 < 0 || data2 > 127)
+				
+				if (length > 2) {
+					if (data2 < 0 || data2 > 127) {
 						throw new InvalidMidiDataException("data2 (" + data2 + ") must be between 0 and 127.");
+					}
 					data[2] = (byte) data2;
 				}
 			}
@@ -204,7 +207,8 @@ namespace gnu.sound.midi
 			byte[] messageData = GetMessage();
 			string hex = MidiHelper.ByteArrayToString(messageData, ",");
 
-			return string.Format("{0} [{1}:{2}: {3}]", metaStrings, command, commandName, hex);
+			//return string.Format("{0} [{1}:{2}: {3}]", metaStrings, command, commandName, hex);
+			return string.Format("{0}", metaStrings);
 		}
 	}
 }
