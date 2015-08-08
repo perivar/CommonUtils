@@ -50,6 +50,7 @@ namespace gnu.sound.midi
 			TimeCodeQuarterFrame  = 0xF1,	// System Common - MIDI Time Code Quarter Frame
 			SongPosition          = 0xF2,	// System Common - Song Position Pointer
 			SongSelect            = 0xF3,	// System Common - Song Select
+			BusSelect             = 0xF5, 	// FIXME: unofficial bus select. Not in spec??
 			TuneRequest           = 0xF6,	// System Common - Tune Request
 			EndOfExclusive        = 0xF7,	// End Of Exclusive message.
 			Clock                 = 0xF8,	// System Real Time - Timing Clock

@@ -118,7 +118,7 @@ namespace gnu.sound.midi
 				case (int) MidiHelper.MidiEventType.ProgramChange:
 				case (int) MidiHelper.MidiEventType.AfterTouchChannel:
 				case (int) MidiHelper.MidiEventType.SongSelect:
-				case 0xF5: // FIXME: unofficial bus select. Not in spec??
+				case (int) MidiHelper.MidiEventType.BusSelect:
 					return 1;
 
 				case (int) MidiHelper.MidiEventType.TuneRequest:

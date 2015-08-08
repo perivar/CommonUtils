@@ -110,7 +110,6 @@ namespace CommonUtils.Audio
 		// DSP processing the buffer variables
 		private DSPPROC _dspProc; // make it global, so that the GC can not remove it
 		IDSPPlugin dspPlugin = null;
-		private DSP_BufferStream _bufferStream;
 		
 		#region Get Field Methods
 		public string FileFilter {

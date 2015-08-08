@@ -180,7 +180,7 @@ namespace gnu.sound.midi.file
 							case (int) MidiHelper.MidiEventType.ProgramChange:
 							case (int) MidiHelper.MidiEventType.AfterTouchChannel:
 							case (int) MidiHelper.MidiEventType.SongSelect:
-							case 0xF5: // FIXME: unofficial bus select. Not in spec??
+							case (int) MidiHelper.MidiEventType.BusSelect:
 								sm = new ShortMessage();
 								sm.SetMessage(statusByte, din.ReadSByte(), 0);
 								runningStatus = statusByte;
@@ -217,7 +217,7 @@ namespace gnu.sound.midi.file
 										case (int) MidiHelper.MidiEventType.ProgramChange:
 										case (int) MidiHelper.MidiEventType.AfterTouchChannel:
 										case (int) MidiHelper.MidiEventType.SongSelect:
-										case 0xF5: // FIXME: unofficial bus select. Not in spec??
+										case (int) MidiHelper.MidiEventType.BusSelect:
 											sm = new ShortMessage();
 											sm.SetMessage(runningStatus, statusByte, 0);
 											continue;
@@ -316,6 +316,6 @@ namespace gnu.sound.midi.file
 			{
 				stream.Close();
 			}
-		}		
+		}
 	}
 }

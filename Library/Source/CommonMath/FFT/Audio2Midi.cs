@@ -1032,7 +1032,6 @@ namespace CommonUtils.CommonMath.FFT
 
 			public static void GaussWindow(float[] samples)
 			{
-				const float a = 2.5f;
 				for (int n = 0; n < samples.Length; n++)
 				{
 					samples[n] *= (float) Math.Pow(Math.E, -0.5f * Math.Pow((n - (samples.Length - 1) / 2) / (0.1f * (samples.Length - 1) / 2), 2));

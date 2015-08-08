@@ -565,7 +565,7 @@ namespace gnu.sound.midi.info
 			byte t = defVal;
 			try {
 				t = Convert.ToByte(s);
-			} catch (Exception e) {
+			} catch {
 				// DO NOTHING - just use the default
 			}
 			return t;
