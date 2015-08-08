@@ -498,7 +498,7 @@ namespace gnu.sound.midi.info
 		public static string CreateMetaEventGeneratedCode(MetaMessage mess, long tick, int ticksPerBeat) {
 			
 			int type = mess.GetMetaMessageType();
-			string typeName = Enum.GetName(typeof(MidiHelper.MetaEventType), type);
+			string typeName = MidiHelper.GetMetaString(type);
 			byte[] data = mess.GetMetaMessageData();
 			int dataLength = data.Length;
 

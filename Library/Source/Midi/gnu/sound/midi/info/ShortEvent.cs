@@ -135,7 +135,7 @@ namespace gnu.sound.midi.info
 		public static string CreateShortEventGeneratedCode(ShortMessage mess, bool inFlats, long tick) {
 			
 			int cmd = mess.GetCommand();
-			string typeName = Enum.GetName(typeof(MidiHelper.MidiEventType), cmd);
+			string typeName = MidiHelper.GetEventTypeString(cmd);
 
 			int st = mess.GetStatus();
 			int d1 = mess.GetData1();

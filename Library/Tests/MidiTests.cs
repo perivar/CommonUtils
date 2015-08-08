@@ -19,21 +19,8 @@ namespace CommonUtils.Tests
 			var fileIn = new FileInfo(fileName);
 			var sequence = new MidiFileReader().GetSequence(fileIn);
 			
-			int trackno = 1;
 			string outputTextPath = fileIn.Name + ".txt";
-			using (var outfile = new StreamWriter(outputTextPath, false)) {
-				foreach (var track in sequence.Tracks) {
-					outfile.WriteLine("Track {0}", trackno);
-					foreach(var ev in track.Events) {
-						long tick = ev.Tick;
-						int beat = (int) tick / sequence.Resolution;
-						int tickRemainder = (int) tick % sequence.Resolution;
-						MidiMessage msg = ev.Message;
-						outfile.WriteLine("{0:0000}:{1:000} {2}", beat, tickRemainder, msg);
-					}
-					trackno++;
-				}
-			}
+			sequence.DumpMidi(outputTextPath);
 			
 			string outputFileName = fileIn.DirectoryName + "\\" + fileIn.Name + "_generated.mid";
 			var fileOut = new FileInfo(outputFileName);

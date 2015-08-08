@@ -2,6 +2,8 @@
 using System.Linq;
 using System.Text;
 using System.Globalization;
+using System.IO;
+using System.Net;
 
 namespace gnu.sound.midi
 {
@@ -13,11 +15,13 @@ namespace gnu.sound.midi
 	/// </summary>
 	public static class MidiHelper
 	{
-		//--Constants
-		public const uint MICRO_SECONDS_PER_MINUTE = 60000000; //microseconds in a minute
-		public const int MAX_CHANNEL = 15;
+		// Time Constants
+		public const uint MICRO_SECONDS_PER_MINUTE = 60000000; // microseconds in a minute
+
+		// Channels Constants
 		public const int MIN_CHANNEL = 0;
-		public const int DRUM_CHANNEL = 9;
+		public const int MAX_CHANNEL = 0xF;
+		public const int DRUM_CHANNEL = 9; // Channel 10 (1-based) is reserved for the percussion map
 		
 		// Midi format enum
 		public enum MidiTimeFormat
@@ -182,7 +186,32 @@ namespace gnu.sound.midi
 			return parsed;
 		}
 		
+		public static string GetMidiTimeFormatString(MidiTimeFormat value)
+		{
+			return Enum.GetName(typeof(MidiTimeFormat), value);
+		}
+
+		public static string GetMidiTimeFormatString(int value)
+		{
+			return Enum.GetName(typeof(MidiTimeFormat), value);
+		}
+
+		public static string GetMidiFormatString(MidiFormat value)
+		{
+			return Enum.GetName(typeof(MidiFormat), value);
+		}
+
+		public static string GetMidiFormatString(int value)
+		{
+			return Enum.GetName(typeof(MidiFormat), value);
+		}
+		
 		public static string GetEventTypeString(MidiEventType value)
+		{
+			return Enum.GetName(typeof(MidiEventType), value);
+		}
+
+		public static string GetEventTypeString(int value)
 		{
 			return Enum.GetName(typeof(MidiEventType), value);
 		}
@@ -192,7 +221,16 @@ namespace gnu.sound.midi
 			return Enum.GetName(typeof(ControllerType), value);
 		}
 		
+		public static string GetControllerString(int value)
+		{
+			return Enum.GetName(typeof(ControllerType), value);
+		}
+
 		public static string GetMetaString(MetaEventType value)
+		{
+			return Enum.GetName(typeof(MetaEventType), value);
+		}
+		public static string GetMetaString(int value)
 		{
 			return Enum.GetName(typeof(MetaEventType), value);
 		}
@@ -305,20 +343,7 @@ namespace gnu.sound.midi
 		}
 		#endregion
 		
-		#region C# Generator Utils taken from the MidiSharp project
-		/// <summary>Create a string of C# code for creating a byte array containing the specified data.</summary>
-		/// <param name="data">The array of data.</param>
-		/// <returns>A string of C# code for allocating a byte array containing the specified data.</returns>
-		public static string ByteArrayCreationString(byte[] data)
-		{
-			var sb = new StringBuilder();
-			sb.AppendFormat(CultureInfo.InvariantCulture, "new byte[{0}]{{", data.Length);
-			for (int i = 0; i < data.Length; i++) {
-				sb.AppendFormat(CultureInfo.InvariantCulture, "{0}{1}", i > 0 ? "," : "", data[i]);
-			}
-			sb.Append("}");
-			return sb.ToString();
-		}
+		#region C# Generator Utils taken from the MidiSharp project by Stephen Toub
 		
 		[ThreadStatic]
 		private static StringBuilder t_cachedBuilder;
@@ -329,6 +354,7 @@ namespace gnu.sound.midi
 		/// </summary>
 		/// <param name="text">The text to output.</param>
 		/// <returns>The text put into a string.</returns>
+		/// <remarks>This is based on the excellent MidiSharp package by Stephen Toub.</remarks>
 		public static string TextString(string text)
 		{
 			bool acceptable = true;
@@ -372,6 +398,21 @@ namespace gnu.sound.midi
 				(Char.IsPunctuation(c) && c != '\\' && c != '\"' && c != '{');
 		}
 		#endregion
+
+		/// <summary>
+		/// Return an URL as a Stream
+		/// </summary>
+		/// <param name="url">url</param>
+		/// <returns>Stream</returns>
+		public static Stream GetStreamFromUrl(string url)
+		{
+			byte[] data = null;
+
+			using (var wc = new System.Net.WebClient())
+				data = wc.DownloadData(url);
+
+			return new MemoryStream(data);
+		}
 
 	}
 }

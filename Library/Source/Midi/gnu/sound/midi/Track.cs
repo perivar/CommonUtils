@@ -24,7 +24,18 @@ namespace gnu.sound.midi
 		}
 
 		/// <summary>
-		/// Add a new event to this track.  Specific events may only be added once.
+		/// Initializes the track with a copy of the data in another track.
+		/// </summary>
+		/// <returns>The track to copy.</returns>
+		public Track(Track source)
+		{
+			foreach (var e in source.Events) {
+				this.Add(e.DeepClone());
+			}
+		}
+		
+		/// <summary>
+		/// Add a new event to this track. Specific events may only be added once.
 		/// The event will be inserted into the appropriate spot in the event list
 		/// based on its timecode.
 		/// <param name="event">the event to add</param>
@@ -39,8 +50,9 @@ namespace gnu.sound.midi
 
 				long targetTick = @event.Tick;
 				int i = events.Count - 1;
-				while (i >= 0 && (((MidiEvent)events[i]).Tick > targetTick))
+				while (i >= 0 && (((MidiEvent)events[i]).Tick > targetTick)) {
 					i--;
+				}
 				events.Insert(i+1, @event);
 				return true;
 			}
@@ -105,10 +117,27 @@ namespace gnu.sound.midi
 			}
 		}
 		
+		/// <summary>Gets whether an end of track event has been added.</summary>
+		public bool HasEndOfTrack
+		{
+			get
+			{
+				if (events.Count == 0) return false;
+				
+				MidiMessage msg = events[events.Count-1].Message;
+				if (msg is MetaMessage) {
+					int type = ((MetaMessage)msg).GetMetaMessageType();
+					if (type == (int) MidiHelper.MetaEventType.EndOfTrack) {
+						return true;
+					}
+				}
+				return false;
+			}
+		}
+		
 		public override string ToString()
 		{
-			return string.Format("[Track Events={0}]", EventCount());
+			return string.Format("[Events={0}, Ticks:{1}]", EventCount(), Ticks());
 		}
-
 	}
 }

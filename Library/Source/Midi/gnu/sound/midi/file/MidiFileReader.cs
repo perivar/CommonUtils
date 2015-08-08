@@ -3,7 +3,6 @@
 
 using System;
 using System.IO;
-using System.Net;
 
 namespace gnu.sound.midi.file
 {
@@ -88,11 +87,11 @@ namespace gnu.sound.midi.file
 
 		/// <summary>
 		/// Get the MidiFileFormat from the given URL.
-		/// <see cref="gnu.sound.midi.spi.MidiFileReader#GetMidiFileFormat(java.net.URL)"/>
+		/// <see cref="gnu.sound.midi.spi.MidiFileReader#GetMidiFileFormat(URL)"/>
 		/// </summary>
 		public override MidiFileFormat GetMidiFileFormat(string url)
 		{
-			Stream stream = GetStreamFromUrl(url);
+			Stream stream = MidiHelper.GetStreamFromUrl(url);
 			try
 			{
 				return GetMidiFileFormat(stream);
@@ -126,7 +125,6 @@ namespace gnu.sound.midi.file
 		/// </summary>
 		public override Sequence GetSequence(Stream stream)
 		{
-			
 			// Good midi spec:
 			// http://www.somascape.org/midi/tech/mfile.html
 			// http://www.ccarh.org/courses/253/handout/smf/
@@ -288,11 +286,11 @@ namespace gnu.sound.midi.file
 		
 		/// <summary>
 		/// Get the MIDI Sequence found at the given URL.
-		/// <see cref="gnu.sound.midi.spi.MidiFileReader#GetSequence(java.net.URL)"/>
+		/// <see cref="gnu.sound.midi.spi.MidiFileReader#GetSequence(URL)"/>
 		/// </summary>
 		public override Sequence GetSequence(string url)
 		{
-			Stream stream = GetStreamFromUrl(url);
+			Stream stream = MidiHelper.GetStreamFromUrl(url);
 			try
 			{
 				return GetSequence(stream);
@@ -318,18 +316,6 @@ namespace gnu.sound.midi.file
 			{
 				stream.Close();
 			}
-		}
-
-		// TODO: move this to a util class
-		private static Stream GetStreamFromUrl(string url)
-		{
-			byte[] data = null;
-
-			using (var wc = new System.Net.WebClient())
-				data = wc.DownloadData(url);
-
-			return new MemoryStream(data);
-		}
-		
+		}		
 	}
 }

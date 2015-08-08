@@ -10,7 +10,7 @@ namespace gnu.sound.midi
 	/// @author Anthony Green (green@redhat.com)
 	/// @since 1.3
 	public class MetaMessage : MidiMessage
-	{	
+	{
 		/// <summary>
 		/// The META status code.  Only valid for MIDI files, not the wire protocol.
 		/// </summary>
@@ -104,7 +104,7 @@ namespace gnu.sound.midi
 		}
 
 		/// <summary>
-		/// Get the meta message type (as an int) 
+		/// Get the meta message type (as an int)
 		/// <returns>the meta message type (as an int)</returns>
 		/// </summary>
 		public int GetMetaMessageType()
@@ -149,7 +149,7 @@ namespace gnu.sound.midi
 			string metaStrings = string.Format("{0} '{2}' ({1} bytes)", meta[0], meta[1], meta[2]);
 			
 			int messageType = GetMetaMessageType();
-			string typeName = Enum.GetName(typeof(MidiHelper.MetaEventType), messageType);
+			string typeName = MidiHelper.GetMetaString(messageType);
 			
 			byte[] messageData = GetMetaMessageData();
 			string hex = MidiHelper.ByteArrayToString(messageData, ",");

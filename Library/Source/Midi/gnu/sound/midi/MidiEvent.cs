@@ -46,6 +46,14 @@ namespace gnu.sound.midi
 			}
 		}
 
+		/// <summary>
+		/// Creates a deep copy of the MIDI event.
+		/// </summary>
+		/// <returns>A deep clone of the MIDI event.</returns>
+		public MidiEvent DeepClone() {
+			return new MidiEvent((MidiMessage) message.Clone(), tick);
+		}
+		
 		public override string ToString()
 		{
 			return string.Format("[{0}] {1}", tick, message);
