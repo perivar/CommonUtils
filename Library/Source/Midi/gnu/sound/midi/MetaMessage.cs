@@ -145,7 +145,7 @@ namespace gnu.sound.midi
 		public override string ToString()
 		{
 			// GetMetaStrings: { type name, length, value string }
-			object[] meta = MetaEvent.GetMetaStrings(this);
+			object[] meta = this.GetMetaStrings();
 			string metaStrings = string.Format("{0} '{2}' ({1} bytes)", meta[0], meta[1], meta[2]);
 			
 			int messageType = GetMetaMessageType();

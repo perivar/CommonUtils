@@ -8,7 +8,8 @@ namespace gnu.sound.midi.info
 	/// jostle@users.sourceforge.net
 	public static class ShortEvent
 	{
-		internal static object[] GetShortStrings(ShortMessage mess, bool inFlats)
+		// extension method
+		internal static object[] GetShortStrings(this ShortMessage mess, bool inFlats)
 		{
 			// Event, Note, Value, Patch, Text, Channel
 			object[] result = { "", "", null, "", "", null };
@@ -132,7 +133,8 @@ namespace gnu.sound.midi.info
 			return ev;
 		}
 		
-		public static string CreateShortEventGeneratedCode(ShortMessage mess, bool inFlats, long tick) {
+		// extension method
+		public static string CreateShortEventGeneratedCode(this ShortMessage mess, bool inFlats, long tick) {
 			
 			int cmd = mess.GetCommand();
 			string typeName = MidiHelper.GetEventTypeString(cmd);

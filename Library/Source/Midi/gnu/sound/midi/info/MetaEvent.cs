@@ -29,7 +29,7 @@ namespace gnu.sound.midi.info
 		/// </summary>
 		/// <param name="mess">the META message to format</param>
 		/// <returns>the representation of the message</returns>
-		public static object[] GetMetaStrings(MetaMessage mess)
+		public static object[] GetMetaStrings(this MetaMessage mess)
 		{
 			// Some data is String some is a series of bytes others are neither
 			bool dumpText = false;
@@ -495,7 +495,7 @@ namespace gnu.sound.midi.info
 		/// <param name="tick">the position of the event in the sequence</param>
 		/// <param name="ticksPerBeat">the tick resolution of the sequence</param>
 		/// <returns>a C# code line</returns>
-		public static string CreateMetaEventGeneratedCode(MetaMessage mess, long tick, int ticksPerBeat) {
+		public static string CreateMetaEventGeneratedCode(this MetaMessage mess, long tick, int ticksPerBeat) {
 			
 			int type = mess.GetMetaMessageType();
 			string typeName = MidiHelper.GetMetaString(type);

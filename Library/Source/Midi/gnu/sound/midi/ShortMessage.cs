@@ -196,7 +196,7 @@ namespace gnu.sound.midi
 		public override string ToString()
 		{
 			// Event, Note, Value, Patch, Text, Channel
-			object[] meta = ShortEvent.GetShortStrings(this, false);
+			object[] meta = this.GetShortStrings(false);
 			string metaStrings = string.Format("{0}\t{1}\t{2}\t{3}\t{4}\t{5}", meta[0], meta[1], meta[2], meta[3], meta[4], meta[5]);
 			
 			int command = GetCommand();
