@@ -40,7 +40,7 @@ namespace gnu.sound.midi
 						int st = msg.GetStatus();
 						
 						// check if this is a channel message
-						if ((st & 0xf0) <= 0xf0)
+						if ( ((ShortMessage)msg).IsChannelMessage() )
 						{
 							var channel = ((ShortMessage)msg).GetChannel();
 							
@@ -49,7 +49,7 @@ namespace gnu.sound.midi
 
 							int cmd = ((ShortMessage)msg).GetCommand();
 							
-							// If the event is a NoteOn, NoteOff, or Aftertouch
+							// If the event is a NoteOn, NoteOff or Aftertouch
 							if (cmd == (int) MidiHelper.MidiEventType.NoteOff
 							    || cmd == (int) MidiHelper.MidiEventType.NoteOn
 							    || cmd == (int) MidiHelper.MidiEventType.AfterTouchPoly) {
@@ -161,12 +161,8 @@ namespace gnu.sound.midi
 							// If this event has a channel, and if we're storing tracks as channels, copy to it
 							if ((options & FormatConversionOption.CopyTrackToChannel) > 0
 							    && trackNumber >= MidiHelper.MIN_CHANNEL && trackNumber <= MidiHelper.MAX_CHANNEL) {
-
-								// get status code
-								int st = msg.GetStatus();
 								
-								// check if this is a channel message
-								if ((st & 0xf0) <= 0xf0)
+								if ( ((ShortMessage)msg).IsChannelMessage() )
 								{
 									// get the data
 									var commandByte = ((ShortMessage)msg).GetCommand();

@@ -8,10 +8,6 @@ namespace gnu.sound.midi.file
 {
 	/// A MIDI file writer.
 	/// This code writes MIDI file types 0 and 1.
-	/// There are many decent documents on the web describing the MIDI file
-	/// format.  I didn't bother looking for the official document.  If it
-	/// exists, I'm not even sure if it is freely available.  We should
-	/// update this comment if we find out anything helpful here.
 	/// @author Anthony Green (green@redhat.com)
 	public class MidiFileWriter : gnu.sound.midi.spi.MidiFileWriter
 	{
@@ -57,7 +53,7 @@ namespace gnu.sound.midi.file
 			// FIXME: division computation is incomplete.
 			int division = 0;
 			if (divisionType == Sequence.PPQ) {
-				division = resolution & 0x7fff;
+				division = resolution & 0x7FFF;
 			}
 			dos.Write((Int16)division);
 			
@@ -80,15 +76,15 @@ namespace gnu.sound.midi.file
 			int length = 0;
 			int i = 0;
 			int eventCount = track.EventCount();
-			long ptick = 0;
+			long previousTick = 0;
 			
 			while (i < eventCount)
 			{
-				MidiEvent me = track.Get(i);
-				long tick = me.Tick;
-				length += MidiDataOutputStream.VariableLengthIntLength((int)(tick - ptick));
-				ptick = tick;
-				length += me.Message.Length;
+				MidiEvent midiEvent = track.Get(i);
+				long tick = midiEvent.Tick;
+				length += MidiDataOutputStream.VariableLengthIntLength((int)(tick - previousTick));
+				previousTick = tick;
+				length += midiEvent.Message.Length;
 				i++;
 			}
 			return length;
@@ -113,18 +109,18 @@ namespace gnu.sound.midi.file
 			
 			while (i < eventCount)
 			{
-				MidiEvent me = track.Get(i);
+				MidiEvent midiEvent = track.Get(i);
 				int deltaTime = 0;
 				if (previousEvent != null) {
-					deltaTime = (int)(me.Tick - previousEvent.Tick);
+					deltaTime = (int)(midiEvent.Tick - previousEvent.Tick);
 				}
 				
 				dos.WriteVariableLengthInt(deltaTime);
 				
 				// FIXME: use running status byte
-				byte[] msg = me.Message.GetMessage();
+				byte[] msg = midiEvent.Message.GetMessage();
 				dos.Write(msg);
-				previousEvent = me;
+				previousEvent = midiEvent;
 				
 				i++;
 			}
@@ -142,7 +138,7 @@ namespace gnu.sound.midi.file
 
 			// Write End of Track meta message
 			dos.WriteVariableLengthInt(0); // Delta time of 0
-			dos.Write((byte)0xFF); // Meta Message
+			dos.Write((byte)MidiHelper.META); // Meta Message
 			dos.Write((byte)MidiHelper.MetaEventType.EndOfTrack); // End of Track message
 			dos.WriteVariableLengthInt(0); // Length of 0
 

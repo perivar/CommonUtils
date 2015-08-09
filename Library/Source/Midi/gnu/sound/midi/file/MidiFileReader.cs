@@ -7,14 +7,7 @@ using System.IO;
 namespace gnu.sound.midi.file
 {
 	/// A MIDI file reader.
-	///
 	/// This code reads MIDI file types 0 and 1.
-	///
-	/// There are many decent documents on the web describing the MIDI file
-	/// format.  I didn't bother looking for the official document.  If it
-	/// exists, I'm not even sure if it is freely available.  We should
-	/// update this comment if we find out anything helpful here.
-	///
 	/// @author Anthony Green (green@redhat.com)
 	public class MidiFileReader : gnu.sound.midi.spi.MidiFileReader
 	{
@@ -71,12 +64,12 @@ namespace gnu.sound.midi.file
 					default:
 						throw new InvalidMidiDataException("Invalid MIDI frame division type: " + division);
 				}
-				resolution = division & 0xff;
+				resolution = division & 0xFF;
 			}
 			else
 			{
 				divisionType = Sequence.PPQ;
-				resolution = division & 0x7fff;
+				resolution = division & 0x7FFF;
 			}
 
 			// If we haven't read every byte in the header now, just skip the rest.
@@ -164,7 +157,7 @@ namespace gnu.sound.midi.file
 					if (statusByte < (int) MidiHelper.MidiEventType.SystemExclusive)
 					{
 						ShortMessage shortMessage;
-						switch (statusByte & 0xf0)
+						switch (statusByte & 0xF0)
 						{
 							case (int) MidiHelper.MidiEventType.NoteOff:
 							case (int) MidiHelper.MidiEventType.NoteOn:
@@ -202,7 +195,7 @@ namespace gnu.sound.midi.file
 							default:
 								if (runningStatus != - 1)
 								{
-									switch (runningStatus & 0xf0)
+									switch (runningStatus & 0xF0)
 									{
 										case (int) MidiHelper.MidiEventType.NoteOff:
 										case (int) MidiHelper.MidiEventType.NoteOn:
@@ -257,7 +250,7 @@ namespace gnu.sound.midi.file
 						mm = sysexMessage;
 						runningStatus = - 1;
 					}
-					else if (statusByte == (int) MidiHelper.MidiEventType.SystemReset)
+					else if (statusByte == (int) MidiHelper.META)
 					{
 						// Meta Message
 						byte metaType = din.ReadByte();
@@ -267,7 +260,8 @@ namespace gnu.sound.midi.file
 						metaMessage.SetMessage(metaType, metaData, metaLength);
 						mm = metaMessage;
 
-						if (metaType == (byte) MidiHelper.MetaEventType.EndOfTrack) { // End of Track
+						// End of Track
+						if (metaType == (byte) MidiHelper.MetaEventType.EndOfTrack) {
 							done = true;
 						}
 

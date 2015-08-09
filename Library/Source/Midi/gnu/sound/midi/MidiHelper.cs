@@ -23,6 +23,11 @@ namespace gnu.sound.midi
 		public const int MAX_CHANNEL = 0xF;
 		public const int DRUM_CHANNEL = 9; // Channel 10 (1-based) is reserved for the percussion map
 		
+		/// <summary>
+		/// The META status code.  Only valid for MIDI files, not the wire protocol.
+		/// </summary>
+		public const int META = 0xFF;
+		
 		// Midi format enum
 		public enum MidiTimeFormat
 		{

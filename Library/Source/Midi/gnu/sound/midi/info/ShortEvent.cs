@@ -8,8 +8,14 @@ namespace gnu.sound.midi.info
 	/// jostle@users.sourceforge.net
 	public static class ShortEvent
 	{
-		// extension method
-		internal static object[] GetShortStrings(this ShortMessage mess, bool inFlats)
+		#region ShortMessage Extension Methods
+		/// <summary>
+		/// Extension method to return useful information about the ShortMessage
+		/// </summary>
+		/// <param name="mess">the ShortMessage</param>
+		/// <param name="inFlats">whether to return Note names in flats</param>
+		/// <returns>and array of 6 elements consisting of Event, Note, Value, Patch, Text and Channel</returns>
+		public static object[] GetShortStrings(this ShortMessage mess, bool inFlats)
 		{
 			// Event, Note, Value, Patch, Text, Channel
 			object[] result = { "", "", null, "", "", null };
@@ -17,7 +23,8 @@ namespace gnu.sound.midi.info
 			int d1 = mess.GetData1();
 			int d2 = mess.GetData2();
 
-			if ((st & 0xf0) <= 0xf0) // This is a channel message
+			// Check if this is a channel message
+			if (mess.IsChannelMessage())
 			{
 				int cmd = mess.GetCommand();
 				switch (cmd)
@@ -109,31 +116,29 @@ namespace gnu.sound.midi.info
 			return result;
 		}
 
-		public static MidiEvent CreateShortEvent(int status, long tick)
-		{
-			var sm = new ShortMessage();
-			sm.SetMessage(status);
-			var ev = new MidiEvent(sm, tick);
-			return ev;
-		}
+		/// <summary>
+		/// Extension method to return whether this ShortMessage is a Channel Message or whether it's a System Message
+		/// </summary>
+		/// <param name="mess">the ShortMessage</param>
+		/// <returns>whether this ShortMessage is a Channel Message</returns>
+		public static bool IsChannelMessage(this ShortMessage mess) {
+			int st = mess.GetStatus();
 
-		public static MidiEvent CreateShortEvent(int status, int d1, int d2, long tick)
-		{
-			var sm = new ShortMessage();
-			sm.SetMessage(status, d1, d2);
-			var ev = new MidiEvent(sm, tick);
-			return ev;
-		}
-
-		public static MidiEvent CreateShortEvent(int status, int channel, int d1, int d2, long tick)
-		{
-			var sm = new ShortMessage();
-			sm.SetMessage(status, channel, d1, d2);
-			var ev = new MidiEvent(sm, tick);
-			return ev;
+			// Check if this is a channel message
+			// all MidiEventTypes less than SystemExclusive, see MidiHelper.MidiEventType
+			if ((st & 0xF0) <= 0xF0) {
+				return true;
+			}
+			return false;
 		}
 		
-		// extension method
+		/// <summary>
+		/// Extension method to generate C# code for this event
+		/// </summary>
+		/// <param name="mess">the ShortMessage</param>
+		/// <param name="inFlats">whether to return Note names in flats</param>
+		/// <param name="tick">the position of the event in the sequence</param>
+		/// <returns>a C# code segment as a string</returns>
 		public static string CreateShortEventGeneratedCode(this ShortMessage mess, bool inFlats, long tick) {
 			
 			int cmd = mess.GetCommand();
@@ -148,7 +153,8 @@ namespace gnu.sound.midi.info
 			string val2 = "0";
 			string comment = "";
 
-			if ((st & 0xf0) <= 0xf0) // This is a channel message
+			// Check if this is a channel message
+			if (mess.IsChannelMessage())
 			{
 				switch (cmd)
 				{
@@ -224,6 +230,54 @@ namespace gnu.sound.midi.info
 			
 			return string.Format("ShortEvent.CreateShortEvent((int) MidiHelper.MidiEventType.{0}, {1}, {2}, {3}, {4})); {5}",
 			                     typeName, chan, val1, val2, tick, comment);
+		}
+		#endregion
+		
+		/// <summary>
+		/// Create a Midi Short event
+		/// </summary>
+		/// <param name="status">the status byte of the Short event</param>
+		/// <param name="tick">the position of the event in the sequence</param>
+		/// <returns>the created Midi Short event</returns>
+		public static MidiEvent CreateShortEvent(int status, long tick)
+		{
+			var sm = new ShortMessage();
+			sm.SetMessage(status);
+			var ev = new MidiEvent(sm, tick);
+			return ev;
+		}
+
+		/// <summary>
+		/// Create a Midi Short event
+		/// </summary>
+		/// <param name="status">the status byte for this message</param>
+		/// <param name="d1">the first data byte for this message</param>
+		/// <param name="d2">the second data byte for this message</param>
+		/// <param name="tick">the position of the event in the sequence</param>
+		/// <returns>the created Midi Short event</returns>
+		public static MidiEvent CreateShortEvent(int status, int d1, int d2, long tick)
+		{
+			var sm = new ShortMessage();
+			sm.SetMessage(status, d1, d2);
+			var ev = new MidiEvent(sm, tick);
+			return ev;
+		}
+
+		/// <summary>
+		/// Create a Midi Short event
+		/// </summary>
+		/// <param name="status">the status byte for this message</param>
+		/// <param name="channel">the midi channel (0 - 15)</param>
+		/// <param name="d1">the first data byte for this message</param>
+		/// <param name="d2">the second data byte for this message</param>
+		/// <param name="tick">the position of the event in the sequence</param>
+		/// <returns>the created Midi Short event</returns>
+		public static MidiEvent CreateShortEvent(int status, int channel, int d1, int d2, long tick)
+		{
+			var sm = new ShortMessage();
+			sm.SetMessage(status, channel, d1, d2);
+			var ev = new MidiEvent(sm, tick);
+			return ev;
 		}
 	}
 }

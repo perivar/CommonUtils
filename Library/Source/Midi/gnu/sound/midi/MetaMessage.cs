@@ -11,11 +11,6 @@ namespace gnu.sound.midi
 	/// @since 1.3
 	public class MetaMessage : MidiMessage
 	{
-		/// <summary>
-		/// The META status code.  Only valid for MIDI files, not the wire protocol.
-		/// </summary>
-		public const int META = 0xFF;
-
 		// The length of the variable length data length encoding.
 		private int lengthByteLength = 0;
 
@@ -27,7 +22,7 @@ namespace gnu.sound.midi
 		/// </summary>
 		public MetaMessage() : base(new byte[4])
 		{
-			data[0] = (byte) META;
+			data[0] = (byte) MidiHelper.META;
 			data[1] = (byte) 0; // Type
 			data[2] = (byte) 1; // Length length
 			data[3] = (byte) 0; // Length
@@ -75,7 +70,7 @@ namespace gnu.sound.midi
 			// Now allocate our data array
 			this.length = 2 + lengthByteLength + length;
 			this.data = new byte[this.length];
-			this.data[0] = (byte) META;
+			this.data[0] = (byte) MidiHelper.META;
 			this.data[1] = (byte) type;
 			
 			// Now compute the length representation

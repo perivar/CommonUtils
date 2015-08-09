@@ -61,7 +61,7 @@ namespace gnu.sound.midi
 		public int GetStatus()
 		{
 			if (length > 0) {
-				return (data[0] & 0xff);
+				return (data[0] & 0xFF);
 			} else {
 				return 0;
 			}
