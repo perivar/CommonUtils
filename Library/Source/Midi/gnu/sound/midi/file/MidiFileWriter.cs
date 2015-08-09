@@ -103,38 +103,39 @@ namespace gnu.sound.midi.file
 		private int WriteTrack(Track track, MidiDataOutputStream dos)
 		{
 			int i = 0;
-			int elength = track.EventCount();
+			int eventCount = track.EventCount();
 			int trackLength = 0;
 
-			MidiEvent pme = null;
+			MidiEvent previousEvent = null;
 			dos.Write((int)0x4D54726B); // "MTrk"
 			trackLength = ComputeTrackLength(track, dos);
 			dos.Write((int)trackLength);
 			
-			while (i < elength)
+			while (i < eventCount)
 			{
 				MidiEvent me = track.Get(i);
-				int dtime = 0;
-				if (pme != null)
-					dtime = (int)(me.Tick - pme.Tick);
+				int deltaTime = 0;
+				if (previousEvent != null) {
+					deltaTime = (int)(me.Tick - previousEvent.Tick);
+				}
 				
-				dos.WriteVariableLengthInt(dtime);
+				dos.WriteVariableLengthInt(deltaTime);
 				
 				// FIXME: use running status byte
 				byte[] msg = me.Message.GetMessage();
 				dos.Write(msg);
-				pme = me;
+				previousEvent = me;
 				
 				i++;
 			}
 
 			// We're done if the last event was an End of Track meta message.
-			if (pme != null && (pme.Message is MetaMessage))
+			if (previousEvent != null && (previousEvent.Message is MetaMessage))
 			{
-				var mm = (MetaMessage) pme.Message;
+				var mm = (MetaMessage) previousEvent.Message;
 				
 				// End of Track message
-				if (mm.GetMetaMessageType() == 0x2F) {
+				if (mm.GetMetaMessageType() == (int) MidiHelper.MetaEventType.EndOfTrack) {
 					return trackLength + 8;
 				}
 			}
@@ -142,7 +143,7 @@ namespace gnu.sound.midi.file
 			// Write End of Track meta message
 			dos.WriteVariableLengthInt(0); // Delta time of 0
 			dos.Write((byte)0xFF); // Meta Message
-			dos.Write((byte)0x2F); // End of Track message
+			dos.Write((byte)MidiHelper.MetaEventType.EndOfTrack); // End of Track message
 			dos.WriteVariableLengthInt(0); // Length of 0
 
 			return trackLength + 8 + 4;
@@ -152,9 +153,9 @@ namespace gnu.sound.midi.file
 		/// Write a Sequence to a file.
 		/// <see cref="MidiFileWriter#Write(Sequence, int, File)"/>
 		/// </summary>
-		public override int Write(Sequence stream, int fileType, FileInfo @out)
+		public override int Write(Sequence stream, int fileType, FileInfo outputFileInfo)
 		{
-			Stream os = new FileStream(@out.FullName, FileMode.Create, FileAccess.Write);
+			Stream os = new FileStream(outputFileInfo.FullName, FileMode.Create, FileAccess.Write);
 			try
 			{
 				return Write(stream, fileType, os);

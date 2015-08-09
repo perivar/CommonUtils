@@ -1,3 +1,5 @@
+using System;
+
 // MidiEvent.java -- A MIDI Event
 // Copyright (C) 2005 Free Software Foundation, Inc.
 
@@ -8,7 +10,7 @@ namespace gnu.sound.midi
 	/// in MIDI ticks.
 	/// @author Anthony Green (green@redhat.com)
 	/// @since 1.3
-	public class MidiEvent
+	public class MidiEvent : IEquatable<MidiEvent>
 	{
 		readonly MidiMessage message;
 		long tick;
@@ -53,6 +55,13 @@ namespace gnu.sound.midi
 		public MidiEvent DeepClone() {
 			return new MidiEvent((MidiMessage) message.Clone(), tick);
 		}
+		
+		#region IEquatable implementation
+		public bool Equals(MidiEvent other)
+		{
+			return this.Tick == other.Tick && this.Message == other.Message;
+		}
+		#endregion
 		
 		public override string ToString()
 		{

@@ -154,8 +154,8 @@ namespace gnu.sound.midi.file
 				while (! done)
 				{
 					MidiMessage mm;
-					int dtime = din.ReadVariableLengthInt();
-					click += dtime;
+					int deltaTime = din.ReadVariableLengthInt();
+					click += deltaTime;
 
 					// in Java bytes are signed (-128, +127)
 					// where in C# it's not (0, 255).
@@ -163,7 +163,7 @@ namespace gnu.sound.midi.file
 					
 					if (statusByte < (int) MidiHelper.MidiEventType.SystemExclusive)
 					{
-						ShortMessage sm;
+						ShortMessage shortMessage;
 						switch (statusByte & 0xf0)
 						{
 							case (int) MidiHelper.MidiEventType.NoteOff:
@@ -172,8 +172,8 @@ namespace gnu.sound.midi.file
 							case (int) MidiHelper.MidiEventType.ControlChange:
 							case (int) MidiHelper.MidiEventType.PitchBend:
 							case (int) MidiHelper.MidiEventType.SongPosition:
-								sm = new ShortMessage();
-								sm.SetMessage(statusByte, din.ReadSByte(), din.ReadSByte());
+								shortMessage = new ShortMessage();
+								shortMessage.SetMessage(statusByte, din.ReadSByte(), din.ReadSByte());
 								runningStatus = statusByte;
 								break;
 
@@ -181,8 +181,8 @@ namespace gnu.sound.midi.file
 							case (int) MidiHelper.MidiEventType.AfterTouchChannel:
 							case (int) MidiHelper.MidiEventType.SongSelect:
 							case (int) MidiHelper.MidiEventType.BusSelect:
-								sm = new ShortMessage();
-								sm.SetMessage(statusByte, din.ReadSByte(), 0);
+								shortMessage = new ShortMessage();
+								shortMessage.SetMessage(statusByte, din.ReadSByte(), 0);
 								runningStatus = statusByte;
 								break;
 
@@ -194,8 +194,8 @@ namespace gnu.sound.midi.file
 							case (int) MidiHelper.MidiEventType.Stop:
 							case (int) MidiHelper.MidiEventType.ActiveSensing:
 							case (int) MidiHelper.MidiEventType.SystemReset:
-								sm = new ShortMessage();
-								sm.SetMessage(statusByte, 0, 0);
+								shortMessage = new ShortMessage();
+								shortMessage.SetMessage(statusByte, 0, 0);
 								runningStatus = statusByte;
 								break;
 
@@ -210,16 +210,16 @@ namespace gnu.sound.midi.file
 										case (int) MidiHelper.MidiEventType.ControlChange:
 										case (int) MidiHelper.MidiEventType.PitchBend:
 										case (int) MidiHelper.MidiEventType.SongPosition:
-											sm = new ShortMessage();
-											sm.SetMessage(runningStatus, statusByte, din.ReadSByte());
+											shortMessage = new ShortMessage();
+											shortMessage.SetMessage(runningStatus, statusByte, din.ReadSByte());
 											break;
 
 										case (int) MidiHelper.MidiEventType.ProgramChange:
 										case (int) MidiHelper.MidiEventType.AfterTouchChannel:
 										case (int) MidiHelper.MidiEventType.SongSelect:
 										case (int) MidiHelper.MidiEventType.BusSelect:
-											sm = new ShortMessage();
-											sm.SetMessage(runningStatus, statusByte, 0);
+											shortMessage = new ShortMessage();
+											shortMessage.SetMessage(runningStatus, statusByte, 0);
 											continue;
 
 										case (int) MidiHelper.MidiEventType.TuneRequest:
@@ -230,8 +230,8 @@ namespace gnu.sound.midi.file
 										case (int) MidiHelper.MidiEventType.Stop:
 										case (int) MidiHelper.MidiEventType.ActiveSensing:
 										case (int) MidiHelper.MidiEventType.SystemReset:
-											sm = new ShortMessage();
-											sm.SetMessage(runningStatus, 0, 0);
+											shortMessage = new ShortMessage();
+											shortMessage.SetMessage(runningStatus, 0, 0);
 											continue;
 
 										default:
@@ -244,31 +244,32 @@ namespace gnu.sound.midi.file
 								break;
 								
 						}
-						mm = sm;
+						mm = shortMessage;
 					}
 					else if (statusByte == (int) MidiHelper.MidiEventType.SystemExclusive
 					         || statusByte == (int) MidiHelper.MidiEventType.EndOfExclusive)
 					{
 						// System Exclusive event
-						int slen = din.ReadVariableLengthInt();
-						var sysex = din.ReadBytes(slen);
-						var sm = new SysexMessage();
-						sm.SetMessage(statusByte, sysex, slen);
-						mm = sm;
+						int sysexLength = din.ReadVariableLengthInt();
+						var sysexData = din.ReadBytes(sysexLength);
+						var sysexMessage = new SysexMessage();
+						sysexMessage.SetMessage(statusByte, sysexData, sysexLength);
+						mm = sysexMessage;
 						runningStatus = - 1;
 					}
 					else if (statusByte == (int) MidiHelper.MidiEventType.SystemReset)
 					{
 						// Meta Message
-						byte mtype = din.ReadByte();
-						int mlen = din.ReadVariableLengthInt();
-						var meta = din.ReadBytes(mlen);
-						var metam = new MetaMessage();
-						metam.SetMessage(mtype, meta, mlen);
-						mm = metam;
+						byte metaType = din.ReadByte();
+						int metaLength = din.ReadVariableLengthInt();
+						var metaData = din.ReadBytes(metaLength);
+						var metaMessage = new MetaMessage();
+						metaMessage.SetMessage(metaType, metaData, metaLength);
+						mm = metaMessage;
 
-						if (mtype == 0x2f) // End of Track
+						if (metaType == (byte) MidiHelper.MetaEventType.EndOfTrack) { // End of Track
 							done = true;
+						}
 
 						runningStatus = - 1;
 					}

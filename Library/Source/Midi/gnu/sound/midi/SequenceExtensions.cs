@@ -142,7 +142,7 @@ namespace gnu.sound.midi
 				sequence = new Sequence(sequence);
 				sequence.MidiFileType = (int) MidiHelper.MidiFormat.SingleTrack;
 
-				// Add all events to new track (except for end of track markers!)
+				// Add all events to new track (except for end of track markers and SequenceOrTrackName events)
 				int trackNumber = 0;
 				var newTrack = new Track();
 				foreach (Track track in sequence.Tracks) {
@@ -153,7 +153,8 @@ namespace gnu.sound.midi
 						if (msg is MetaMessage) {
 							// add all meta messages except the end of track markers (we'll add our own)
 							int type = ((MetaMessage)msg).GetMetaMessageType();
-							if (type == (int) MidiHelper.MetaEventType.EndOfTrack) {
+							if (type == (int) MidiHelper.MetaEventType.EndOfTrack
+							    || type == (int) MidiHelper.MetaEventType.SequenceOrTrackName) {
 								doAddEvent = false;
 							}
 						} else if (msg is ShortMessage) {
@@ -177,23 +178,28 @@ namespace gnu.sound.midi
 								}
 							}
 						} else if (msg is SysexMessage) {
-							
+							// add as normal
 						}
 						
 						// Add all events, except for end of track markers (we'll add our own)
 						if (doAddEvent) {
-							//newTrack.Events.Add(midiEvent);
-							newTrack.Add(midiEvent);
+							//newTrack.Events.Add(midiEvent); // add to end of list
+							newTrack.Add(midiEvent); // add in the right position based on the tick
 						}
 					}
 					trackNumber++;
 				}
 
 				// Sort the events by total time
-				// and top things off with an end-of-track marker.
-				//newTrack.Events.Sort((x, y) => x.Tick.CompareTo(y.Tick));
+				// newTrack.Events.Sort((x, y) => x.Tick.CompareTo(y.Tick));
+				// Note! using newTrack.Add instead of newTrack.Events.Add, already ensures a correct sort order
+				
+				// Top things off with an end-of-track marker.
 				newTrack.Add(MetaEvent.CreateMetaEvent("EndOfTrack", "", newTrack.Ticks(), 0));
 
+				// add a new track name as the very first event
+				newTrack.Events.Insert(0, MetaEvent.CreateMetaEvent((int) MidiHelper.MetaEventType.SequenceOrTrackName, "SongNameForType0", 0, 0));
+				
 				// We now have all of the combined events in newTrack.  Clear out the sequence, replacing all the tracks
 				// with this new one.
 				sequence.Tracks.Clear();
