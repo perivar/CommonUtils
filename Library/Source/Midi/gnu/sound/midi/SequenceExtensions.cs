@@ -34,20 +34,22 @@ namespace gnu.sound.midi
 					// transposition (which makes sense), skip this event.
 					MidiMessage msg = ev.Message;
 					
-					if (msg is ShortMessage) {
-
+					// check if this is a short message
+					var sm = msg as ShortMessage;
+					if (sm != null) {
+						
 						// get status code
 						int st = msg.GetStatus();
 						
 						// check if this is a channel message
-						if ( ((ShortMessage)msg).IsChannelMessage() )
+						if (sm.IsChannelMessage())
 						{
-							var channel = ((ShortMessage)msg).GetChannel();
+							var channel = sm.GetChannel();
 							
 							if (!includeDrums && channel == (byte)MidiHelper.DRUM_CHANNEL)
 								continue;
 
-							int cmd = ((ShortMessage)msg).GetCommand();
+							int cmd = sm.GetCommand();
 							
 							// If the event is a NoteOn, NoteOff or Aftertouch
 							if (cmd == (int) MidiHelper.MidiEventType.NoteOff
@@ -55,14 +57,14 @@ namespace gnu.sound.midi
 							    || cmd == (int) MidiHelper.MidiEventType.AfterTouchPoly) {
 								
 								// shift the note according to the supplied number of steps.
-								var data1 = ((ShortMessage)msg).GetData1();
-								var data2 = ((ShortMessage)msg).GetData2();
+								var data1 = sm.GetData1();
+								var data2 = sm.GetData2();
 
 								// note number is stored in data[1]
 								byte noteTransposed = (byte)((data1 + steps) % 128);
 								
 								// store the track number as the channel
-								((ShortMessage)msg).SetMessage(cmd, channel, noteTransposed, data2);
+								sm.SetMessage(cmd, channel, noteTransposed, data2);
 							}
 						}
 					}
@@ -145,36 +147,52 @@ namespace gnu.sound.midi
 				// Add all events to new track (except for end of track markers and SequenceOrTrackName events)
 				int trackNumber = 0;
 				var newTrack = new Track();
+				string trackName = "";
 				foreach (Track track in sequence.Tracks) {
 					foreach (MidiEvent midiEvent in track.Events) {
 						bool doAddEvent = true;
 						
-						MidiMessage msg = midiEvent.Message;
-						if (msg is MetaMessage) {
+						var msg = midiEvent.Message;
+						
+						// check if this is a meta message
+						var mm = msg as MetaMessage;
+						if (mm != null) {
+
+							// we have a meta message
 							// add all meta messages except the end of track markers (we'll add our own)
-							int type = ((MetaMessage)msg).GetMetaMessageType();
-							if (type == (int) MidiHelper.MetaEventType.EndOfTrack
-							    || type == (int) MidiHelper.MetaEventType.SequenceOrTrackName) {
+							int type = mm.GetMetaMessageType();
+							
+							if (type == (int) MidiHelper.MetaEventType.EndOfTrack) {
 								doAddEvent = false;
+							} else if (type == (int) MidiHelper.MetaEventType.SequenceOrTrackName) {
+								doAddEvent = false;
+
+								// store track name, will be used later
+								if (trackName == "") {
+									byte[] data = mm.GetMetaMessageData();
+									string text = MidiHelper.GetString(data);
+									trackName = MidiHelper.TextString(text);
+								}
 							}
-						} else if (msg is ShortMessage) {
+						}
+						
+						// check if this is a short message
+						var sm = msg as ShortMessage;
+						if (sm != null) {
 							// If this event has a channel, and if we're storing tracks as channels, copy to it
 							if ((options & FormatConversionOption.CopyTrackToChannel) > 0
 							    && trackNumber >= MidiHelper.MIN_CHANNEL && trackNumber <= MidiHelper.MAX_CHANNEL) {
 								
-								if ( ((ShortMessage)msg).IsChannelMessage() )
-								{
+								if (sm.IsChannelMessage()) {
 									// get the data
-									var commandByte = ((ShortMessage)msg).GetCommand();
-									var data1 = ((ShortMessage)msg).GetData1();
-									var data2 = ((ShortMessage)msg).GetData2();
+									var commandByte = sm.GetCommand();
+									var data1 = sm.GetData1();
+									var data2 = sm.GetData2();
 									
 									// store the track number as the channel
-									((ShortMessage)msg).SetMessage(commandByte, trackNumber, data1, data2);
+									sm.SetMessage(commandByte, trackNumber, data1, data2);
 								}
 							}
-						} else if (msg is SysexMessage) {
-							// add as normal
 						}
 						
 						// Add all events, except for end of track markers (we'll add our own)
@@ -194,7 +212,7 @@ namespace gnu.sound.midi
 				newTrack.Add(MetaEvent.CreateMetaEvent("EndOfTrack", "", newTrack.Ticks(), 0));
 
 				// add a new track name as the very first event
-				newTrack.Events.Insert(0, MetaEvent.CreateMetaEvent((int) MidiHelper.MetaEventType.SequenceOrTrackName, "SongNameForType0", 0, 0));
+				newTrack.Events.Insert(0, MetaEvent.CreateMetaEvent((int) MidiHelper.MetaEventType.SequenceOrTrackName, trackName, 0, 0));
 				
 				// We now have all of the combined events in newTrack.  Clear out the sequence, replacing all the tracks
 				// with this new one.

@@ -135,6 +135,29 @@ namespace gnu.sound.midi
 			}
 		}
 		
+		/// <summary>
+		/// Gets the name of the track, based on finding the first track name event in the track, if one exists.
+		/// </summary>
+		public string Name
+		{
+			get
+			{
+				foreach (MidiEvent midiEvent in Events) {
+
+					var mm = midiEvent.Message as MetaMessage;
+					if (mm != null) {
+						// find first SequenceOrTrackName event
+						int type = mm.GetMetaMessageType();
+						if (type == (int) MidiHelper.MetaEventType.SequenceOrTrackName) {
+							byte[] data = mm.GetMetaMessageData();							
+							return MidiHelper.GetString(data);
+						}
+					}
+				}
+				return null;
+			}
+		}
+		
 		public override string ToString()
 		{
 			return string.Format("[Events={0}, Ticks:{1}]", EventCount(), Ticks());

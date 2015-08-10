@@ -276,18 +276,28 @@ namespace gnu.sound.midi
 						int tickRemainder = (int) tick % this.Resolution;
 
 						MidiMessage msg = ev.Message;
-						if (msg is MetaMessage) {
-							string metaCodeString = ((MetaMessage) msg).CreateMetaEventGeneratedCode(tick, this.Resolution);
+						
+						// check if this is a meta message
+						var mm = msg as MetaMessage;
+						if (mm != null) {
+							string metaCodeString = mm.CreateMetaEventGeneratedCode(tick, this.Resolution);
 							outfile.WriteLine("\ttrack{0}.Add({1});", trackno, metaCodeString);
-						} else if (msg is ShortMessage) {
-							string shortCodeString = ((ShortMessage) msg).CreateShortEventGeneratedCode(true, tick);
+						}
+						
+						// check if this is a short message
+						var sm = msg as ShortMessage;
+						if (sm != null) {
+							string shortCodeString = sm.CreateShortEventGeneratedCode(true, tick);
 							outfile.WriteLine("\ttrack{0}.Add({1}", trackno, shortCodeString);
-						} else if (msg is SysexMessage) {
+						}
+						
+						// check if this is a sysex message
+						var ss = msg as SysexMessage;
+						if (ss != null) {
 							outfile.WriteLine("\t// We don't support SysexMessage now");
 						}
 					}
-					trackno++;
-					
+					trackno++;	
 				}
 				
 				outfile.WriteLine("\n\treturn sequence;");
