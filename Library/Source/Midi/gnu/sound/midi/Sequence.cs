@@ -1,4 +1,4 @@
-// Sequence.java -- A sequence of MIDI events
+// Sequence -- A sequence of MIDI events
 // Copyright (C) 2005 Free Software Foundation, Inc.
 
 using System;
@@ -12,7 +12,7 @@ namespace gnu.sound.midi
 	/// Objects of this type represent sequences of MIDI messages that can be
 	/// played back by a Sequencer.
 	/// @author Anthony Green (green@redhat.com)
-	/// @since 1.3
+	/// Modified by Per Ivar Nerseth (perivar@nerseth.com)
 	public class Sequence
 	{
 		/// <summary>

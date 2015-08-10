@@ -5,7 +5,7 @@ using System.Linq;
 namespace gnu.sound.midi.file
 {
 	/// <summary>
-	/// Description of BinaryReaderBigEndian.
+	/// BigEndian BinaryReader.
 	/// </summary>
 	public class BinaryReaderBigEndian : BinaryReader {
 		

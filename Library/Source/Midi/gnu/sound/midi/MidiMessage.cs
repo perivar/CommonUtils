@@ -1,4 +1,4 @@
-// MidiMessage.java -- base class for MIDI messages.
+// MidiMessage -- base class for MIDI messages.
 // Copyright (C) 2005 Free Software Foundation, Inc.
 
 using System;
@@ -7,7 +7,7 @@ namespace gnu.sound.midi
 {
 	/// The base class for all MIDI messages.
 	/// @author Anthony Green (green@redhat.com)
-	/// @since 1.3
+	/// Modified by Per Ivar Nerseth (perivar@nerseth.com)
 	public abstract class MidiMessage : ICloneable
 	{
 		/// <summary>

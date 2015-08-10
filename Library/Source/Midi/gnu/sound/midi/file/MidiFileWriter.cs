@@ -1,5 +1,5 @@
-// MidiFileWriter.java -- Write MIDI files.
-//   Copyright (C) 2006 Free Software Foundation, Inc.
+// MidiFileWriter -- Write MIDI files.
+// Copyright (C) 2006 Free Software Foundation, Inc.
 
 using System;
 using System.IO;

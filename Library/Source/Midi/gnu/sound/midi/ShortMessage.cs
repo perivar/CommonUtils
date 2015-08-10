@@ -1,4 +1,4 @@
-// ShortMessage.java -- A MIDI message no longer than 3 bytes
+// ShortMessage -- A MIDI message no longer than 3 bytes
 // Copyright (C) 2005 Free Software Foundation, Inc.
 
 using System;
@@ -8,7 +8,7 @@ namespace gnu.sound.midi
 {
 	/// A short MIDI message that is no longer than 3 bytes long.
 	/// @author Anthony Green (green@redhat.com)
-	/// @since 1.3
+	/// Modified by Per Ivar Nerseth (perivar@nerseth.com)
 	public class ShortMessage : MidiMessage
 	{
 		// Create and initialize a default, arbitrary message.

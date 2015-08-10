@@ -1,4 +1,4 @@
-// Track.java -- A track of MIDI events
+// Track -- A track of MIDI events
 // Copyright (C) 2005 Free Software Foundation, Inc.
 
 using System;
@@ -10,7 +10,7 @@ namespace gnu.sound.midi
 	/// A Track contains a list of timecoded MIDI events for processing
 	/// by a Sequencer.
 	/// @author Anthony Green (green@redhat.com)
-	/// @since 1.3
+	/// Modified by Per Ivar Nerseth (perivar@nerseth.com)
 	public class Track
 	{
 		/// <summary>

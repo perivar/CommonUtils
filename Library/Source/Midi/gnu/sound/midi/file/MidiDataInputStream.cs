@@ -1,5 +1,5 @@
-// MidiDataInputStream.java -- adds variable length MIDI ints
-//   Copyright (C) 2006 Free Software Foundation, Inc.
+// MidiDataInputStream -- adds variable length MIDI ints
+// Copyright (C) 2006 Free Software Foundation, Inc.
 
 using System;
 using System.IO;

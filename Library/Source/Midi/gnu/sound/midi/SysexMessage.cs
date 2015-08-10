@@ -1,14 +1,13 @@
-// SysexMessage.java -- System Exclusive MIDI message.
+// SysexMessage -- System Exclusive MIDI message.
 // Copyright (C) 2005 Free Software Foundation, Inc.
 
 using System;
-using gnu.sound.midi.file; // BinaryReaderBigEndian
 
 namespace gnu.sound.midi
 {
 	/// A system exclusive MIDI message.
 	/// @author Anthony Green (green@redhat.com)
-	/// @since 1.3
+	/// Modified by Per Ivar Nerseth (perivar@nerseth.com)
 	public class SysexMessage : MidiMessage
 	{
 		/// <summary>

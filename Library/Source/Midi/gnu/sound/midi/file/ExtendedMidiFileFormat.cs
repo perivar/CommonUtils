@@ -1,11 +1,12 @@
-// ExtendedMidiFileFormat.java -- extended with track count info.
-//   Copyright (C) 2006 Free Software Foundation, Inc.
+// ExtendedMidiFileFormat -- extended with track count info.
+// Copyright (C) 2006 Free Software Foundation, Inc.
 
 namespace gnu.sound.midi.file
 {
 	/// ExtendedMidiFileFormat is a package private class that simply
 	/// adds the number of MIDI tracks for the MidiFileFormat class.
 	/// @author Anthony Green (green@redhat.com)
+	/// Modified by Per Ivar Nerseth (perivar@nerseth.com)
 	internal class ExtendedMidiFileFormat : gnu.sound.midi.MidiFileFormat
 	{
 		private int ntracks;

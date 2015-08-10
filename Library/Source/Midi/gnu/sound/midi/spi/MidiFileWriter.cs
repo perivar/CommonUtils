@@ -1,4 +1,4 @@
-// MidiFileWriter.java -- MIDI file writing services
+// MidiFileWriter -- MIDI file writing services
 // Copyright (C) 2005 Free Software Foundation, Inc.
 
 using System.IO;
@@ -22,7 +22,7 @@ namespace gnu.sound.midi.spi
 	/// information.
 	/// 
 	/// @author Anthony Green (green@redhat.com)
-	/// @since 1.3
+	/// Modified by Per Ivar Nerseth (perivar@nerseth.com)
 	public abstract class MidiFileWriter
 	{
 		/// <summary>
@@ -94,5 +94,4 @@ namespace gnu.sound.midi.spi
 		public abstract int Write(Sequence stream, int fileType, FileInfo @out);
 
 	}
-
 }

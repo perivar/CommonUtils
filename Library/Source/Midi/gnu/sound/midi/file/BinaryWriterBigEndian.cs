@@ -4,7 +4,7 @@ using System.IO;
 namespace gnu.sound.midi.file
 {
 	/// <summary>
-	/// Description of BinaryWriterBigEndian.
+	/// BigEndian BinaryWriter
 	/// </summary>
 	public class BinaryWriterBigEndian : BinaryWriter {
 		

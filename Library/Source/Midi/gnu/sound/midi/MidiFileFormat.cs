@@ -1,11 +1,11 @@
-// MidiFileFormat.java -- Information about a MIDI file
+// MidiFileFormat -- Information about a MIDI file
 // Copyright (C) 2005 Free Software Foundation, Inc.
 
 namespace gnu.sound.midi
 {
 	/// Describe a MIDI file, including specifics about its type, length and timing.
 	/// @author Anthony Green (green@redhat.com)
-	/// @since 1.3
+	/// Modified by Per Ivar Nerseth (perivar@nerseth.com)
 	public class MidiFileFormat
 	{
 		/// <summary>

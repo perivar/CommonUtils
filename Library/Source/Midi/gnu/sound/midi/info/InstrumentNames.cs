@@ -9,6 +9,7 @@ namespace gnu.sound.midi.info
 	/// Taken from MidiQuickFix - A Simple Midi file editor and player
 	/// Copyright (C) 2004-2009 John Lemcke
 	/// jostle@users.sourceforge.net
+	/// Modified by Per Ivar Nerseth (perivar@nerseth.com)
 	public static class InstrumentNames
 	{
 		// The names of the controllers are retrieved from a resource file.

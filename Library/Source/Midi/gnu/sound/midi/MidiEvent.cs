@@ -1,7 +1,7 @@
-using System;
-
-// MidiEvent.java -- A MIDI Event
+// MidiEvent -- A MIDI Event
 // Copyright (C) 2005 Free Software Foundation, Inc.
+
+using System;
 
 namespace gnu.sound.midi
 {
@@ -9,7 +9,7 @@ namespace gnu.sound.midi
 	/// A MIDI event is the combination of a MIDI message and a timestamp specified
 	/// in MIDI ticks.
 	/// @author Anthony Green (green@redhat.com)
-	/// @since 1.3
+	/// Modified by Per Ivar Nerseth (perivar@nerseth.com)
 	public class MidiEvent : IEquatable<MidiEvent>
 	{
 		readonly MidiMessage message;

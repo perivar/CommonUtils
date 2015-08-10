@@ -1,5 +1,5 @@
-// MidiFileReader.java -- Read MIDI files.
-//   Copyright (C) 2006 Free Software Foundation, Inc.
+// MidiFileReader -- Read MIDI files.
+// Copyright (C) 2006 Free Software Foundation, Inc.
 
 using System;
 using System.IO;

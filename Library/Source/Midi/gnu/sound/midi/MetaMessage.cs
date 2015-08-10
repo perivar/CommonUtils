@@ -1,4 +1,4 @@
-// MetaMessage.java -- A meta message for MIDI files.
+// MetaMessage -- A meta message for MIDI files.
 // Copyright (C) 2005 Free Software Foundation, Inc.
 
 using System;
@@ -8,7 +8,7 @@ namespace gnu.sound.midi
 {
 	/// A system exclusive MIDI message.
 	/// @author Anthony Green (green@redhat.com)
-	/// @since 1.3
+	/// Modified by Per Ivar Nerseth (perivar@nerseth.com)
 	public class MetaMessage : MidiMessage
 	{
 		// The length of the variable length data length encoding.
