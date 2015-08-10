@@ -197,7 +197,7 @@ namespace gnu.sound.midi
 		{
 			// Event, Note, Value, Patch, Text, Channel
 			object[] meta = this.GetShortStrings(false);
-			string metaStrings = string.Format("{0}\t{1}\t{2}\t{3}\t{4}\t{5}", meta[0], meta[1], meta[2], meta[3], meta[4], meta[5]);
+			string metaStrings = string.Format("{0,-22} {1,-8} {2,-8} {3,-22} {4,-8} {5,-8}", meta[0], meta[1], meta[2], meta[3], meta[4], meta[5]);
 			
 			int command = GetCommand();
 			string commandName = MidiHelper.GetEventTypeString((MidiHelper.MidiEventType)command);

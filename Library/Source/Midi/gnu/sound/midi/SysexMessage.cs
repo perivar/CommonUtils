@@ -45,9 +45,9 @@ namespace gnu.sound.midi
 		}
 
 		/// <summary>
-		/// Set the sysex message.  status must be either 0xF0 or 0xF7.
+		/// Set the sysex message. Status must be either 0xF0 or 0xF7.
 		/// <param name="status">the sysex statys byte (0xF0 or 0xF7)</param>
-		/// <param name="data">the message data</param>
+		/// <param name="data">the message data (must end with the sysex end byte (0xF7)</param>
 		/// <param name="length">the length of the message data</param>
 		/// <exception cref="InvalidMidiDataException">if status is not 0xF0 or 0xF7</exception>
 		/// </summary>
@@ -55,11 +55,20 @@ namespace gnu.sound.midi
 		{
 			if (status != (byte) MidiHelper.MidiEventType.SystemExclusive && status != (byte) MidiHelper.MidiEventType.EndOfExclusive)
 				throw new InvalidMidiDataException("Sysex message starts with 0x" + status.ToString("X4") + " instead of 0xF0 or 0xF7");
-			this.data = new byte[length+1];
-			this.data[0] = (byte) status;
 			
-			Array.Copy(data, 0, this.data, 1, length);
-			this.length = length+1;
+			// The format of a whole sysex chunk is
+			// delta time
+			// sysex start (0xF0)
+			// sysex data bytes length
+			// sysex data bytes
+			// sysex end (0xF7)
+			
+			this.data = new byte[length+2];
+			this.data[0] = (byte) status;
+			this.data[1] = (byte) length;
+			
+			Array.Copy(data, 0, this.data, 2, length);
+			this.length = length+2;
 		}
 
 		/// <summary>
@@ -85,5 +94,15 @@ namespace gnu.sound.midi
 			return new SysexMessage(message);
 		}
 		#endregion
+		
+		/// <summary>
+		/// Return the string representation of this object
+		/// </summary>
+		/// <returns>the string representation of this object</returns>
+		public override string ToString()
+		{
+			string hex = MidiHelper.ByteArrayToString(data, ",");
+			return string.Format("Sysex: [{0}]", hex);
+		}
 	}
 }

@@ -166,7 +166,7 @@ namespace gnu.sound.midi.file
 							case (int) MidiHelper.MidiEventType.PitchBend:
 							case (int) MidiHelper.MidiEventType.SongPosition:
 								shortMessage = new ShortMessage();
-								shortMessage.SetMessage(statusByte, din.ReadSByte(), din.ReadSByte());
+								shortMessage.SetMessage(statusByte, din.ReadByte(), din.ReadByte());
 								runningStatus = statusByte;
 								break;
 
@@ -175,7 +175,7 @@ namespace gnu.sound.midi.file
 							case (int) MidiHelper.MidiEventType.SongSelect:
 							case (int) MidiHelper.MidiEventType.BusSelect:
 								shortMessage = new ShortMessage();
-								shortMessage.SetMessage(statusByte, din.ReadSByte(), 0);
+								shortMessage.SetMessage(statusByte, din.ReadByte(), 0);
 								runningStatus = statusByte;
 								break;
 
@@ -204,7 +204,7 @@ namespace gnu.sound.midi.file
 										case (int) MidiHelper.MidiEventType.PitchBend:
 										case (int) MidiHelper.MidiEventType.SongPosition:
 											shortMessage = new ShortMessage();
-											shortMessage.SetMessage(runningStatus, statusByte, din.ReadSByte());
+											shortMessage.SetMessage(runningStatus, statusByte, din.ReadByte());
 											break;
 
 										case (int) MidiHelper.MidiEventType.ProgramChange:

@@ -141,7 +141,7 @@ namespace gnu.sound.midi
 		{
 			// GetMetaStrings: { type name, length, value string }
 			object[] meta = this.GetMetaStrings();
-			string metaStrings = string.Format("{0} '{2}' ({1} bytes)", meta[0], meta[1], meta[2]);
+			string metaStrings = string.Format("{0,-22} '{2}' ({1} bytes)", meta[0], meta[1], meta[2]);
 			
 			int messageType = GetMetaMessageType();
 			string typeName = MidiHelper.GetMetaString(messageType);
