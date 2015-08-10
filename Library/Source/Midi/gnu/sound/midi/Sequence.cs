@@ -165,6 +165,9 @@ namespace gnu.sound.midi
 			get {
 				return resolution;
 			}
+			set {
+				this.resolution = value;
+			}
 		}
 		
 		/// <summary>
@@ -297,7 +300,7 @@ namespace gnu.sound.midi
 							outfile.WriteLine("\t// We don't support SysexMessage now");
 						}
 					}
-					trackno++;	
+					trackno++;
 				}
 				
 				outfile.WriteLine("\n\treturn sequence;");
@@ -317,6 +320,20 @@ namespace gnu.sound.midi
 				// write header
 				string midiTypeName = MidiHelper.GetMidiFormatString(midiFileType);
 				outfile.WriteLine("Midi Type: {0} = {1}", this.MidiFileType, midiTypeName);
+				
+				string divisionTypeString = "";
+				if (divisionType == PPQ) {
+					divisionTypeString = "PPQ";
+				} else if(divisionType == SMPTE_24) {
+					divisionTypeString = "SMPTE_24";
+				} else if(divisionType == SMPTE_25) {
+					divisionTypeString = "SMPTE_25";
+				} else if(divisionType == SMPTE_30) {
+					divisionTypeString = "SMPTE_30";
+				} else if(divisionType == SMPTE_30DROP) {
+					divisionTypeString = "SMPTE_30DROP";
+				}
+				outfile.WriteLine("Division Type: {0} = {1}", divisionTypeString, divisionType);
 				outfile.WriteLine("Resolution: {0}", this.Resolution);
 				outfile.WriteLine("Tracks: {0}", this.Tracks.Count);
 				outfile.WriteLine("Time: {0} ticks", this.GetTickLength());

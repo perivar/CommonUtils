@@ -108,20 +108,35 @@ namespace gnu.sound.midi
 		/// <returns>The converted sequence.</returns>
 		/// <remarks>
 		/// This may or may not return the same sequence as passed in.
+		/// This is based on the excellent MidiSharp package by Stephen Toub.
 		/// </remarks>
-		/// <remarks>This is based on the excellent MidiSharp package by Stephen Toub.</remarks>
 		public static Sequence Convert(this Sequence sequence, int format)
 		{
-			return Convert(sequence, format, FormatConversionOption.None);
+			return Convert(sequence, format, FormatConversionOption.None, 0, null);
+		}
+
+		/// <summary>Converts a MIDI sequence from its current format to the specified format.</summary>
+		/// <param name="sequence">The sequence to be converted.</param>
+		/// <param name="format">The format to which we want to convert the sequence.</param>
+		/// <param name="newResolution">the new resolution (disable using 0 or -1)</param>
+		/// <returns>The converted sequence.</returns>
+		/// <remarks>
+		/// This may or may not return the same sequence as passed in.
+		/// This is based on the excellent MidiSharp package by Stephen Toub.
+		/// </remarks>
+		public static Sequence Convert(this Sequence sequence, int format, int newResolution)
+		{
+			return Convert(sequence, format, FormatConversionOption.None, newResolution, null);
 		}
 		
 		/// <summary>Converts the MIDI sequence into a new one with the desired format.</summary>
 		/// <param name="sequence">The sequence to be converted.</param>
 		/// <param name="format">The format to which we want to convert the sequence.</param>
 		/// <param name="options">Options used when doing the conversion.</param>
+		/// <param name="newResolution">the new resolution (disable using 0 or -1)</param>
 		/// <returns>The new, converted sequence.</returns>
 		/// <remarks>This is based on the excellent MidiSharp package by Stephen Toub.</remarks>
-		public static Sequence Convert(this Sequence sequence, int format, FormatConversionOption options)
+		public static Sequence Convert(this Sequence sequence, int format, FormatConversionOption options, int newResolution, string trackName)
 		{
 			if (sequence.MidiFileType == format) {
 				// If the desired format is the same as the original, just return a copy.
@@ -141,13 +156,16 @@ namespace gnu.sound.midi
 			else {
 				// Now the harder cases, converting to format 0.  We need to combine all tracks into 1,
 				// as format 0 requires that there only be a single track with all of the events for the song.
+				int originalResolution = sequence.Resolution;
+				if (newResolution <= 0) newResolution = originalResolution;
+
 				sequence = new Sequence(sequence);
 				sequence.MidiFileType = (int) MidiHelper.MidiFormat.SingleTrack;
 
 				// Add all events to new track (except for end of track markers and SequenceOrTrackName events)
 				int trackNumber = 0;
 				var newTrack = new Track();
-				string trackName = "";
+				
 				foreach (Track track in sequence.Tracks) {
 					foreach (MidiEvent midiEvent in track.Events) {
 						bool doAddEvent = true;
@@ -168,7 +186,7 @@ namespace gnu.sound.midi
 								doAddEvent = false;
 
 								// store track name, will be used later
-								if (trackName == "") {
+								if (string.IsNullOrEmpty(trackName)) {
 									byte[] data = mm.GetMetaMessageData();
 									string text = MidiHelper.GetString(data);
 									trackName = MidiHelper.TextString(text);
@@ -179,19 +197,37 @@ namespace gnu.sound.midi
 						// check if this is a short message
 						var sm = msg as ShortMessage;
 						if (sm != null) {
+							// get the data
+							var commandByte = sm.GetCommand();
+							var data1 = sm.GetData1();
+							var data2 = sm.GetData2();
+							
 							// If this event has a channel, and if we're storing tracks as channels, copy to it
 							if ((options & FormatConversionOption.CopyTrackToChannel) > 0
 							    && trackNumber >= MidiHelper.MIN_CHANNEL && trackNumber <= MidiHelper.MAX_CHANNEL) {
 								
 								if (sm.IsChannelMessage()) {
-									// get the data
-									var commandByte = sm.GetCommand();
-									var data1 = sm.GetData1();
-									var data2 = sm.GetData2();
-									
 									// store the track number as the channel
 									sm.SetMessage(commandByte, trackNumber, data1, data2);
 								}
+							}
+							
+							if ((options & FormatConversionOption.NoteOffZero2NoteOnZero) > 0) {
+								
+								// If the event is a NoteOff with Volume 0
+								if (commandByte == (int) MidiHelper.MidiEventType.NoteOff && data2 == 0) {
+									// convert to a NoteOn instead
+									sm.SetMessage((int) MidiHelper.MidiEventType.NoteOn, data1, data2);
+								}
+							}
+						}
+						
+						// convert ticks if resolution has changed
+						if (originalResolution != newResolution) {
+							if (midiEvent.Tick != 0) {
+								double fraction = (double) midiEvent.Tick / (double) originalResolution;
+								int tick = (int) (fraction * newResolution);
+								midiEvent.Tick = tick;
 							}
 						}
 						
@@ -204,6 +240,10 @@ namespace gnu.sound.midi
 					trackNumber++;
 				}
 
+				if (originalResolution != newResolution) {
+					sequence.Resolution = newResolution;
+				}
+				
 				// Sort the events by total time
 				// newTrack.Events.Sort((x, y) => x.Tick.CompareTo(y.Tick));
 				// Note! using newTrack.Add instead of newTrack.Events.Add, already ensures a correct sort order
@@ -233,7 +273,12 @@ namespace gnu.sound.midi
 			/// Uses the number of the track as the channel for all events on that track.
 			/// Only valid if the number of the track is a valid track number.
 			/// </summary>
-			CopyTrackToChannel
+			CopyTrackToChannel,
+			
+			/// <summary>
+			/// Convert NoteOff events with Volume 0 to NoteOn events with Volume 0
+			/// </summary>
+			NoteOffZero2NoteOnZero
 		}
 		#endregion
 		
