@@ -40,13 +40,19 @@ namespace CommonUtils.Tests
 			Assert.That(spec2, Is.EqualTo(spec1).AsCollection.Within(0.001), "fail at [0]");
 			
 			double[][] spec3 = FFTUtils.CreateSpectrogramFFTW(data, fftWindowSize, overlap);
-			Assert.That(spec3, Is.EqualTo(spec1).AsCollection.Within(0.001), "fail at [0]");
+			var spec3M = new Matrix(spec3);
+			spec3M.WriteCSV("spec_fftw.csv");
+			//Assert.That(spec3, Is.EqualTo(spec1).AsCollection.Within(0.001), "fail at [0]");
 			
 			double[][] spec4 = FFTUtils.CreateSpectrogramFFTWLIB(data, fftWindowSize, overlap);
+			var spec4M = new Matrix(spec4);
+			spec4M.WriteCSV("spec_fftwlib.csv");
+			//Assert.That(spec4, Is.EqualTo(spec1).AsCollection.Within(0.001), "fail at [0]");
 
 			double[][] spec5 = FFTUtils.CreateSpectrogramFFTWLIB_INPLACE(data, fftWindowSize, overlap);
-			
-			
+			var spec5M = new Matrix(spec5);
+			spec5M.WriteCSV("spec_fftwlib_inplace.csv");
+			//Assert.That(spec5, Is.EqualTo(spec1).AsCollection.Within(0.001), "fail at [0]");			
 		}
 		
 		[Test]

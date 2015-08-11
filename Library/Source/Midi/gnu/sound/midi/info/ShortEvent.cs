@@ -6,7 +6,7 @@ namespace gnu.sound.midi.info
 	/// Taken from MidiQuickFix - A Simple Midi file editor and player
 	/// Copyright (C) 2004-2009 John Lemcke
 	/// jostle@users.sourceforge.net
-	/// Modified by Per Ivar Nerseth (perivar@nerseth.com) 
+	/// Modified by Per Ivar Nerseth (perivar@nerseth.com)
 	public static class ShortEvent
 	{
 		#region ShortMessage Extension Methods
@@ -50,7 +50,11 @@ namespace gnu.sound.midi.info
 						break;
 					case (int) MidiHelper.MidiEventType.PitchBend:
 						result[0] = "PitchBend";
-						result[2] = Convert.ToInt32(d1 + (d2 << 7));
+						// The two bytes of the pitch bend message form a 14 bit number, 0 to 16383.
+						// The value 8192 (sent, LSB first, as 0x00 0x40), is centered, or "no pitch bend."
+						// The value 0 (0x00 0x00) means, "bend as low as possible,"
+						// and, similarly, 16383 (0x7F 0x7F) is to "bend as high as possible."
+						result[2] = MidiHelper.TwoBytesToInt(d1, d2);
 						break;
 					case (int) MidiHelper.MidiEventType.AfterTouchPoly:
 						result[0] = "AfterTouchPoly";
@@ -88,7 +92,10 @@ namespace gnu.sound.midi.info
 						break;
 					case (int) MidiHelper.MidiEventType.SongPosition:
 						result[0] = "SongPosition";
-						result[2] = Convert.ToInt32(d1 + (d2 << 7));
+						// This 14-bit value is the MIDI Beat upon which to start the song.
+						// Songs are always assumed to start on a MIDI Beat of 0. Each MIDI Beat spans 6 MIDI Clocks.
+						// In other words, each MIDI Beat is a 16th note (since there are 24 MIDI Clocks in a quarter note).
+						result[2] = MidiHelper.TwoBytesToInt(d1, d2);
 						break;
 					case (int) MidiHelper.MidiEventType.SongSelect:
 						result[0] = "SongSelect";
@@ -180,8 +187,13 @@ namespace gnu.sound.midi.info
 						val2 = "" + Convert.ToInt32(d2);
 						break;
 					case (int) MidiHelper.MidiEventType.PitchBend:
-						val1 = "" + Convert.ToInt32(d1 + (d2 << 7));
-						val2 = "0";
+						// The two bytes of the pitch bend message form a 14 bit number, 0 to 16383.
+						// The value 8192 (sent, LSB first, as 0x00 0x40), is centered, or "no pitch bend."
+						// The value 0 (0x00 0x00) means, "bend as low as possible,"
+						// and, similarly, 16383 (0x7F 0x7F) is to "bend as high as possible."
+						val1 = "" + d1;
+						val2 = "" + d2;
+						comment = string.Format("// {0} (0 to 16383, 8192 = centered)", MidiHelper.TwoBytesToInt(d1, d2));
 						break;
 					case (int) MidiHelper.MidiEventType.AfterTouchPoly:
 						string noteAfterTouch = NoteNames.GetNoteName(d1, inFlats);
@@ -217,8 +229,12 @@ namespace gnu.sound.midi.info
 						val2 = "0";
 						break;
 					case (int) MidiHelper.MidiEventType.SongPosition:
-						val1 = "" + Convert.ToInt32(d1 + (d2 << 7));
-						val2 = "0";
+						// This 14-bit value is the MIDI Beat upon which to start the song.
+						// Songs are always assumed to start on a MIDI Beat of 0. Each MIDI Beat spans 6 MIDI Clocks.
+						// In other words, each MIDI Beat is a 16th note (since there are 24 MIDI Clocks in a quarter note).
+						val1 = "" + d1;
+						val2 = "" + d2;
+						comment = string.Format("// {0}", MidiHelper.TwoBytesToInt(d1, d2));
 						break;
 					case (int) MidiHelper.MidiEventType.SongSelect:
 						val1 = "" + Convert.ToInt32(d1);

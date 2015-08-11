@@ -4,6 +4,7 @@ using System.Text;
 using System.Globalization;
 using System.IO;
 using System.Net;
+using System.Collections.Generic;
 
 namespace gnu.sound.midi
 {
@@ -47,14 +48,26 @@ namespace gnu.sound.midi
 			NoteOff	              = 0x80,	// Note Off
 			NoteOn                = 0x90,	// Note On
 			AfterTouchPoly        = 0xA0,	// Polyphonic AfterTouch
-			ControlChange         = 0xB0,	// Control Change / Channel Mode
+			ControlChange         = 0xB0,	// Control Change / Channel Mode Control Change. Controller numbers 120-127 are reserved as "Channel Mode Messages".
 			ProgramChange         = 0xC0,	// Program Change
 			AfterTouchChannel     = 0xD0,	// Channel (monophonic) AfterTouch
+
 			PitchBend             = 0xE0,	// Pitch Bend
+			// The two bytes of the pitch bend message form a 14 bit number, 0 to 16383.
+			// The value 8192 (sent, LSB first, as 0x00 0x40), is centered, or "no pitch bend."
+			// The value 0 (0x00 0x00) means, "bend as low as possible,"
+			// and, similarly, 16383 (0x7F 0x7F) is to "bend as high as possible."
+			
 			SystemExclusive       = 0xF0,	// System Exclusive
 			TimeCodeQuarterFrame  = 0xF1,	// System Common - MIDI Time Code Quarter Frame
-			SongPosition          = 0xF2,	// System Common - Song Position Pointer
-			SongSelect            = 0xF3,	// System Common - Song Select
+			
+			SongPosition          = 0xF2,	// System Common, Song Pointer, with data1 and data2 being LSB and MSB respectively.
+			// This is an internal 14 bit register that holds the number of MIDI beats (1 beat = six MIDI clock messages) since the start of the song.
+			// This 14-bit value is the MIDI Beat upon which to start the song.
+			// Songs are always assumed to start on a MIDI Beat of 0. Each MIDI Beat spans 6 MIDI Clocks.
+			// In other words, each MIDI Beat is a 16th note (since there are 24 MIDI Clocks in a quarter note).
+			
+			SongSelect            = 0xF3,	// System Common, Song Select, with data1 being the Song Number, data2 unused
 			BusSelect             = 0xF5, 	// FIXME: unofficial bus select. Not in spec??
 			TuneRequest           = 0xF6,	// System Common - Tune Request
 			EndOfExclusive        = 0xF7,	// End Of Exclusive message.
@@ -420,5 +433,30 @@ namespace gnu.sound.midi
 			return new MemoryStream(data);
 		}
 
+		/// <summary>
+		/// Convert two 7-bit databytes (LSB and MSB) into an int value
+		/// E.g. convert the least significant and most significant byte
+		/// for PitchBend or SongPosition into an int value between 0 and 16383.
+		/// msg.GetData1() is the LSB, and msg.GetData2 in the MSB
+		/// </summary>
+		/// <param name="lsb">least significant byte (message.GetData1())</param>
+		/// <param name="msb">most significant byte (message.GetData2())</param>
+		/// <returns>a 14 bit number, 0 to 16383.</returns>
+		public static int TwoBytesToInt(int lsb, int msb) {
+			return  (msb * 128) + lsb; // this is the same as Convert.ToInt32(d1 + (d2 << 7));
+		}
+		
+		/// <summary>
+		/// Convert an int value into two 7-bit data bytes (LSB and MSB).
+		/// E.g. convert a PitchBend or SongPosition int value into two bits,
+		/// the least significant and most significant byte.
+		/// </summary>
+		/// <param name="value">a 14 bit number, 0 to 16383.</param>
+		/// <returns>least significant and most significant bytes</returns>
+		public static KeyValuePair<int,int> IntToTwoBytes(int value) {
+			int msb = value >> 7; 	// MSB is: e.g. pitchbend bit shift right 7
+			int lsb = value & 0x7F; // LSB is: e.g. pitchbend bitwise AND with a mask of 127
+			return new KeyValuePair<int, int>(lsb, msb);
+		}
 	}
 }

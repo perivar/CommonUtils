@@ -189,6 +189,7 @@
     <Compile Include="Source\Midi\gnu\sound\midi\info\MetaEvent.cs" />
     <Compile Include="Source\Midi\gnu\sound\midi\info\NoteNames.cs" />
     <Compile Include="Source\Midi\gnu\sound\midi\info\ShortEvent.cs" />
+    <Compile Include="Source\Midi\gnu\sound\midi\info\SysexEvent.cs" />
     <Compile Include="Source\Midi\gnu\sound\midi\InvalidMidiDataException.cs" />
     <Compile Include="Source\Midi\gnu\sound\midi\MetaMessage.cs" />
     <Compile Include="Source\Midi\gnu\sound\midi\MidiEvent.cs" />
@@ -196,6 +197,7 @@
     <Compile Include="Source\Midi\gnu\sound\midi\MidiHelper.cs" />
     <Compile Include="Source\Midi\gnu\sound\midi\MidiMessage.cs" />
     <Compile Include="Source\Midi\gnu\sound\midi\Sequence.cs" />
+    <Compile Include="Source\Midi\gnu\sound\midi\SequenceExtensions.cs" />
     <Compile Include="Source\Midi\gnu\sound\midi\ShortMessage.cs" />
     <Compile Include="Source\Midi\gnu\sound\midi\spi\MidiFileReader.cs" />
     <Compile Include="Source\Midi\gnu\sound\midi\spi\MidiFileWriter.cs" />
@@ -290,9 +292,18 @@
     <Content Include="Tests\Passacaglia, Handel-Sine-86bmp.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Tests\agnes-release_me.mid">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Tests\Passacaglia, Handel_Sample.mid">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Tests\Passacaglia, Handel_Sample_Cubase_Format0.mid">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Include="Tests\Passacaglia, Handel_Sample_Cubase_Format0_Default.mid" />
+    <None Include="Tests\Passacaglia, Handel_Sample_Cubase_Format1.mid" />
+    <None Include="Tests\Passacaglia, Handel_Sample_Cubase_Format1_Default.mid" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

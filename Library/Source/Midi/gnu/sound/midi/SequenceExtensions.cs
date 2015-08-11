@@ -63,7 +63,7 @@ namespace gnu.sound.midi
 								// note number is stored in data[1]
 								byte noteTransposed = (byte)((data1 + steps) % 128);
 								
-								// store the track number as the channel
+								// store the transposed note
 								sm.SetMessage(cmd, channel, noteTransposed, data2);
 							}
 						}
@@ -198,7 +198,8 @@ namespace gnu.sound.midi
 						var sm = msg as ShortMessage;
 						if (sm != null) {
 							// get the data
-							var commandByte = sm.GetCommand();
+							var channel = sm.GetChannel();
+							var cmd = sm.GetCommand();
 							var data1 = sm.GetData1();
 							var data2 = sm.GetData2();
 							
@@ -208,16 +209,17 @@ namespace gnu.sound.midi
 								
 								if (sm.IsChannelMessage()) {
 									// store the track number as the channel
-									sm.SetMessage(commandByte, trackNumber, data1, data2);
+									sm.SetMessage(cmd, trackNumber, data1, data2);
 								}
 							}
 							
 							if ((options & FormatConversionOption.NoteOffZero2NoteOnZero) > 0) {
 								
 								// If the event is a NoteOff with Volume 0
-								if (commandByte == (int) MidiHelper.MidiEventType.NoteOff && data2 == 0) {
+								if (cmd == (int) MidiHelper.MidiEventType.NoteOff && data2 == 0) {
+									
 									// convert to a NoteOn instead
-									sm.SetMessage((int) MidiHelper.MidiEventType.NoteOn, data1, data2);
+									sm.SetMessage((int) MidiHelper.MidiEventType.NoteOn, channel, data1, data2);
 								}
 							}
 						}

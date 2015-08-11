@@ -531,7 +531,7 @@ namespace CommonUtils.CommonMath.FFT
 					double re = complexSignal[2*j];
 					double img = complexSignal[2*j + 1];
 					
-					band[j] = (double) Math.Sqrt(re*re + img*img) * 1/fftWindowsSize;
+					band[j] = (double) Math.Sqrt(re*re + img*img);
 				}
 				frames[i] = band;
 			}
