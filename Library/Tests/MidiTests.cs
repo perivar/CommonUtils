@@ -20,19 +20,18 @@ namespace CommonUtils.Tests
 		[Test]
 		public void TestReadWriteMidi()
 		{
-			string fileName = @"Tests\Passacaglia, Handel_Sample.mid";
+			string inputFileName = @"Tests\Passacaglia, Handel_Sample.mid";
 			
-			var fileIn = new FileInfo(fileName);
+			var fileIn = new FileInfo(inputFileName);
 			var sequence = new MidiFileReader().GetSequence(fileIn);
 			
 			string outputTextPath = fileIn.Name + ".txt";
 			sequence.DumpMidi(outputTextPath);
 			
 			string outputFileName = fileIn.Name + "_parsed.mid";
-			var fileOut = new FileInfo(outputFileName);
-			new MidiFileWriter().Write(sequence, sequence.MidiFileType, fileOut);
+			sequence.Save(outputFileName);
 			
-			if (FileCompare(fileIn.FullName, fileOut.FullName)) {
+			if (FileCompare(inputFileName, outputFileName)) {
 				Assert.Pass("The midi files are identical.");
 			} else {
 				Assert.Fail("The midi files are different!");
