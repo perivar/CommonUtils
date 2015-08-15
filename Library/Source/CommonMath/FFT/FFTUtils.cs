@@ -454,8 +454,16 @@ namespace CommonUtils.CommonMath.FFT
 			int numberOfSegments = (numberOfSamples - fftWindowsSize)/fftOverlap;
 			var frames = new double[numberOfSegments][];
 			
+			// since we are dealing with small buffer sizes (1024) but are trying to detect peaks at low frequency ranges
+			// octaves 0 .. 2 for example, zero padding is nessessary to improve the interpolation resolution of the FFT
+			// otherwise FFT bins will be quite large making it impossible to distinguish between low octave notes which
+			// are seperated by only a few Hz in these ranges.
+			//const int ZERO_PAD_MULTIPLIER = 4; // zero padding adds interpolation resolution to the FFT, it also dilutes the magnitude of the bins
+			// TODO: figure out how to properly use zero_padding
+			
 			// even - Re, odd - Img
 			var complexSignal = new double[2*fftWindowsSize];
+			//var complexSignal = new double[2*fftWindowsSize*ZERO_PAD_MULTIPLIER*2]; // zero pad
 			double lengthSqrt = Math.Sqrt(fftWindowsSize);
 			for (int i = 0; i < numberOfSegments; i++)
 			{
@@ -476,8 +484,8 @@ namespace CommonUtils.CommonMath.FFT
 				var band = new double[fftWindowsSize/2];
 				for (int j = 0; j < fftWindowsSize/2; j++)
 				{
-					double re = complexSignal[2*j];// * lengthSqrt;
-					double img = complexSignal[2*j + 1];// * lengthSqrt;
+					double re = complexSignal[2*j];
+					double img = complexSignal[2*j + 1];
 					
 					// do the Abs calculation and add with Math.Sqrt(audio_data.Length);
 					// i.e. the magnitude spectrum

@@ -156,7 +156,7 @@ namespace CommonUtils.CommonMath.FFT
 			blackKey = Image.FromFile(@"data\blackkey.png");
 			octaveBtn = Image.FromFile(@"data\octavebutton.png");
 			
-			window.SetMode(0); // No Window
+			window.SetMode(Window.RECTANGULAR); // No Window
 		}
 		
 		#region Freq to Pitch or Pitch to Freq
@@ -320,7 +320,7 @@ namespace CommonUtils.CommonMath.FFT
 			loadedAudioFile = audioFile;
 			TRACK_LOADED = true;
 			
-			audioSystem.Play();
+			//audioSystem.Play();
 			
 			while (audioSystem.IsPlaying) {
 				System.Threading.Thread.Sleep(100);

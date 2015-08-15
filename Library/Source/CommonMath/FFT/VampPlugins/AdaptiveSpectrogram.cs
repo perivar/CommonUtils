@@ -56,8 +56,13 @@ namespace CommonUtils.CommonMath.FFT.VampPlugins {
 		public AdaptiveSpectrogram(float inputSampleRate)
 		{
 			sampleRate = inputSampleRate;
-			m_w = 8;
-			m_n = 2;
+			
+			m_w = 9; 	// m_w: 8 => 512
+			m_n = 2;	// Number of resolutions
+			
+			// original defaults
+			// m_w: 8, m_n: 2 => min window: 512, max window: 2048
+			
 			m_coarse = false;
 			m_threaded = false;
 			m_threadsInUse = false;
@@ -173,42 +178,41 @@ namespace CommonUtils.CommonMath.FFT.VampPlugins {
 
 		public float GetParameter(string id)
 		{
-			if (id == "n") {
-				return m_n + 1;
-			} else if (id == "w") {
-				return m_w + 1;
-			} else if (id == "threaded") {
-				return (m_threaded ? 1 : 0);
-			} else if (id == "coarse") {
-				return (m_coarse ? 1 : 0);
-			} else {
-				return 0.0f;
+			switch (id) {
+				case "n":
+					return m_n + 1;
+				case "w":
+					return m_w + 1;
+				case "threaded":
+					return (m_threaded ? 1 : 0);
+				case "coarse":
+					return (m_coarse ? 1 : 0);
+				default:
+					return 0.0f;
 			}
 		}
 		
 		public void SetParameter(string id, float value)
 		{
-			if (id == "n")
-			{
-				int n = Convert.ToInt32(value);
-				if (n >= 1 && n <= 10) {
-					m_n = n - 1;
-				}
-			}
-			else if (id == "w")
-			{
-				int w = Convert.ToInt32(value);
-				if (w >= 1 && w <= 14) {
-					m_w = w - 1;
-				}
-			}
-			else if (id == "threaded")
-			{
-				m_threaded = (value > 0.5);
-			}
-			else if (id == "coarse")
-			{
-				m_coarse = (value > 0.5);
+			switch (id) {
+				case "n":
+					int n = Convert.ToInt32(value);
+					if (n >= 1 && n <= 10) {
+						m_n = n - 1;
+					}
+					break;
+				case "w":
+					int w = Convert.ToInt32(value);
+					if (w >= 1 && w <= 14) {
+						m_w = w - 1;
+					}
+					break;
+				case "threaded":
+					m_threaded = (value > 0.5);
+					break;
+				case "coarse":
+					m_coarse = (value > 0.5);
+					break;
 			}
 		}
 
@@ -645,8 +649,8 @@ namespace CommonUtils.CommonMath.FFT.VampPlugins {
 				minres = mn;
 				maxres = mx;
 				
-				// The number of resolutions, d, we may obtain depends directly on our choice of L and N:
-				// d = log2 (N=L) + 1
+				// The number of resolutions, n, we may obtain depends directly on our choice of L and N:
+				// n = log2 (N/L) + 1
 				// N = number of points in each DFT
 				// L = time advance of the analysis window
 				n = Log2(maxres/minres) + 1;
@@ -755,7 +759,7 @@ namespace CommonUtils.CommonMath.FFT.VampPlugins {
 		#region FFTThread Class
 		protected class FFTThread
 		{
-			Window m_window;
+			readonly Window m_window;
 			float[] m_in;
 			double[] m_rin;
 			double[] m_rout;
@@ -818,7 +822,9 @@ namespace CommonUtils.CommonMath.FFT.VampPlugins {
 					int origin = m_maxwid/4 - m_w/4; // for 50% overlap
 					for (int j = 0; j < m_w; ++j)
 					{
-						m_rin[j] = m_in[origin + i * m_w/2 + j];
+						int index = origin + i * m_w/2 + j;
+						if (index > m_in.Length - 1) break;
+						m_rin[j] = m_in[index];
 					}
 					
 					// perform windowing
