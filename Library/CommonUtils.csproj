@@ -133,6 +133,8 @@
     <Compile Include="Source\CommonMath\FFT\fftw\FFTW.cs" />
     <Compile Include="Source\CommonMath\FFT\LomontFFT.cs" />
     <Compile Include="Source\CommonMath\FFT\STFT.cs" />
+    <Compile Include="Source\CommonMath\FFT\VampPlugins\AdaptiveSpectrogram.cs" />
+    <Compile Include="Source\CommonMath\FFT\VampPlugins\Window.cs" />
     <Compile Include="Source\CommonMath\FFT\WindowFunctions.cs" />
     <Compile Include="Source\CommonMath\MFCC\MFCC.cs" />
     <Compile Include="Source\CommonMath\Wavelets\Haar.cs" />
@@ -219,6 +221,7 @@
     <Compile Include="Tests\WaveletTest.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="Source\CommonMath\FFT\VampPlugins" />
     <Folder Include="Source\CommonMath\MFCC" />
     <Folder Include="Source\CommonMath\Wavelets" />
     <Folder Include="Source\CommonMath\Wavelets\HaarCSharp" />

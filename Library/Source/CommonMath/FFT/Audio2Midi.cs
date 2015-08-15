@@ -16,14 +16,30 @@ namespace CommonUtils.CommonMath.FFT
 	/// https://github.com/corbanbrook/spectrotune
 	/// </summary>
 	public class Audio2Midi : IDSPPlugin
-	{
+	{		
+		// using iZotope Spectrogram Demo.exe
+		// which can be found at http://audio.rightmark.org/lukin/pub/aes_adapt/
+		// the following seems like the best settings for:
+		
+		// Normal STFT Spectogram
+		// FFTSize: 2048
+		// FFT Zero Padding: 4 x Padding
+		// FFT Overlap: 50% 
+		// Window: Hann
+
+		// Multiresolution STFT Spectogram
+		// FFTSize: 512 (or 1024)
+		// FFT Zero Padding: None
+		// FFT Overlap: None 
+		// Window: Hann
+
 		
 		// const int bufferSize = 32768;
 		// const int bufferSize = 16384;
 		// const int bufferSize = 8192;
 		// const int bufferSize = 4096;
 		const int bufferSize = 2048;
-		// const int bufferSize = 1024;
+		//const int bufferSize = 1024;
 		// const int bufferSize = 512;
 
 		// since we are dealing with small buffer sizes (1024) but are trying to detect peaks at low frequency ranges

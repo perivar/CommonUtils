@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Linq;
+using System.Collections.Generic;
 using System.Drawing;
 using NUnit.Framework;
 
@@ -6,6 +8,7 @@ using CommonUtils.Audio;
 using CommonUtils.Audio.NAudio;
 using CommonUtils.CommonMath.FFT;
 using CommonUtils.CommonMath.Comirva;
+using CommonUtils.CommonMath.FFT.VampPlugins;
 
 namespace CommonUtils.Tests
 {
@@ -52,7 +55,7 @@ namespace CommonUtils.Tests
 			double[][] spec5 = FFTUtils.CreateSpectrogramFFTWLIB_INPLACE(data, fftWindowSize, overlap);
 			var spec5M = new Matrix(spec5);
 			spec5M.WriteCSV("spec_fftwlib_inplace.csv");
-			//Assert.That(spec5, Is.EqualTo(spec1).AsCollection.Within(0.001), "fail at [0]");			
+			//Assert.That(spec5, Is.EqualTo(spec1).AsCollection.Within(0.001), "fail at [0]");
 		}
 		
 		[Test]
@@ -194,6 +197,62 @@ namespace CommonUtils.Tests
 			Bitmap bmp1 = AudioAnalyzer.GetSpectrogramImage(spectrogram, width, height, seconds*1000, SAMPLING_RATE, ColorUtils.ColorPaletteType.BLACK_AND_WHITE, false, null, null);
 			bmp1.Save(@"spectrogram-blackwhite.png");
 			
+		}
+		
+		[Test]
+		public void TestAdaptiveSpectrogram() {
+			// test variables
+			var audioSystem = BassProxy.Instance;
+
+			// 0. Get Audio Data
+			float[] audioSamples = BassProxy.ReadMonoFromFile(WAVE_INPUT_FILEPATH, SAMPLING_RATE);
+			
+			var aspec = new AdaptiveSpectrogram(SAMPLING_RATE);
+			
+			int blockSize = aspec.GetPreferredBlockSize(); 	// 2048
+			int stepSize = aspec.GetPreferredStepSize(); 	// 1024 = 50% overlap
+			
+			// print out a normal spectrogram for comparison
+			double[][] spec1 = FFTUtils.CreateSpectrogramLomont(audioSamples, blockSize, stepSize);
+			var spec1M = new Matrix(spec1).Transpose();
+			spec1M.DrawMatrixImage("spec1_normal.png", -1, -1, true, true);
+
+			// split the signal into chunks to feed the AdaptiveSpectrogram
+			var chunks = MathUtils.Split(audioSamples, stepSize, false);
+			
+			int chunkLength = chunks.Count();
+			Console.WriteLine("Chunk count: {0}", chunkLength);
+
+			int count = 1;
+			IEnumerable<double[]> spec = new double[0][];
+			float[] lastChunk = null;
+			foreach (var chunk in chunks) {
+				Console.Write("Processing chunk: {0}   \r", count);
+				
+				if (lastChunk != null) {
+					
+					// add two chunks together, because adaptive spectrogram expects 50% overlap
+					var z = new float[lastChunk.Length + chunk.Count()];
+					lastChunk.CopyTo(z, 0);
+					chunk.ToArray().CopyTo(z, chunk.Count());
+					
+					// process two last chunks as one (e.g. 50% overlap)
+					var chunkData = aspec.Process(z);
+					
+					// store in spectrogram
+					spec = spec.Concat(chunkData);
+					
+					//var chunkM = new Matrix(chunkData);
+					//chunkM.WriteCSV("chunkData_" + count + ".csv");
+				}
+				
+				lastChunk = chunk.ToArray();
+				count++;
+			}
+			
+			var specM = new Matrix(spec.ToArray()).Transpose();
+			//specM.WriteCSV("spec_all.csv");
+			specM.DrawMatrixImage("spec_adaptive.png", -1, -1, true, true);
 		}
 	}
 }
