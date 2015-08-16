@@ -21,6 +21,9 @@ namespace CommonUtils.CommonMath.FFT.VampPlugins {
 	/// </summary>
 	public class AdaptiveSpectrogram
 	{
+		/// <summary>
+		/// Sample rate
+		/// </summary>
 		protected float sampleRate;
 		
 		/// <summary>
@@ -57,11 +60,10 @@ namespace CommonUtils.CommonMath.FFT.VampPlugins {
 		{
 			sampleRate = inputSampleRate;
 			
-			m_w = 9; 	// m_w: 8 => 512, 9 => 1024
-			m_n = 3;	// Number of resolutions
-			
 			// original defaults
-			// m_w: 8, m_n: 2 => min window: 512, max window: 2048
+			// m_w: 8, m_n: 2 => min window: 512, max window: 2048, 3 iterations
+			m_w = 8; 	// One less than the GUI, e.g. m_w: 8 is really 9 => 512
+			m_n = 2;	// One less than the GUI, e.g. m_n: 2 is really 3
 			
 			m_coarse = false;
 			m_threaded = false;
@@ -94,14 +96,63 @@ namespace CommonUtils.CommonMath.FFT.VampPlugins {
 			return "Plugin by Wen Xue and Chris Cannam.  Copyright (c) 2009 Wen Xue and QMUL - All Rights Reserved";
 		}
 
+		/// <summary>
+		/// Return window increment (step size)
+		/// </summary>
+		/// <returns></returns>
 		public int GetPreferredStepSize()
 		{
 			return ((2 << m_w) << m_n) / 2;
 		}
 
+		/// <summary>
+		/// Return the number of Audio frames per block
+		/// </summary>
+		/// <returns></returns>
 		public int GetPreferredBlockSize()
 		{
 			return (2 << m_w) << m_n;
+		}
+		
+		/// <summary>
+		/// Using the GUI window value (which is one less than the version used in the code)
+		/// return the actual window length used
+		/// </summary>
+		/// <param name="w">window integer</param>
+		/// <returns>actual window length used</returns>
+		public static string GetWindowDescription(int w) {
+			switch (w) {
+				case 1:
+					return "2";
+				case 2:
+					return "4";
+				case 3:
+					return "8";
+				case 4:
+					return "16";
+				case 5:
+					return "32";
+				case 6:
+					return "64";
+				case 7:
+					return "128";
+				case 8:
+					return "256";
+				case 9:
+					return "512";
+				case 10:
+					return "1024";
+				case 11:
+					return "2048";
+				case 12:
+					return "4096";
+				case 13:
+					return "8192";
+				case 14:
+					return "16384";
+				default:
+					return "no window";
+			}
 		}
 
 		/*
@@ -176,6 +227,37 @@ namespace CommonUtils.CommonMath.FFT.VampPlugins {
 	}
 		 */
 
+		/*
+		public AdaptiveSpectrogram.OutputList getOutputDescriptors()
+		{
+			OutputList list = new OutputList();
+			
+			OutputDescriptor d = new OutputDescriptor();
+			d.identifier = "output";
+			d.name = "Output";
+			d.description = "The output of the plugin";
+			d.unit = "";
+			d.hasFixedBinCount = true;
+			d.binCount = getPreferredBlockSize() / 2;
+			d.hasKnownExtents = false;
+			d.isQuantized = false;
+			d.sampleType = OutputDescriptor.FixedSampleRate;
+			d.sampleRate = m_inputSampleRate / ((2 << m_w) / 2);
+			d.hasDuration = false;
+			string name = new string(new char[20]);
+			for (int i = 0; i < d.binCount; ++i)
+			{
+				float freq = (m_inputSampleRate / (d.binCount * 2)) * (i + 1); // no DC bin
+				name = string.Format("{0:D} Hz", (int)freq);
+				d.binNames.push_back(name);
+			}
+			list.push_back(d);
+			
+			return list;
+		}
+		 */
+		
+		#region Get and Set parameter methods
 		public float GetParameter(string id)
 		{
 			switch (id) {
@@ -215,42 +297,13 @@ namespace CommonUtils.CommonMath.FFT.VampPlugins {
 					break;
 			}
 		}
-
-		/*
-		public AdaptiveSpectrogram.OutputList getOutputDescriptors()
-		{
-			OutputList list = new OutputList();
-			
-			OutputDescriptor d = new OutputDescriptor();
-			d.identifier = "output";
-			d.name = "Output";
-			d.description = "The output of the plugin";
-			d.unit = "";
-			d.hasFixedBinCount = true;
-			d.binCount = getPreferredBlockSize() / 2;
-			d.hasKnownExtents = false;
-			d.isQuantized = false;
-			d.sampleType = OutputDescriptor.FixedSampleRate;
-			d.sampleRate = m_inputSampleRate / ((2 << m_w) / 2);
-			d.hasDuration = false;
-			string name = new string(new char[20]);
-			for (int i = 0; i < d.binCount; ++i)
-			{
-				float freq = (m_inputSampleRate / (d.binCount * 2)) * (i + 1); // no DC bin
-				name = string.Format("{0:D} Hz", (int)freq);
-				d.binNames.push_back(name);
-			}
-			list.push_back(d);
-			
-			return list;
-		}
-		 */
+		#endregion
 
 		public double[][] Process(float[] inputBuffers)
 		{
 			int minwid = (2 << m_w); 			// m_w: 8 => 512, 9 => 1024
 			int maxwid = ((2 << m_w) << m_n); 	// m_w: 8, m_n: 2 => 2048
-												// m_w: 9, m_n: 3 => 8192
+			// m_w: 9, m_n: 3 => 8192
 			
 			#if DEBUGVERBOSE
 			Console.WriteLine("Widths from {0} to {1} ({2} to {3} in real parts)", minwid, maxwid, minwid/2, maxwid/2);
@@ -313,7 +366,7 @@ namespace CommonUtils.CommonMath.FFT.VampPlugins {
 			
 			int cutwid = maxwid/2;
 
-			Cutting cutting = Cut(s, cutwid, 0, 0, cutwid, null);
+			Cutting cutting = Cut(s, cutwid, 0, 0, cutwid);
 			
 			#if DEBUGVERBOSE
 			PrintCutting(cutting, "  ");
@@ -331,6 +384,7 @@ namespace CommonUtils.CommonMath.FFT.VampPlugins {
 			return rmat;
 		}
 
+		#region Math util methods
 		public static int Log2(double val) {
 			return (int) Math.Log(val, 2);
 		}
@@ -352,6 +406,7 @@ namespace CommonUtils.CommonMath.FFT.VampPlugins {
 				return Math.Log(x);
 			}
 		}
+		#endregion
 
 		protected static double Cost(Spectrogram s, int x, int y)
 		{
@@ -384,20 +439,13 @@ namespace CommonUtils.CommonMath.FFT.VampPlugins {
 		}
 
 		// recursively cut the spectrogram into small pieces
-		protected Cutting Cut(Spectrograms s, int res, int x, int y, int h, Cutting allocator)
+		protected Cutting Cut(Spectrograms s, int res, int x, int y, int h)
 		{
 			#if DEBUGVERBOSE
 			Console.WriteLine("res = {0}, x = {1}, y = {2}, h = {3}", res, x, y, h);
 			#endif
 			
-			Cutting cutting;
-			if (allocator != null) {
-				cutting = allocator;
-				cutting.allocator = allocator;
-			} else {
-				cutting = new Cutting();
-				cutting.allocator = null;
-			}
+			var cutting = new Cutting();
 			
 			if (h > 1 && res > s.minres)
 			{
@@ -405,7 +453,7 @@ namespace CommonUtils.CommonMath.FFT.VampPlugins {
 				{
 					var left = new Cutting();
 					var right = new Cutting();
-					//GetSubCuts(s, res, x, y, h, null, null, ref left, ref right, allocator);
+					//GetSubCuts(s, res, x, y, h, null, null, ref left, ref right);
 					
 					double hcost = left.cost + right.cost;
 					double henergy = left.value + right.value;
@@ -421,7 +469,7 @@ namespace CommonUtils.CommonMath.FFT.VampPlugins {
 				{
 					var top = new Cutting();
 					var bottom = new Cutting();
-					//GetSubCuts(s, res, x, y, h, ref top, ref bottom, null, null, allocator);
+					//GetSubCuts(s, res, x, y, h, ref top, ref bottom, null, null);
 					
 					double vcost = top.cost + bottom.cost;
 					double venergy = top.value + bottom.value;
@@ -439,7 +487,7 @@ namespace CommonUtils.CommonMath.FFT.VampPlugins {
 					var bottom = new Cutting();
 					var left = new Cutting();
 					var right = new Cutting();
-					GetSubCuts(s, res, x, y, h, ref top, ref bottom, ref left, ref right, allocator);
+					GetSubCuts(s, res, x, y, h, ref top, ref bottom, ref left, ref right);
 					
 					double vcost = top.cost + bottom.cost;
 					double venergy = top.value + bottom.value;
@@ -493,7 +541,7 @@ namespace CommonUtils.CommonMath.FFT.VampPlugins {
 			return cutting;
 		}
 		
-		protected void GetSubCuts(Spectrograms s, int res, int x, int y, int h, ref Cutting top, ref Cutting bottom, ref Cutting left, ref Cutting right, Cutting allocator)
+		protected void GetSubCuts(Spectrograms s, int res, int x, int y, int h, ref Cutting top, ref Cutting bottom, ref Cutting left, ref Cutting right)
 		{
 			if (m_threaded && !m_threadsInUse)
 			{
@@ -543,10 +591,10 @@ namespace CommonUtils.CommonMath.FFT.VampPlugins {
 				// but with two vertical subregions of height h/2.
 				
 				if (top != null)
-					top = Cut(s, res, x, y + h/2, h/2, allocator);
+					top = Cut(s, res, x, y + h/2, h/2);
 
 				if (bottom != null)
-					bottom = Cut(s, res, x, y, h/2, allocator);
+					bottom = Cut(s, res, x, y, h/2);
 				
 				// The "horizontal" division is a left/right split.
 				// Splitting this way places us in resolution res/2, which has lower
@@ -554,10 +602,10 @@ namespace CommonUtils.CommonMath.FFT.VampPlugins {
 				// We need to double x accordingly.
 				
 				if (left != null)
-					left = Cut(s, res/2, 2 * x, y/2, h/2, allocator);
+					left = Cut(s, res/2, 2 * x, y/2, h/2);
 
 				if (right != null)
-					right = Cut(s, res/2, 2 * x + 1, y/2, h/2, allocator);
+					right = Cut(s, res/2, 2 * x + 1, y/2, h/2);
 			}
 		}
 
@@ -608,6 +656,14 @@ namespace CommonUtils.CommonMath.FFT.VampPlugins {
 			}
 		}
 		
+		public override string ToString()
+		{
+			return string.Format("[SampleRate={0}, N={1}, W={2}, Threaded={3}, Coarse={4}", sampleRate,
+			                     GetParameter("n"), GetWindowDescription((int) GetParameter("w")), GetParameter("threaded"), GetParameter("coarse"));
+		}
+
+		#region Helper Classes
+		#region Spectrogram class
 		protected class Spectrogram
 		{
 			public int resolution;
@@ -637,7 +693,9 @@ namespace CommonUtils.CommonMath.FFT.VampPlugins {
 				return string.Format("Resolution={0}, Width={1}", resolution, width);
 			}
 		}
+		#endregion
 		
+		#region Spectrograms class
 		protected class Spectrograms
 		{
 			public int minres;
@@ -681,7 +739,9 @@ namespace CommonUtils.CommonMath.FFT.VampPlugins {
 				return string.Format("[Spectrograms Minres={0}, Maxres={1}, N={2}, Spectrograms={3}]", minres, maxres, n, spectrograms.Length);
 			}
 		}
+		#endregion
 
+		#region Cutting class
 		protected class Cutting
 		{
 			public enum Cut
@@ -708,12 +768,12 @@ namespace CommonUtils.CommonMath.FFT.VampPlugins {
 				return string.Format("[Cut={0}, Cost={1}, Value={2}, First={3}, Second={4}, Allocator={5}]", cut, cost, value, first != null, second != null, allocator != null);
 			}
 		}
+		#endregion
 		
 		#region CutThread Class
 		protected class CutThread
 		{
 			AdaptiveSpectrogram m_as;
-			Cutting m_allocator;
 			Spectrograms m_s;
 			int m_res;
 			int m_x;
@@ -726,7 +786,6 @@ namespace CommonUtils.CommonMath.FFT.VampPlugins {
 			public CutThread(AdaptiveSpectrogram @as)
 			{
 				m_as = @as;
-				m_allocator = new Cutting();
 			}
 			
 			public void Cut(Spectrograms s, int res, int x, int y, int h)
@@ -752,7 +811,7 @@ namespace CommonUtils.CommonMath.FFT.VampPlugins {
 
 			protected void PerformTask()
 			{
-				m_result = m_as.Cut(m_s, m_res, m_x, m_y, m_h, m_allocator);
+				m_result = m_as.Cut(m_s, m_res, m_x, m_y, m_h);
 			}
 		}
 		#endregion
@@ -816,8 +875,8 @@ namespace CommonUtils.CommonMath.FFT.VampPlugins {
 			public void PerformTask()
 			{
 				// perform the fft for each of the chosen window sizes
-				// m_maxwid = 2048
-				// m_w = 512, 1024, 2048
+				// m_maxwid = 2048 (8192)
+				// m_w = 512, 1024, 2048 (1024, 2048, 4096, 8192)
 				for (int i = 0; i < m_maxwid / m_w; ++i)
 				{
 					int origin = m_maxwid/4 - m_w/4; // for 50% overlap
@@ -851,6 +910,7 @@ namespace CommonUtils.CommonMath.FFT.VampPlugins {
 				}
 			}
 		}
+		#endregion
 		#endregion
 	}
 }

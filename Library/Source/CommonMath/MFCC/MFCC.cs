@@ -3,6 +3,7 @@ using CommonUtils.CommonMath.Comirva;
 
 using CommonUtils.CommonMath.Wavelets.Compress;
 using CommonUtils.CommonMath.Wavelets;
+using CommonUtils.CommonMath.Filters;
 using CommonUtils;
 
 namespace CommonUtils.CommonMath.MFCC
@@ -44,69 +45,11 @@ namespace CommonUtils.CommonMath.MFCC
 		{
 			this.numberCoefficients = numberCoefficients;
 			
-			var mel = new double[srate/2 - 19];
-			var freq = new double[srate/2 - 19];
-			const int startFreq = 20;
-			
-			// Mel Scale from StartFreq to SamplingRate/2, step every 1Hz
-			for (int f = startFreq; f <= srate/2; f++) {
-				mel[f-startFreq] = LinearToMel(f);
-				freq[f-startFreq] = f;
-			}
-			
-			// Prepare filters
-			var freqs = new double[numberFilters + 2];
-			melScaleFreqsIndex = new int[numberFilters + 2];
-			
-			for (int f = 0; f < freqs.Length; f++) {
-				double melIndex = 1.0 + ((mel[mel.Length - 1] - 1.0) /
-				                         (freqs.Length - 1.0) * f);
-				double min = Math.Abs(mel[0] - melIndex);
-				freqs[f] = freq[0];
-				
-				for (int j = 1; j < mel.Length; j++) {
-					double cur = Math.Abs(mel[j] - melIndex);
-					if (cur < min) {
-						min = cur;
-						freqs[f] = freq[j];
-					}
-				}
-				
-				melScaleFreqsIndex[f] = MathUtils.FreqToIndex(freqs[f], srate, winsize);
-			}
-			
-			// triangle heights
-			melScaleTriangleHeights = new double[numberFilters];
-			for (int j = 0; j < melScaleTriangleHeights.Length; j++) {
-				melScaleTriangleHeights[j] = 2.0/(freqs[j+2] - freqs[j]);
-			}
-			
-			var fftFreq = new double[winsize/2 + 1];
-			for (int j = 0; j < fftFreq.Length; j++) {
-				fftFreq[j] = ((srate/2)/(fftFreq.Length -1.0)) * j;
-			}
-			
-			// Compute the MFCC filter Weights
-			filterWeights = new Matrix(numberFilters, winsize/2);
-			for (int j = 0; j < numberFilters; j++) {
-				for (int k = 0; k < fftFreq.Length; k++) {
-					if ((fftFreq[k] > freqs[j]) && (fftFreq[k] <= freqs[j+1])) {
-						
-						filterWeights.MatrixData[j][k] = (float)(melScaleTriangleHeights[j] *
-						                                         ((fftFreq[k]-freqs[j])/(freqs[j+1]-freqs[j])));
-					}
-					if ((fftFreq[k] > freqs[j+1]) &&
-					    (fftFreq[k] < freqs[j+2])) {
-						
-						filterWeights.MatrixData[j][k] += (float)(melScaleTriangleHeights[j] *
-						                                          ((freqs[j+2]-fftFreq[k])/(freqs[j+2]-freqs[j+1])));
-					}
-				}
-			}
-			#if DEBUG
-			filterWeights.WriteAscii("melfilters-mirage-orig.ascii");
-			filterWeights.DrawMatrixGraph("melfilters-mirage-orig.png");
-			#endif
+			// Compute the Mel Frequencey Filters
+			var melFilter = new MelFilter(winsize, srate, numberFilters, 20);
+			this.melScaleFreqsIndex = melFilter.MelScaleFreqsIndex;
+			this.melScaleTriangleHeights = melFilter.MelScaleTriangleHeights;
+			this.filterWeights = melFilter.FilterWeights;
 			
 			// Compute the DCT
 			// This whole section is copied from GetDCTMatrix() from CoMirva package
@@ -117,32 +60,6 @@ namespace CommonUtils.CommonMath.MFCC
 			dct.DrawMatrixGraph("dct-mirage-orig.png");
 			#endif
 		}
-		
-		#region Mel scale to Linear and Linear to Mel scale
-		/// <summary>
-		/// Converts frequency from linear to Mel scale.
-		/// Mel-frequency is proportional to the logarithm of the linear frequency,
-		/// reflecting similar effects in the human's subjective aural perception)
-		/// </summary>
-		/// <param name="lFrequency">lFrequency frequency in linear scale</param>
-		/// <returns>frequency in Mel scale</returns>
-		public static double LinearToMel(double lFrequency)
-		{
-			return 1127.01048 * Math.Log(1.0 + lFrequency / 700.0);
-		}
-
-		/// <summary>
-		/// Converts frequency from Mel to linear scale.
-		/// Mel-frequency is proportional to the logarithm of the linear frequency,
-		/// reflecting similar effects in the human's subjective aural perception)
-		/// </summary>
-		/// <param name="mFrequency">frequency in Mel scale</param>
-		/// <returns>frequency in linear scale</returns>
-		public static double MelToLinear(double mFrequency)
-		{
-			return 700.0 * (Math.Exp(mFrequency / 1127.01048) - 1);
-		}
-		#endregion
 		
 		/// <summary>
 		/// Apply internal DCT and Mel Filterbands

@@ -136,6 +136,10 @@
     <Compile Include="Source\CommonMath\FFT\VampPlugins\AdaptiveSpectrogram.cs" />
     <Compile Include="Source\CommonMath\FFT\VampPlugins\Window.cs" />
     <Compile Include="Source\CommonMath\FFT\WindowFunctions.cs" />
+    <Compile Include="Source\CommonMath\Filters\MelFilter.cs" />
+    <Compile Include="Source\CommonMath\Filters\MelFilterBank.cs" />
+    <Compile Include="Source\CommonMath\Filters\MelUtils.cs" />
+    <Compile Include="Source\CommonMath\Filters\TriangleFilter.cs" />
     <Compile Include="Source\CommonMath\MFCC\MFCC.cs" />
     <Compile Include="Source\CommonMath\Wavelets\Haar.cs" />
     <Compile Include="Source\CommonMath\Wavelets\HaarCSharp\ColorChannels.cs" />
@@ -216,6 +220,7 @@
     <Compile Include="Source\XmlUtils.cs" />
     <Compile Include="Tests\FFTTest.cs" />
     <Compile Include="Tests\FFTTesting.cs" />
+    <Compile Include="Tests\FilterTests.cs" />
     <Compile Include="Tests\ImageTests.cs" />
     <Compile Include="Tests\MidiTests.cs" />
     <Compile Include="Tests\WaveletTest.cs" />
@@ -223,6 +228,7 @@
   <ItemGroup>
     <Folder Include="Source\CommonMath\FFT\VampPlugins" />
     <Folder Include="Source\CommonMath\MFCC" />
+    <Folder Include="Source\CommonMath\Filters" />
     <Folder Include="Source\CommonMath\Wavelets" />
     <Folder Include="Source\CommonMath\Wavelets\HaarCSharp" />
     <Folder Include="Source\CommonMath\Wavelets\WaveletCompress" />
