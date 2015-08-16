@@ -57,8 +57,8 @@ namespace CommonUtils.CommonMath.FFT.VampPlugins {
 		{
 			sampleRate = inputSampleRate;
 			
-			m_w = 9; 	// m_w: 8 => 512
-			m_n = 2;	// Number of resolutions
+			m_w = 9; 	// m_w: 8 => 512, 9 => 1024
+			m_n = 3;	// Number of resolutions
 			
 			// original defaults
 			// m_w: 8, m_n: 2 => min window: 512, max window: 2048
@@ -248,8 +248,9 @@ namespace CommonUtils.CommonMath.FFT.VampPlugins {
 
 		public double[][] Process(float[] inputBuffers)
 		{
-			int minwid = (2 << m_w); 			// m_w: 8 => 512
+			int minwid = (2 << m_w); 			// m_w: 8 => 512, 9 => 1024
 			int maxwid = ((2 << m_w) << m_n); 	// m_w: 8, m_n: 2 => 2048
+												// m_w: 9, m_n: 3 => 8192
 			
 			#if DEBUGVERBOSE
 			Console.WriteLine("Widths from {0} to {1} ({2} to {3} in real parts)", minwid, maxwid, minwid/2, maxwid/2);
