@@ -6,7 +6,7 @@ using CommonUtils.CommonMath.Wavelets;
 using CommonUtils.CommonMath.Filters;
 using CommonUtils;
 
-namespace CommonUtils.CommonMath.MFCC
+namespace CommonUtils.CommonMath.FeatureExtraction
 {
 	/// <summary>
 	/// Mfcc method copied from the Mirage project:

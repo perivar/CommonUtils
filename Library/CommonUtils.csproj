@@ -138,7 +138,7 @@
     <Compile Include="Source\CommonMath\Filters\MelFilterBank.cs" />
     <Compile Include="Source\CommonMath\Filters\MelUtils.cs" />
     <Compile Include="Source\CommonMath\Filters\TriangleFilter.cs" />
-    <Compile Include="Source\CommonMath\MFCC\MFCC.cs" />
+    <Compile Include="Source\CommonMath\FeatureExtraction\MFCC.cs" />
     <Compile Include="Source\CommonMath\Wavelets\Haar.cs" />
     <Compile Include="Source\CommonMath\Wavelets\HaarCSharp\ColorChannels.cs" />
     <Compile Include="Source\CommonMath\Wavelets\HaarCSharp\ForwardWaveletTransform.cs" />
@@ -225,7 +225,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Source\CommonMath\FFT\VampPlugins" />
-    <Folder Include="Source\CommonMath\MFCC" />
+    <Folder Include="Source\CommonMath\FeatureExtraction" />
     <Folder Include="Source\CommonMath\Filters" />
     <Folder Include="Source\CommonMath\Wavelets" />
     <Folder Include="Source\CommonMath\Wavelets\HaarCSharp" />

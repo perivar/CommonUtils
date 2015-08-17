@@ -52,10 +52,10 @@ namespace CommonUtils.CommonMath.Comirva
 	///<P><PRE>
 	///      var vals = {{1.,2.,3},{4.,5.,6.},{7.,8.,10.}};
 	///      Matrix matrixData = new Matrix(vals);
-	///      Matrix b = Matrix.random(3,1);
-	///      Matrix x = matrixData.solve(b);
-	///      Matrix r = matrixData.times(x).minus(b);
-	///      double rnorm = r.normInf();
+	///      Matrix b = Matrix.Random(3,1);
+	///      Matrix x = matrixData.Solve(b);
+	///      Matrix r = matrixData.Times(x).Minus(b);
+	///      double rnorm = r.NormInf();
 	///</PRE>
 	///</P>
 	///</DD>
@@ -151,8 +151,8 @@ namespace CommonUtils.CommonMath.Comirva
 
 		/// <summary>Construct matrixData matrix from matrixData 2-D array.</summary>
 		/// <param name="matrixData">Two-dimensional array of doubles.</param>
-		/// <exception cref="">ArgumentException All rows must have the same length</exception>
-		/// <seealso cref="">#constructWithCopy</seealso>
+		/// <exception cref="ArgumentException">All rows must have the same length</exception>
+		/// <seealso cref="ConstructWithCopy">ConstructWithCopy</seealso>
 		public Matrix(double[][] matrixData)
 		{
 			rowCount = matrixData.Length;
@@ -251,7 +251,10 @@ namespace CommonUtils.CommonMath.Comirva
 			return X;
 		}
 
-		/// Make matrixData deep copy of matrixData matrix
+		/// <summary>
+		/// Make deep copy of matrixData matrix
+		/// </summary>
+		/// <returns>a matrix</returns>
 		public Matrix Copy()
 		{
 			var X = new Matrix(rowCount,columnCount);
@@ -266,7 +269,10 @@ namespace CommonUtils.CommonMath.Comirva
 			return X;
 		}
 
+		/// <summary>
 		/// Clone the Matrix object.
+		/// </summary>
+		/// <returns></returns>
 		public object Clone()
 		{
 			return this.Copy();
@@ -461,7 +467,7 @@ namespace CommonUtils.CommonMath.Comirva
 		/// <param name="j0">Initial column index</param>
 		/// <param name="j1">Final column index</param>
 		/// <returns>matrixData(r(:),j0:j1)</returns>
-		/// <exception cref="">IndexOutOfRangeException Submatrix indices</exception>
+		/// <exception cref="IndexOutOfRangeException">Submatrix indices</exception>
 		public Matrix GetMatrix(int[] r, int j0, int j1) {
 			var X = new Matrix(r.Length,j1-j0+1);
 			var B = X.GetArray();
@@ -511,7 +517,7 @@ namespace CommonUtils.CommonMath.Comirva
 		/// <param name="r">Array of row indices.</param>
 		/// <param name="c">Array of column indices.</param>
 		/// <param name="X">matrixData(r(:),c(:))</param>
-		/// <exception cref="Exception ">Submatrix indices</exception>
+		/// <exception cref="Exception">Submatrix indices</exception>
 		public void SetMatrix(int[] r, int[] c, Matrix X) {
 			try {
 				for (int i = 0; i < r.Length; i++) {
@@ -529,7 +535,7 @@ namespace CommonUtils.CommonMath.Comirva
 		/// <param name="j0">Initial column index</param>
 		/// <param name="j1">Final column index</param>
 		/// <param name="X">matrixData(r(:),j0:j1)</param>
-		/// <exception cref="">Exception Submatrix indices</exception>
+		/// <exception cref="Exception">Submatrix indices</exception>
 		public void SetMatrix(int[] r, int j0, int j1, Matrix X) {
 			try {
 				for (int i = 0; i < r.Length; i++) {
@@ -547,7 +553,7 @@ namespace CommonUtils.CommonMath.Comirva
 		/// <param name="i1">Final row index</param>
 		/// <param name="c">Array of column indices.</param>
 		/// <param name="X">matrixData(i0:i1,c(:))</param>
-		/// <exception cref="">Exception Submatrix indices</exception>
+		/// <exception cref="Exception">Submatrix indices</exception>
 		public void SetMatrix(int i0, int i1, int[] c, Matrix X) {
 			try {
 				for (int i = i0; i <= i1; i++) {
@@ -1166,9 +1172,11 @@ namespace CommonUtils.CommonMath.Comirva
 		{
 			// return matrix with values between minVal and maxVal
 			var result = new Matrix(rows, columns);
-			for (int i = 0; i < rows; ++i)
-				for (int j = 0; j < columns; ++j)
+			for (int i = 0; i < rows; ++i) {
+				for (int j = 0; j < columns; ++j) {
 					result.MatrixData[i][j] = (maxVal - minVal) * random.NextDouble() + minVal;
+				}
+			}
 			return result;
 		}
 		
