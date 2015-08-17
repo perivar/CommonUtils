@@ -88,7 +88,7 @@ namespace CommonUtils.Tests
 			
 			// 2. Windowing
 			// 3. FFT
-			var stft = new STFT(WINDOW_SIZE, OVERLAP, new HannWindow());
+			var stft = new STFT(FFTWindowType.HANNING, WINDOW_SIZE, OVERLAP);
 			//var stftdata = stft.Apply(audioSamples);
 			//stftdata.WriteCSV(@"stft.csv");
 			

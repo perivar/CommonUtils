@@ -27,12 +27,12 @@ namespace CommonUtils.CommonMath.FFT
 		/// </summary>
 		/// <param name="winsize">FFT window size</param>
 		/// <param name="hopsize">Value to hop on to the next window</param>
-		/// <param name="window">Window function to apply to every window processed</param>
-		public STFT(int winsize, int hopsize, IWindowFunction window)
+		/// <param name="windowType">Window function to apply to every window processed</param>
+		public STFT(FFTWindowType windowType, int winsize, int hopsize)
 		{
 			this.winsize = winsize;
 			this.hopsize = hopsize;
-			fft = new FFT(winsize, window);
+			fft = new FFT(windowType, winsize);
 		}
 		
 		/// <summary>

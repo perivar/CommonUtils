@@ -13,6 +13,8 @@
 using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Lomont;
+using CommonUtils.CommonMath.FFT;
 
 namespace CommonUtils.CommonMath.FFT.VampPlugins {
 	
@@ -819,7 +821,7 @@ namespace CommonUtils.CommonMath.FFT.VampPlugins {
 		#region FFTThread Class
 		protected class FFTThread
 		{
-			readonly Window m_window;
+			readonly FFTWindow m_window;
 			float[] m_in;
 			double[] m_rin;
 			double[] m_rout;
@@ -830,18 +832,18 @@ namespace CommonUtils.CommonMath.FFT.VampPlugins {
 			int m_maxwid;
 
 			Task task;
-			Lomont.LomontFFT m_fft;
+			LomontFFT m_fft;
 			
 			public FFTThread(int w)
 			{
-				m_window = new Window(WindowType.HanningWindow, w);
+				m_window = new FFTWindow(FFTWindowType.HANNING, w);
 				m_w = w;
 				m_rin = new double[m_w];
 				m_rout = new double[m_w];
 				m_iout = new double[m_w];
 				//m_fft = new FFTReal(m_w);
 				
-				m_fft = new Lomont.LomontFFT();
+				m_fft = new LomontFFT();
 			}
 
 			public int GetW()
@@ -888,7 +890,7 @@ namespace CommonUtils.CommonMath.FFT.VampPlugins {
 					}
 					
 					// perform windowing
-					m_window.Cut(m_rin);
+					m_window.Apply(m_rin);
 					
 					var fft = new double[m_rin.Length];
 					Array.Copy(m_rin, fft, m_rin.Length);

@@ -132,7 +132,7 @@ namespace CommonUtils.CommonMath.FFT
 
 			// overlap must be an integer smaller than the window size
 			// half the windows size is quite normal
-			double[] windowArray = FFTWindowFunctions.GetWindowFunction(FFTWindowFunctions.HANNING, fftWindowsSize);
+			double[] windowArray = FFTWindow.GetWindowFunction(FFTWindowType.HANNING, fftWindowsSize);
 			
 			// width of the segment - e.g. split the file into 78 time slots (numberOfSegments) and do analysis on each slot
 			int numberOfSegments = (numberOfSamples - fftWindowsSize)/fftOverlap;
@@ -177,7 +177,7 @@ namespace CommonUtils.CommonMath.FFT
 
 			// overlap must be an integer smaller than the window size
 			// half the windows size is quite normal
-			double[] windowArray = FFTWindowFunctions.GetWindowFunction(FFTWindowFunctions.HANNING, fftWindowsSize);
+			double[] windowArray = FFTWindow.GetWindowFunction(FFTWindowType.HANNING, fftWindowsSize);
 			
 			// width of the segment - e.g. split the file into 78 time slots (numberOfSegments) and do analysis on each slot
 			int numberOfSegments = (numberOfSamples - fftWindowsSize)/fftOverlap;
@@ -230,7 +230,7 @@ namespace CommonUtils.CommonMath.FFT
 			
 			// overlap must be an integer smaller than the window size
 			// half the windows size is quite normal
-			double[] windowArray = FFTWindowFunctions.GetWindowFunction(FFTWindowFunctions.HANNING, fftWindowsSize);
+			double[] windowArray = FFTWindow.GetWindowFunction(FFTWindowType.HANNING, fftWindowsSize);
 
 			// even - Re, odd - Img
 			var complexSignal = new double[2*fftWindowsSize];

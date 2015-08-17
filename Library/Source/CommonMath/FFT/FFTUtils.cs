@@ -66,7 +66,7 @@ namespace CommonUtils.CommonMath.FFT
 		/// <param name="input">e.g. an audio signal</param>
 		/// <returns>a complex array (the array alternates between a real and an imaginary value)</returns>
 		public static double[] FFT(double[] input) {
-			var fft = new Lomont.LomontFFT();
+			var fft = new LomontFFT();
 			var complexSignal = DoubleToComplexDouble(input);
 			fft.FFT(complexSignal, true);
 			return complexSignal;
@@ -111,7 +111,7 @@ namespace CommonUtils.CommonMath.FFT
 		/// </param>
 		/// <returns>signal (complex or only positive real values)</returns>
 		public static double[] IFFT(double[] input, bool inputComplex=true, bool returnComplex=true) {
-			var fft = new Lomont.LomontFFT();
+			var fft = new LomontFFT();
 			
 			double[] complexSignal;
 			if (inputComplex) {
@@ -448,7 +448,7 @@ namespace CommonUtils.CommonMath.FFT
 
 			// overlap must be an integer smaller than the window size
 			// half the windows size is quite normal
-			double[] windowArray = FFTWindowFunctions.GetWindowFunction(FFTWindowFunctions.HANNING, fftWindowsSize);
+			double[] windowArray = FFTWindow.GetWindowFunction(FFTWindowType.HANNING, fftWindowsSize);
 			
 			// width of the segment - e.g. split the file into 78 time slots (numberOfSegments) and do analysis on each slot
 			int numberOfSegments = (numberOfSamples - fftWindowsSize)/fftOverlap;
@@ -509,7 +509,7 @@ namespace CommonUtils.CommonMath.FFT
 
 			// overlap must be an integer smaller than the window size
 			// half the windows size is quite normal
-			double[] windowArray = FFTWindowFunctions.GetWindowFunction(FFTWindowFunctions.HANNING, fftWindowsSize);
+			double[] windowArray = FFTWindow.GetWindowFunction(FFTWindowType.HANNING, fftWindowsSize);
 			
 			// width of the segment - e.g. split the file into X time slots (numberOfSegments) and do analysis on each slot
 			int numberOfSegments = (numberOfSamples - fftWindowsSize)/fftOverlap;
@@ -560,7 +560,7 @@ namespace CommonUtils.CommonMath.FFT
 
 			// overlap must be an integer smaller than the window size
 			// half the windows size is quite normal
-			double[] windowArray = FFTWindowFunctions.GetWindowFunction(FFTWindowFunctions.HANNING, fftWindowsSize);
+			double[] windowArray = FFTWindow.GetWindowFunction(FFTWindowType.HANNING, fftWindowsSize);
 			
 			// width of the segment - e.g. split the file into 78 time slots (numberOfSegments) and do analysis on each slot
 			int numberOfSegments = (numberOfSamples - fftWindowsSize)/fftOverlap;
@@ -601,7 +601,7 @@ namespace CommonUtils.CommonMath.FFT
 
 			// overlap must be an integer smaller than the window size
 			// half the windows size is quite normal
-			double[] windowArray = FFTWindowFunctions.GetWindowFunction(FFTWindowFunctions.HANNING, fftWindowsSize);
+			double[] windowArray = FFTWindow.GetWindowFunction(FFTWindowType.HANNING, fftWindowsSize);
 			
 			// width of the segment - e.g. split the file into 78 time slots (numberOfSegments) and do analysis on each slot
 			int numberOfSegments = (numberOfSamples - fftWindowsSize)/fftOverlap;
@@ -653,7 +653,7 @@ namespace CommonUtils.CommonMath.FFT
 
 			// overlap must be an integer smaller than the window size
 			// half the windows size is quite normal
-			double[] windowArray = FFTWindowFunctions.GetWindowFunction(FFTWindowFunctions.HANNING, fftWindowsSize);
+			double[] windowArray = FFTWindow.GetWindowFunction(FFTWindowType.HANNING, fftWindowsSize);
 			
 			// width of the segment - e.g. split the file into 78 time slots (numberOfSegments) and do analysis on each slot
 			int numberOfSegments = (numberOfSamples - fftWindowsSize)/fftOverlap;
@@ -694,7 +694,7 @@ namespace CommonUtils.CommonMath.FFT
 			
 			// overlap must be an integer smaller than the window size
 			// half the windows size is quite normal
-			double[] windowArray = FFTWindowFunctions.GetWindowFunction(FFTWindowFunctions.HANNING, fftWindowsSize);
+			double[] windowArray = FFTWindow.GetWindowFunction(FFTWindowType.HANNING, fftWindowsSize);
 
 			// even - Re, odd - Img
 			var complexSignal = new double[2*fftWindowsSize];

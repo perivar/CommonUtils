@@ -134,8 +134,6 @@
     <Compile Include="Source\CommonMath\FFT\LomontFFT.cs" />
     <Compile Include="Source\CommonMath\FFT\STFT.cs" />
     <Compile Include="Source\CommonMath\FFT\VampPlugins\AdaptiveSpectrogram.cs" />
-    <Compile Include="Source\CommonMath\FFT\VampPlugins\Window.cs" />
-    <Compile Include="Source\CommonMath\FFT\WindowFunctions.cs" />
     <Compile Include="Source\CommonMath\Filters\MelFilter.cs" />
     <Compile Include="Source\CommonMath\Filters\MelFilterBank.cs" />
     <Compile Include="Source\CommonMath\Filters\MelUtils.cs" />

@@ -16,7 +16,7 @@ namespace CommonUtils.CommonMath.FFT
 	/// https://github.com/corbanbrook/spectrotune
 	/// </summary>
 	public class Audio2Midi : IDSPPlugin
-	{		
+	{
 		// using iZotope Spectrogram Demo.exe
 		// which can be found at http://audio.rightmark.org/lukin/pub/aes_adapt/
 		// the following seems like the best settings for:
@@ -24,13 +24,13 @@ namespace CommonUtils.CommonMath.FFT
 		// Normal STFT Spectogram
 		// FFTSize: 2048
 		// FFT Zero Padding: 4 x Padding
-		// FFT Overlap: 50% 
+		// FFT Overlap: 50%
 		// Window: Hann
 
 		// Multiresolution STFT Spectogram
 		// FFTSize: 512 (or 1024)
 		// FFT Zero Padding: None
-		// FFT Overlap: None 
+		// FFT Overlap: None
 		// Window: Hann
 
 		
@@ -71,7 +71,7 @@ namespace CommonUtils.CommonMath.FFT
 		int audioChannels;
 		int audioPosition;
 		
-		Window window = new Window();
+		FFTWindow window;
 
 		int frames; // total horizontal audio frames
 		int frameNumber = -1; // current audio frame
@@ -156,7 +156,7 @@ namespace CommonUtils.CommonMath.FFT
 			blackKey = Image.FromFile(@"data\blackkey.png");
 			octaveBtn = Image.FromFile(@"data\octavebutton.png");
 			
-			window.SetMode(Window.RECTANGULAR); // No Window
+			window = new FFTWindow(FFTWindowType.RECTANGULAR, bufferSize);
 		}
 		
 		#region Freq to Pitch or Pitch to Freq
@@ -433,7 +433,7 @@ namespace CommonUtils.CommonMath.FFT
 			if (frameNumber < frames - 1)
 			{
 				// need to apply the window transform before we zeropad
-				window.Transform(buffer); // add window to samples
+				window.Apply(buffer); // add window to samples
 
 				Array.Copy(buffer, 0, bufferPadded, 0, buffer.Length);
 
@@ -751,13 +751,12 @@ namespace CommonUtils.CommonMath.FFT
 			const int windowY = 160;
 			const int windowHeight = 80;
 
-			float[] windowCurve = window.DrawCurve();
+			double[] windowCurve = window.DrawCurve();
 
 			using(Graphics g = Graphics.FromImage(bitmap))
 			{
 				for (int i = 0; i < windowCurve.Length - 1; i++)
 				{
-					//line(i + windowX, windowY - windowCurve[i] * windowHeight, i+1 + windowX, windowY - windowCurve[i+1] * windowHeight);
 					g.DrawLine(Pens.White, i + windowX, (int) (windowY - windowCurve[i] * windowHeight), i+1 + windowX, (int) (windowY - windowCurve[i+1] * windowHeight));
 				}
 			}
@@ -927,134 +926,6 @@ namespace CommonUtils.CommonMath.FFT
 				return string.Format("[{7}] Freq.={0}, Amp.={1}, Oct.={2}, Semit.={3}, Ch.={4}, Pitch={5}, Vel.={6}", frequency, amplitude, octave, semitone, channel, pitch, velocity, label());
 			}
 		}
-		
-		internal class Window
-		{
-			public const int RECTANGULAR = 0; // equivilent to no window
-			public const int HAMMING = 1;
-			public const int HANN = 2;
-			public const int COSINE = 3;
-			public const int TRIANGULAR = 4;
-			public const int BLACKMAN = 5;
-			public const int GAUSS = 6;
-
-			private int mode = RECTANGULAR;
-			
-			private const double PI = Math.PI;
-			private const double TWO_PI = 2.0 * Math.PI;
-
-			public void SetMode(int window)
-			{
-				this.mode = window;
-			}
-
-			public void Transform(float[] samples)
-			{
-				switch(mode)
-				{
-					case HAMMING:
-						HammingWindow(samples);
-						break;
-					case HANN:
-						HannWindow(samples);
-						break;
-					case COSINE:
-						CosineWindow(samples);
-						break;
-					case TRIANGULAR:
-						TriangularWindow(samples);
-						break;
-					case BLACKMAN:
-						BlackmanWindow(samples);
-						break;
-					case GAUSS:
-						GaussWindow(samples);
-						break;
-				}
-			}
-
-			public float[] DrawCurve()
-			{
-				var samples = new float[128];
-
-				for(int i = 0; i < samples.Length; i++)
-				{
-					samples[i] = 1; // 1 out samples
-				}
-
-				switch(mode)
-				{
-					case HAMMING:
-						HammingWindow(samples);
-						break;
-					case HANN:
-						HannWindow(samples);
-						break;
-					case COSINE:
-						CosineWindow(samples);
-						break;
-					case TRIANGULAR:
-						TriangularWindow(samples);
-						break;
-					case BLACKMAN:
-						BlackmanWindow(samples);
-						break;
-					case GAUSS:
-						GaussWindow(samples);
-						break;
-				}
-				return samples;
-			}
-
-			public static void HammingWindow(float[] samples)
-			{
-				for(int n = 0; n < samples.Length; n++)
-				{
-					samples[n] *= (float) (0.54f - 0.46f * Math.Cos(TWO_PI * n / (samples.Length - 1)));
-				}
-			}
-
-			public static void HannWindow(float[] samples)
-			{
-				for(int n = 0; n < samples.Length; n++)
-				{
-					samples[n] *= (float) (0.5f * (1 - Math.Cos(TWO_PI * n / (samples.Length - 1))));
-				}
-			}
-
-			public static void CosineWindow(float[] samples)
-			{
-				for(int n = 0; n < samples.Length; n++)
-				{
-					samples[n] *= (float) Math.Cos((Math.PI * n) / (samples.Length - 1) - (Math.PI / 2));
-				}
-			}
-
-			public static void TriangularWindow(float[] samples)
-			{
-				for(int n = 0; n < samples.Length; n++)
-				{
-					samples[n] *= (float) ((2.0f / samples.Length) * ((samples.Length / 2.0f) - Math.Abs(n - (samples.Length - 1) / 2.0f)));
-				}
-			}
-
-			public static void BlackmanWindow(float[] samples)
-			{
-				for(int n = 0; n < samples.Length; n++)
-				{
-					samples[n] *= (float) ((0.42f - 0.5f * Math.Cos(TWO_PI * n / (samples.Length - 1))) + (0.08f * Math.Cos(4 * PI * n / (samples.Length -1))));
-				}
-			}
-
-			public static void GaussWindow(float[] samples)
-			{
-				for (int n = 0; n < samples.Length; n++)
-				{
-					samples[n] *= (float) Math.Pow(Math.E, -0.5f * Math.Pow((n - (samples.Length - 1) / 2) / (0.1f * (samples.Length - 1) / 2), 2));
-				}
-			}
-		}
 		#endregion
-
 	}
 }

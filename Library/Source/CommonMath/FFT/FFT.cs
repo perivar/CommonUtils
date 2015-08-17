@@ -2,6 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 
 using CommonUtils.CommonMath.Comirva;
+using Lomont;
 
 namespace CommonUtils.CommonMath.FFT
 {
@@ -45,11 +46,11 @@ namespace CommonUtils.CommonMath.FFT
 		int winsize;
 		int fftsize;
 		float[] fft;
-		IWindowFunction win;
 		float[] data;
-		Lomont.LomontFFT lomonFFT;
+		FFTWindow win;
+		LomontFFT lomonFFT;
 		
-		public FFT(int winsize, IWindowFunction window)
+		public FFT(FFTWindowType windowType, int winsize)
 		{
 			this.winsize = winsize;
 			this.fftsize = 2 * winsize;
@@ -59,11 +60,10 @@ namespace CommonUtils.CommonMath.FFT
 			                             FFTW_ESTIMATE | FFTW_DESTROY_INPUT);
 
 			fft = new float[fftsize];
-			window.Initialize(winsize);
-			win = window;
 			data = new float[fftsize];
 			
-			lomonFFT = new Lomont.LomontFFT();
+			lomonFFT = new LomontFFT();
+			win = new FFTWindow(windowType, winsize);
 		}
 		
 		public void ComputeMatrixUsingFftw(ref Matrix m, int j, float[] audiodata, int pos)
@@ -159,7 +159,7 @@ namespace CommonUtils.CommonMath.FFT
 
 			lomonFFT.RealFFT(ifft, false);
 
-			double[] window = win.GetWindow();
+			double[] window = win.Window;
 
 			// multiply by window w/ overlap-add
 			int N = ifft.Length / 2;
@@ -189,7 +189,7 @@ namespace CommonUtils.CommonMath.FFT
 			double[] complexSignal = FFTUtils.DoubleToComplexDouble(extendedWindow);
 			lomonFFT.TableFFT(complexSignal, false);
 			
-			double[] window = win.GetWindow();
+			double[] window = win.Window;
 
 			// multiply by window w/ overlap-add
 			int N = complexSignal.Length / 2;
