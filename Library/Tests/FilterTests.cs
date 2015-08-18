@@ -2,9 +2,9 @@
 using NUnit.Framework;
 
 using CommonUtils.Audio;
-using CommonUtils.CommonMath.Comirva;
-using CommonUtils.CommonMath.FFT;
-using CommonUtils.CommonMath.Filters;
+using CommonUtils.MathLib.MatrixLib;
+using CommonUtils.MathLib.FFT;
+using CommonUtils.MathLib.Filters;
 
 namespace CommonUtils.Tests
 {

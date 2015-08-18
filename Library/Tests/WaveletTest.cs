@@ -5,10 +5,10 @@ using System.Drawing;
 using System.Linq;
 using System.Diagnostics;
 
-using CommonUtils.CommonMath.Comirva;
-using CommonUtils.CommonMath.Wavelets.HaarCSharp;
-using CommonUtils.CommonMath.Wavelets.Compress;
-using CommonUtils.CommonMath.Wavelets;
+using CommonUtils.MathLib.MatrixLib;
+using CommonUtils.MathLib.Wavelets.HaarCSharp;
+using CommonUtils.MathLib.Wavelets.Compress;
+using CommonUtils.MathLib.Wavelets;
 
 namespace CommonUtils.Tests
 {
@@ -72,7 +72,46 @@ namespace CommonUtils.Tests
 		
 		[Test]
 		public void TestThresholding() {
-			Thresholding.RunTests();
+			// Run the following matlab test:
+			// T = 1; % threshold value
+			// v = linspace(-5,5,1024);
+			// clf;
+			// hold('on');
+			// plot(v, perform_thresholding(v,T,'hard'), 'b--');
+			// plot(v, perform_thresholding(v,T,'soft'), 'r--');
+			// plot(v, perform_thresholding(v,[T 2*T],'semisoft'), 'g');
+			// plot(v, perform_thresholding(v,[T 4*T],'semisoft'), 'g:');
+			// plot(v, perform_thresholding(v',400,'strict'), 'r:');
+			// legend('hard', 'soft', 'semisoft, \mu=2', 'semisoft, \mu=4', 'strict, 400');
+			// hold('off');
+			
+			const double start = -5;
+			const double end = 5;
+			const double totalCount = 1024;
+			var v = MathUtils.Linspace(start, end, totalCount);
+			
+			// perform thresholding and plot
+			const int T = 1;
+			
+			double[][] hard = Thresholding.PerformHardThresholding(v, T);
+			var mHard = new Matrix(hard);
+			mHard.DrawMatrixGraph("thresholding-hard.png", false);
+
+			double[][] soft = Thresholding.PerformSoftThresholding(v, T);
+			var mSoft = new Matrix(soft);
+			mSoft.DrawMatrixGraph("thresholding-soft.png", false);
+
+			double[][] semisoft1 = Thresholding.PerformSemisoftThresholding(v, T, 2*T);
+			var mSemiSoft1 = new Matrix(semisoft1);
+			mSemiSoft1.DrawMatrixGraph("thresholding-semisoft1.png", false);
+
+			double[][] semisoft2 = Thresholding.PerformSemisoftThresholding(v, T, 4*T);
+			var mSemiSoft2 = new Matrix(semisoft2);
+			mSemiSoft2.DrawMatrixGraph("thresholding-semisoft2.png", false);
+			
+			double[][] strict = Thresholding.PerformStrictThresholding(v, 400);
+			var mStrict = new Matrix(strict);
+			mStrict.DrawMatrixGraph("thresholding-strict.png", false);
 		}
 		
 		#region Test Wavelet Transforms using data arrays (no images)

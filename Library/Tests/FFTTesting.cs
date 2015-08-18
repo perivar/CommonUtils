@@ -3,7 +3,7 @@ using System.Diagnostics;
 using NUnit.Framework;
 
 using CommonUtils;
-using CommonUtils.CommonMath.FFT;
+using CommonUtils.MathLib.FFT;
 using CommonUtils.Audio.NAudio;
 
 // For FTTW

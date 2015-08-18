@@ -4,7 +4,7 @@ using System.Drawing.Imaging;
 
 using System.Windows.Forms;
 
-using CommonUtils.CommonMath.FFT;
+using CommonUtils.MathLib.FFT;
 using CommonUtils.Audio;
 
 namespace CommonUtils.GUI

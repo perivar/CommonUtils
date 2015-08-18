@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices; // GCHandle
 using System.IO; // Stream
 using System.Text; // Encoding
-using CommonUtils.CommonMath.FFT;
+using CommonUtils.MathLib.FFT;
 
 using System.Diagnostics;
 

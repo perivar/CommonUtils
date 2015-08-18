@@ -6,9 +6,9 @@ using NUnit.Framework;
 
 using CommonUtils.Audio;
 using CommonUtils.Audio.NAudio;
-using CommonUtils.CommonMath.FFT;
-using CommonUtils.CommonMath.Comirva;
-using CommonUtils.CommonMath.FFT.VampPlugins;
+using CommonUtils.MathLib.FFT;
+using CommonUtils.MathLib.MatrixLib;
+using CommonUtils.MathLib.FFT.VampPlugins;
 
 namespace CommonUtils.Tests
 {

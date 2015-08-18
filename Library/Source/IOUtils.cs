@@ -379,7 +379,7 @@ namespace CommonUtils
 		/// public static string CvsComplexFormatter(object line, int lineCounter, string columnSeparator)
 		/// {
 		///     var elements = new List&lt;string&gt;();
-		///     var complex = (CommonUtils.CommonMath.FFT.Complex) line;
+		///     var complex = (CommonUtils.MathLib.FFT.Complex) line;
 		///
 		///     elements.Add(String.Format("{0,4}", lineCounter));
 		///     elements.Add(String.Format("{0,12:N6}", complex.Re));

@@ -5,7 +5,7 @@ using System.Windows.Forms;
 using System.Collections.Generic;
 
 using CommonUtils;
-using CommonUtils.CommonMath.FFT;
+using CommonUtils.MathLib.FFT;
 
 namespace CommonUtils.GUI
 {
