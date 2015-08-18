@@ -581,8 +581,15 @@ namespace CommonUtils.MathLib.FFT
 				// FFT transform for gathering the spectrum
 				var complexOutput = FFTWPaddedFFT(ref realSignal);
 				
+				// 4096 real numbers on input processed by FFTW dft_r2c_1d transform gives
+				// 4096/2+1 = 2049 complex numbers at output
+
+				// remove the value as FFTW returns one extra complex value not needed
+				var complexFixed = new double[complexOutput.Length - 1];
+				Array.Copy(complexOutput, complexFixed, complexFixed.Length);
+				
 				// get the result
-				var spectrum_fft_abs = FFTUtils.Abs(complexOutput);
+				var spectrum_fft_abs = FFTUtils.Abs(complexFixed);
 				frames[i] = spectrum_fft_abs;
 			}
 			return frames;

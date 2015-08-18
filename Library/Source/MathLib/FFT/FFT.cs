@@ -43,27 +43,27 @@ namespace CommonUtils.MathLib.FFT
 
 		IntPtr fftwData;
 		IntPtr fftwPlan;
-		int winsize;
-		int fftsize;
+		int winSize;
+		int fftSize;
 		float[] fft;
 		float[] data;
 		FFTWindow win;
 		LomontFFT lomonFFT;
 		
-		public FFT(FFTWindowType windowType, int winsize)
+		public FFT(FFTWindowType windowType, int winSize)
 		{
-			this.winsize = winsize;
-			this.fftsize = 2 * winsize;
+			this.winSize = winSize;
+			this.fftSize = 2 * winSize;
 			
-			fftwData = fftwf_malloc(fftsize * sizeof(float));
-			fftwPlan = fftwf_plan_r2r_1d(fftsize, fftwData, fftwData, FFTW_R2HC,
+			fftwData = fftwf_malloc(fftSize * sizeof(float));
+			fftwPlan = fftwf_plan_r2r_1d(fftSize, fftwData, fftwData, FFTW_R2HC,
 			                             FFTW_ESTIMATE | FFTW_DESTROY_INPUT);
 
-			fft = new float[fftsize];
-			data = new float[fftsize];
+			fft = new float[fftSize];
+			data = new float[fftSize];
 			
 			lomonFFT = new LomontFFT();
-			win = new FFTWindow(windowType, winsize);
+			win = new FFTWindow(windowType, winSize);
 		}
 		
 		public void ComputeMatrixUsingFftw(ref Matrix m, int j, float[] audiodata, int pos)
@@ -71,9 +71,9 @@ namespace CommonUtils.MathLib.FFT
 			// apply the window method (e.g HammingWindow, HannWindow etc)
 			win.Apply(ref data, audiodata, pos);
 
-			Marshal.Copy(data, 0, fftwData, fftsize);
+			Marshal.Copy(data, 0, fftwData, fftSize);
 			fftwf_execute(fftwPlan);
-			Marshal.Copy(fftwData, fft, 0, fftsize);
+			Marshal.Copy(fftwData, fft, 0, fftSize);
 			
 			// fft input will now contain the FFT values in a Half Complex format
 			// r0, r1, r2, ..., rn/2, i(n+1)/2-1, ..., i2, i1
@@ -81,14 +81,14 @@ namespace CommonUtils.MathLib.FFT
 			// For a halfcomplex array hc[n], the kth component thus has its real part in hc[k] and its imaginary part in hc[n-k],
 			// with the exception of k == 0 or n/2 (the latter only if n is even)—in these two cases, the imaginary part is zero due to symmetries of the real-input DFT, and is not stored.
 			m.MatrixData[0][j] = Math.Sqrt(fft[0] * fft[0]);
-			for (int i = 1; i < winsize/2; i++) {
+			for (int i = 1; i < winSize/2; i++) {
 				// amplitude (or magnitude) is the square root of the power spectrum
 				// the magnitude spectrum is abs(fft), i.e. Math.Sqrt(re*re + img*img)
 				// use 20*log10(Y) to get dB from amplitude
 				// the power spectrum is the magnitude spectrum squared
 				// use 10*log10(Y) to get dB from power spectrum
 				m.MatrixData[i][j] = Math.Sqrt((fft[i * 2]* fft[i * 2] +
-				                                fft[fftsize - i * 2] * fft[fftsize - i * 2]));
+				                                fft[fftSize - i * 2] * fft[fftSize - i * 2]));
 			}
 			//m.MatrixData[winsize/2][j] = Math.Sqrt(fft[winsize] * fft[winsize]);
 		}
@@ -104,16 +104,16 @@ namespace CommonUtils.MathLib.FFT
 			
 			// fft input will now contain the FFT values
 			// r0, r(n/2), r1, i1, r2, i2 ...
-			m.MatrixData[0][column] = Math.Sqrt(fft[0] * fft[0] * winsize);
-			m.MatrixData[winsize/2-1][column] = Math.Sqrt(fft[1] * fft[1] * winsize);
-			for (int row = 1; row < winsize/2; row++) {
+			m.MatrixData[0][column] = Math.Sqrt(fft[0] * fft[0] * winSize);
+			m.MatrixData[winSize/2-1][column] = Math.Sqrt(fft[1] * fft[1] * winSize);
+			for (int row = 1; row < winSize/2; row++) {
 				// amplitude (or magnitude) is the square root of the power spectrum
 				// the magnitude spectrum is abs(fft), i.e. Math.Sqrt(re*re + img*img)
 				// use 20*log10(Y) to get dB from amplitude
 				// the power spectrum is the magnitude spectrum squared
 				// use 10*log10(Y) to get dB from power spectrum
 				m.MatrixData[row][column] = Math.Sqrt((fft[2 * row] * fft[2 * row] +
-				                                       fft[2 * row + 1] * fft[2 * row + 1]) * winsize);
+				                                       fft[2 * row + 1] * fft[2 * row + 1]) * winSize);
 			}
 		}
 
@@ -134,7 +134,7 @@ namespace CommonUtils.MathLib.FFT
 			}
 		}
 		
-		public void ComputeInverseMatrixUsingLomontRealFFT(Matrix m, int column, ref double[] signal, int winsize, int hopsize) {
+		public void ComputeInverseMatrixUsingLomontRealFFT(Matrix m, int column, ref double[] signal, int winsize, int overlap) {
 			
 			double[] spectrogramWindow = m.GetColumn(column);
 
@@ -170,11 +170,11 @@ namespace CommonUtils.MathLib.FFT
 				
 				// overlap-add method
 				// scale with 5 just because the volume got so much lower when using a second smoothing filter when reconstrcting
-				signal[j+hopsize*column] = signal[j+hopsize*column] + returnArray[j];// * 5;
+				signal[j+overlap*column] = signal[j+overlap*column] + returnArray[j];// * 5;
 			}
 		}
 		
-		public void ComputeInverseMatrixUsingLomontTableFFT(Matrix m, int column, ref double[] signal, int winsize, int hopsize) {
+		public void ComputeInverseMatrixUsingLomontTableFFT(Matrix m, int column, ref double[] signal, int winsize, int overlap) {
 
 			double[] spectrogramWindow = m.GetColumn(column);
 
@@ -201,7 +201,7 @@ namespace CommonUtils.MathLib.FFT
 				
 				// overlap-add method
 				// scale with 2 just because the volume got so much lower when using a second smoothing filter when reconstrcting
-				signal[j+hopsize*column] = signal[j+hopsize*column] + returnArray[j];// * 3;
+				signal[j+overlap*column] = signal[j+overlap*column] + returnArray[j];// * 3;
 			}
 		}
 		

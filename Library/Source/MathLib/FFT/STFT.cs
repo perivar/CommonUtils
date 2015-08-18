@@ -18,21 +18,21 @@ namespace CommonUtils.MathLib.FFT
 	/// </summary>
 	public class STFT
 	{
-		int winsize;
-		int hopsize;
+		int winSize;
+		int fftOverlap;
 		FFT fft; // Use the mirage fft class
 		
 		/// <summary>
 		/// Instantiate a new Stft Class
 		/// </summary>
-		/// <param name="winsize">FFT window size</param>
-		/// <param name="hopsize">Value to hop on to the next window</param>
+		/// <param name="winSize">FFT window size</param>
+		/// <param name="overlap">Value to hop on to the next window</param>
 		/// <param name="windowType">Window function to apply to every window processed</param>
-		public STFT(FFTWindowType windowType, int winsize, int hopsize)
+		public STFT(FFTWindowType windowType, int winSize, int overlap)
 		{
-			this.winsize = winsize;
-			this.hopsize = hopsize;
-			fft = new FFT(windowType, winsize);
+			this.winSize = winSize;
+			this.fftOverlap = overlap;
+			fft = new FFT(windowType, winSize);
 		}
 		
 		/// <summary>
@@ -44,17 +44,18 @@ namespace CommonUtils.MathLib.FFT
 		{
 			using (new DebugTimer("Apply(audiodata)"))
 			{
-				int hops = (audiodata.Length - winsize)/ hopsize; // PIN: Removed + 1
+				// width of the segment - e.g. split the file into 78 time slots (numberOfSegments) and do analysis on each slot
+				int numberOfSegments = (audiodata.Length - winSize)/ fftOverlap;
 				
 				// Create a Matrix with "winsize" Rows and "hops" Columns
 				// Matrix[Row, Column]
-				var stft = new Matrix(winsize/2, hops);
+				var stft = new Matrix(winSize/2, numberOfSegments);
 				
-				for (int i = 0; i < hops; i++) {
+				for (int i = 0; i < numberOfSegments; i++) {
 					// Lomont RealFFT seems to be the fastest option
 					//fft.ComputeMatrixUsingFftw(ref stft, i, audiodata, i*hopsize);
 					//fft.ComputeMatrixUsingLomontTableFFT (ref stft, i, audiodata, i*hopsize);
-					fft.ComputeMatrixUsingLomontRealFFT(ref stft, i, audiodata, i*hopsize);
+					fft.ComputeMatrixUsingLomontRealFFT(ref stft, i, audiodata, i*fftOverlap);
 				}
 				return stft;
 			}
@@ -73,12 +74,12 @@ namespace CommonUtils.MathLib.FFT
 				// stft is a Matrix with "winsize" Rows and "hops" Columns
 				int columns = stft.Columns;
 
-				int signalLengh = winsize + (columns)*hopsize; // PIN: Removed -1 from (columns-1)
+				int signalLengh = winSize + (columns)*fftOverlap; // PIN: Removed -1 from (columns-1)
 				var signal = new double[signalLengh];
 				
 				// Take the ifft of each column of pixels and piece together the results.
 				for (int i = 0; i < columns; i++) {
-					fft.ComputeInverseMatrixUsingLomontTableFFT(stft, i, ref signal, winsize, hopsize);
+					fft.ComputeInverseMatrixUsingLomontTableFFT(stft, i, ref signal, winSize, fftOverlap);
 					//fft.ComputeInverseComirvaMatrixUsingLomontRealFFT(stft, i, ref signal, winsize, hopsize);
 				}
 				return signal;

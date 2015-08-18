@@ -88,36 +88,42 @@ namespace CommonUtils.Tests
 			
 			// 2. Windowing
 			// 3. FFT
+			#region Windowing and FFT
 			var stft = new STFT(FFTWindowType.HANNING, WINDOW_SIZE, OVERLAP);
-			//var stftdata = stft.Apply(audioSamples);
-			//stftdata.WriteCSV(@"stft.csv");
-			
-			var spect = FFTUtils.CreateSpectrogramFFTW(audioSamples, WINDOW_SIZE, OVERLAP);
-			//var spect = FFTUtils.CreateSpectrogramLomont(audioSamples, WINDOW_SIZE, OVERLAP);
-			var stftdata = new Matrix(spect).Transpose();
-			
-			//stftdata.WriteAscii(outputFilePath + "_stftdata.ascii");
-			//stftdata.WriteCSV(outputFilePath + "_stftdata.csv", ";");
-			
+			var stftdata = stft.Apply(audioSamples);
+
 			// same as specgram(audio*32768, 2048, 44100, hanning(2048), 1024);
 			stftdata.DrawMatrixImageLogValues(outputDirectoryFilePath + "_specgram.png", true, false, -1, -1, false);
-			//stftdata.DrawMatrixImage(outputDirectoryFilePath + "_specgramlin.png", -1, -1, false, true);
-			return;
-			// spec gram with log values for the y axis (frequency)
-			stftdata.DrawMatrixImageLogY(outputDirectoryFilePath + "_specgramlog.png", SAMPLING_RATE, 20, SAMPLING_RATE/2, 120, WINDOW_SIZE);
 			
+			var spect2 = FFTUtils.CreateSpectrogramFFTW(audioSamples, WINDOW_SIZE, OVERLAP);
+			var stftdata2 = new Matrix(spect2).Transpose();
+			
+			// same as specgram(audio*32768, 2048, 44100, hanning(2048), 1024);
+			stftdata2.DrawMatrixImageLogValues(outputDirectoryFilePath + "_specgram2.png", true, false, -1, -1, false);
+			
+			var spect3 = FFTUtils.CreateSpectrogramLomont(audioSamples, WINDOW_SIZE, OVERLAP);
+			var stftdata3 = new Matrix(spect3).Transpose();
+			
+			// same as specgram(audio*32768, 2048, 44100, hanning(2048), 1024);
+			stftdata3.DrawMatrixImageLogValues(outputDirectoryFilePath + "_specgram3.png", true, false, -1, -1, false);
+			#endregion
+
+			// the matrix are too different so comparing them always fails!
+			//Assert.That(stftdata2, Is.EqualTo(stftdata3).AsCollection.Within(0.001), "fail at [0]");
+			
+			#region Inverse FFT
+			// Perform inverse stft as well
 			double[] audiodata_inverse_stft = stft.InverseStft(stftdata);
 			
-			// divide
+			// divide or normalize
 			//MathUtils.Divide(ref audiodata_inverse_stft, AUDIO_MULTIPLIER);
 			MathUtils.Normalize(ref audiodata_inverse_stft);
 
-			//Export.WriteAscii(audiodata_inverse_stft, outputFilePath + "_audiodata_inverse_stft.ascii");
-			//Export.WriteF3Formatted(audiodata_inverse_stft, outputFilePath + "_audiodata_inverse_stft.txt");
 			Export.DrawGraph(audiodata_inverse_stft, outputDirectoryFilePath + "_audiodata_inverse_stft.png");
 			
 			float[] audiodata_inverse_float = MathUtils.DoubleToFloat(audiodata_inverse_stft);
 			BassProxy.SaveFile(audiodata_inverse_float, outputDirectoryFilePath + "_inverse_stft.wav", 1, SAMPLING_RATE, 32);
+			#endregion
 			
 			Assert.Pass("This test was succesful.");
 		}
