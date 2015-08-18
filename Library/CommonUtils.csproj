@@ -108,7 +108,7 @@
     <Compile Include="Source\BitCounter.cs" />
     <Compile Include="Source\ColorUtils.cs" />
     <Compile Include="Source\CommonMath\Comirva\CholeskyDecomposition.cs" />
-    <Compile Include="Source\CommonMath\Comirva\Dct.cs" />
+    <Compile Include="Source\CommonMath\Comirva\DctComirva.cs" />
     <Compile Include="Source\CommonMath\Comirva\DctMethods.cs" />
     <Compile Include="Source\CommonMath\Comirva\EigenvalueDecomposition.cs" />
     <Compile Include="Source\CommonMath\Comirva\LUDecomposition.cs" />
@@ -216,6 +216,7 @@
     <Compile Include="Source\VST\VstHost.cs" />
     <Compile Include="Source\VST\VstPlaybackNAudio.cs" />
     <Compile Include="Source\XmlUtils.cs" />
+    <Compile Include="Tests\ComirvaTests.cs" />
     <Compile Include="Tests\FFTTest.cs" />
     <Compile Include="Tests\FFTTesting.cs" />
     <Compile Include="Tests\FilterTests.cs" />
