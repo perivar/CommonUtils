@@ -40,80 +40,6 @@ namespace CommonUtils.MathLib.FFT
 		 */
 		
 		#region CreateLogSpectrogram
-		/// <summary>
-		/// Get logarithmically spaced indices
-		/// </summary>
-		/// <param name = "sampleRate">Signal's sample rate</param>
-		/// <param name = "minFreq">Min frequency</param>
-		/// <param name = "maxFreq">Max frequency</param>
-		/// <param name = "logBins">Number of logarithmically spaced bins</param>
-		/// <param name = "fftSize">FFT Size</param>
-		/// <param name = "logBase">Log base of the logarithm to be spaced</param>
-		/// <param name = "indexes">output parameter to return the indexes</param>
-		/// <param name = "frequencies">output parameter to return the frequencies</param>
-		/// <returns>Gets an array of indexes</returns>
-		public static void GetLogFrequenciesIndex(double sampleRate, double minFreq, double maxFreq, int logBins, int fftSize, double logBase, out int[] indexes, out float[] frequencies)
-		{
-			GenerateLogFrequencies(sampleRate, minFreq, maxFreq, logBins, fftSize, logBase, out indexes, out frequencies);
-		}
-		
-		/// <summary>
-		/// Get logarithmically spaced indices
-		/// </summary>
-		/// <param name = "sampleRate">Signal's sample rate</param>
-		/// <param name = "minFreq">Min frequency</param>
-		/// <param name = "maxFreq">Max frequency</param>
-		/// <param name = "logBins">Number of logarithmically spaced bins</param>
-		/// <param name = "fftSize">FFT Size</param>
-		/// <param name = "logarithmicBase">Logarithmic base</param>
-		/// <param name = "indexes">output parameter to return the indices</param>
-		/// <param name = "frequencies">output parameter to return the frequencies</param>
-		private static void GenerateLogFrequencies(double sampleRate, double minFreq, double maxFreq, int logBins, int fftSize, double logarithmicBase, out int[] indexes, out float[] frequencies)
-		{
-			double logMin = Math.Log(minFreq, logarithmicBase);
-			double logMax = Math.Log(maxFreq, logarithmicBase);
-			double delta = (logMax - logMin)/ logBins;
-
-			indexes = new int[logBins + 1];
-			frequencies = new float[logBins + 1];
-			double accDelta = 0;
-			for (int i = 0; i <= logBins; ++i)
-			{
-				float freq = (float) Math.Pow(logarithmicBase, logMin + accDelta);
-				frequencies[i] = freq;
-
-				accDelta += delta; // accDelta = delta * i;
-				indexes[i] = MathUtils.FreqToIndex(freq, sampleRate, fftSize);
-			}
-		}
-		
-		/// <summary>
-		/// Logarithmic spacing of a frequency in a linear domain
-		/// </summary>
-		/// <param name="complexSignal">Spectrum to space</param>
-		/// <param name="logBins">number of log bins</param>
-		/// <param name="logFrequenciesIndex">array of logarithmically spaced indexes</param>
-		/// <returns>Logarithmically spaced signal</returns>
-		private static float[] ExtractLogBins(double[] complexSignal, int logBins, int[] logFrequenciesIndex)
-		{
-			var sumFreq = new float[logBins]; /*32*/
-			for (int i = 0; i < logBins; i++)
-			{
-				int lowBound = logFrequenciesIndex[i];
-				int hiBound = logFrequenciesIndex[i + 1];
-
-				if (hiBound*2 < complexSignal.Length) {
-					for (int j = lowBound; j < hiBound; j++)
-					{
-						double re = complexSignal[2*j];
-						double img = complexSignal[2*j + 1];
-						sumFreq[i] += (float) (Math.Sqrt(re*re + img*img));
-					}
-				}
-				sumFreq[i] = sumFreq[i]/(hiBound - lowBound);
-			}
-			return sumFreq;
-		}
 		
 		/// <summary>
 		/// Generate a spectrogram array spaced logarithmically
@@ -156,7 +82,7 @@ namespace CommonUtils.MathLib.FFT
 				// FFT transform for gathering the spectrum
 				fft.FFT(complexSignal, true);
 
-				frames[i] = ExtractLogBins(complexSignal, logBins, logFrequenciesIndex);
+				frames[i] = MathUtils.ExtractLogBins(complexSignal, logBins, logFrequenciesIndex);
 			}
 			return frames;
 		}
@@ -580,7 +506,7 @@ namespace CommonUtils.MathLib.FFT
 				spectrogram = CreateSpectrogramLomont(audioData, fftWindowsSize, fftOverlap);
 			} else {
 				// calculate the log frequency index table
-				GetLogFrequenciesIndex(sampleRate, minFrequency, maxFrequency, logBins, fftWindowsSize, LogBase, out logFrequenciesIndex, out logFrequencies);
+				MathUtils.GenerateLogFrequencies(sampleRate, minFrequency, maxFrequency, logBins, fftWindowsSize, LogBase, out logFrequenciesIndex, out logFrequencies);
 				spectrogram = CreateLogSpectrogramLomont(audioData, fftWindowsSize, fftOverlap, logBins, logFrequenciesIndex, logFrequencies);
 			}
 			

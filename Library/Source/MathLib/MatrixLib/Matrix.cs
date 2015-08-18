@@ -2326,12 +2326,12 @@ namespace CommonUtils.MathLib.MatrixLib
 
 			int[] indexes;
 			float[] frequencies;
-			GenerateLogFrequencies(sampleRate, minFreq, maxFreq, logBins, fftSize, Math.E, out indexes, out frequencies);
+			MathUtils.GenerateLogFrequencies(sampleRate, minFreq, maxFreq, logBins, fftSize, Math.E, out indexes, out frequencies);
 			
 			for(int column = 0; column < columnCount; column++)
 			{
 				var col = GetColumn(column);
-				var avg = ComputeLogAverages(col, sampleRate, rowCount, logBins, indexes);
+				var avg = MathUtils.ComputeLogAverages(col, logBins, indexes);
 				
 				for(int logBin = 0; logBin < logBins; logBin++)
 				{
@@ -2482,72 +2482,6 @@ namespace CommonUtils.MathLib.MatrixLib
 			{
 				throw new ArgumentException("Matrix dimensions must agree.");
 			}
-		}
-		
-		/// <summary>
-		/// Get logarithmically spaced indexes
-		/// </summary>
-		/// <param name="sampleRate">Signal's sample rate</param>
-		/// <param name="minFreq">Min frequency</param>
-		/// <param name="maxFreq">Max frequency</param>
-		/// <param name="logBins">Number of logarithmically spaced bins</param>
-		/// <param name="fftSize">FFT Size</param>
-		/// <param name="logarithmicBase">Logarithm base, like Math.E</param>
-		/// <param name="logFrequenciesIndex">Indexes output array</param>
-		/// <param name="logFrequencies">Frequency output array</param>
-		/// <remarks>
-		/// Copied from Sound Fingerprinting framework FingerprintManager
-		/// git://github.com/AddictedCS/soundfingerprinting.git
-		/// Code license: CPOL v.1.02
-		/// ciumac.sergiu@gmail.com
-		/// </remarks>
-		private static void GenerateLogFrequencies(double sampleRate, double minFreq, double maxFreq, int logBins, int fftSize, double logarithmicBase, out int[] logFrequenciesIndex, out float[] logFrequencies)
-		{
-			double logMin = Math.Log(minFreq, logarithmicBase);
-			double logMax = Math.Log(maxFreq, logarithmicBase);
-			double delta = (logMax - logMin)/ logBins;
-
-			logFrequenciesIndex = new int[logBins + 1];
-			logFrequencies = new float[logBins + 1];
-			double accDelta = 0;
-			for (int i = 0; i < logBins; ++i)
-			{
-				float freq = (float) Math.Pow(logarithmicBase, logMin + accDelta);
-				logFrequencies[i] = freq;
-
-				accDelta += delta; // accDelta = delta * i;
-				logFrequenciesIndex[i] = MathUtils.FreqToIndex(freq, sampleRate, fftSize);
-			}
-		}
-		
-		/// <summary>
-		/// Compute log bin averages for a passed spectrum
-		/// </summary>
-		/// <param name="spectrum">spectrum array (i.e. one column in a FFT matrix)</param>
-		/// <param name="sampleRate">Signal's sample rate</param>
-		/// <param name="fftSize">FFT Size</param>
-		/// <param name="logBins">Number of logarithmically spaced bins</param>
-		/// <param name="logFrequenciesIndex">logarithmically spaced indexes</param>
-		/// <returns>array averages for each of the logBins</returns>
-		private static double[] ComputeLogAverages(double[] spectrum, double sampleRate, int fftSize, int logBins, int[] logFrequenciesIndex) {
-			
-			var averages = new double[logBins];
-			
-			for (int i = 0; i < logBins; i++) {
-				double avg = 0;
-				
-				int lowBound = logFrequenciesIndex[i];
-				int hiBound = logFrequenciesIndex[i + 1];
-
-				for (int j = lowBound; j <= hiBound; j++) // added the <= equal sign to ensure that we get the edges
-				{
-					avg += spectrum[j];
-				}
-
-				avg /= (hiBound - lowBound + 1); // added + 1 at the end to ensure we get the edges
-				averages[i] = avg;
-			}
-			return averages;
 		}
 		#endregion
 	}

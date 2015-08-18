@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Collections.Generic;
 using System.Drawing;
@@ -203,6 +204,9 @@ namespace CommonUtils.Tests
 			Bitmap bmp1 = AudioAnalyzer.GetSpectrogramImage(spectrogram, width, height, seconds*1000, SAMPLING_RATE, ColorUtils.ColorPaletteType.BLACK_AND_WHITE, false, null, null);
 			bmp1.Save(@"spectrogram-blackwhite.png");
 			
+			
+			Bitmap bmp2 = AudioAnalyzer.GetSpectrogramImage(audioSamples, width, height, SAMPLING_RATE, WINDOW_SIZE, OVERLAP, ColorUtils.ColorPaletteType.BLACK_AND_WHITE, true);
+			bmp2.Save(@"spectrogram-blackwhite-2.png");
 		}
 		
 		[Test]
