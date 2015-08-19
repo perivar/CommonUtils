@@ -12,7 +12,7 @@ using NAudio.Wave;
 // daniel_s
 namespace CommonUtils.VST
 {
-	class AudioOutput : IDisposable
+	public class AudioOutput : IDisposable
 	{
 		// NAudio Player
 		private IWavePlayer playbackDevice = null;

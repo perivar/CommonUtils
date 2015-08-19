@@ -1,10 +1,4 @@
 ﻿using System;
-using System.Threading;
-
-using Jacobi.Vst.Core;
-using Jacobi.Vst.Core.Host;
-using Jacobi.Vst.Interop.Host;
-
 using NAudio.Wave;
 
 namespace CommonUtils.VST
@@ -200,9 +194,9 @@ namespace CommonUtils.VST
 		
 		public void CreateWaveFile(string outputFile) {
 			Console.WriteLine("Saving wav file: " + outputFile);
-			using (WaveFileWriter writer = new WaveFileWriter(outputFile, this.VstStream.WaveFormat))
+			using (var writer = new WaveFileWriter(outputFile, this.VstStream.WaveFormat))
 			{
-				byte[] buf = new byte[this.blocksize];
+				var buf = new byte[this.blocksize];
 				for (; ;)
 				{
 					int cnt = this.VstStream.Read(buf, 0, buf.Length);

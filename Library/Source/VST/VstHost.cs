@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-
 using Jacobi.Vst.Core;
 using Jacobi.Vst.Interop.Host;
-
 using NAudio.Wave;
-
 using CommonUtils;
 using CommonUtils.Audio;
 
