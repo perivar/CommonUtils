@@ -168,7 +168,9 @@ namespace CommonUtils.VST
 		public VstFileWriter(VstHost host)
 		{
 			Host = host;
-			this.blocksize = 32768; // 16384 8192 4096
+			
+			// TODO: by some reason it doesn't render all the sound unless the blocksize is very large
+			this.blocksize = 65536; // 16384 8192 4096
 			vstStream = new VstStreamNAudio(Host);
 		}
 
