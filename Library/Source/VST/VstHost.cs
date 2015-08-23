@@ -145,9 +145,6 @@ namespace CommonUtils.VST
 		{
 			try
 			{
-				//HostCommandStub hostCmdStub = new HostCommandStub();
-				//hostCmdStub.PluginCalled += new EventHandler<PluginCalledEventArgs>(HostCmdStub_PluginCalled);
-
 				VstPluginContext ctx = VstPluginContext.Create(pluginPath, hostCmdStub);
 
 				// add custom data to the context
@@ -156,13 +153,39 @@ namespace CommonUtils.VST
 
 				// actually open the plugin itself
 				ctx.PluginCommandStub.Open();
-				//doPluginOpen();
-
 				PluginContext = ctx;
+				
+				// there is a question whether we should "turn on" the plugin here or later
+				// by "turn on" i mean do MainsChanged(true)
+				// a working Vst Host (see MidiVstTest, a copy from the microDRUM project)
+				// does the following:
+				// 
+				// GeneralVST.pluginContext = VstPluginContext.Create(VSTPath, hcs);
+				// GeneralVST.pluginContext.PluginCommandStub.Open();
+				// GeneralVST.pluginContext.PluginCommandStub.EditorOpen(hWnd);
+				// GeneralVST.pluginContext.PluginCommandStub.MainsChanged(true);
+				
+				// While a forum entry suggested the following:
+				// [plugin.Open()]
+				// plugin.MainsChanged(true) // turn on 'power' on plugin.
+				// plugin.StartProcess() // let the plugin know the audio engine has started
+				// PluginContext.PluginCommandStub.ProcessEvents(ve); // process events (like VstMidiEvent)
+				// 
+				// while(audioEngineIsRunning)
+				// {
+				//     plugin.ProcessReplacing(inputBuffers, outputBuffers)  // letplugin process audio stream
+				// }
+				// 
+				// plugin.StopProcess()
+				// plugin.MainsChanged(false)
+				// 
+				// [plugin.Close()]
+				
+				//doPluginOpen();
 			}
 			catch (Exception e)
 			{
-				System.Diagnostics.Debug.WriteLine(e.ToString());
+				throw new InvalidOperationException(e.ToString(), e.InnerException);
 			}
 		}
 
@@ -203,7 +226,7 @@ namespace CommonUtils.VST
 		}
 		
 		public void doPluginOpen() {
-			// The calls to Mainschanged and Start/Stop Process should be made only once, not for every cycle in the audio processing.
+			// The calls to MainsChanged and Start/Stop Process should be made only once, not for every cycle in the audio processing.
 			// So it should look something like:
 			// 
 			// [plugin.Open()]
