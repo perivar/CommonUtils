@@ -925,7 +925,7 @@ namespace CommonUtils.Audio
 				}
 				
 				mixerstreams[i] = BassMix.BASS_Mixer_StreamCreate(samplerate, 1, BASSFlag.BASS_STREAM_DECODE | BASSFlag.BASS_SAMPLE_MONO | BASSFlag.BASS_SAMPLE_FLOAT);
-				if (!BassMix.BASS_Mixer_StreamAddChannel(mixerstreams[i], streams[i], BASSFlag.BASS_MIXER_FILTER))  {
+				if (!BassMix.BASS_Mixer_StreamAddChannel(mixerstreams[i], streams[i], BASSFlag.BASS_DEFAULT))  {
 					throw new Exception(Bass.BASS_ErrorGetCode().ToString());
 				}
 			}
@@ -1033,7 +1033,7 @@ namespace CommonUtils.Audio
 			var tags = new TAG_INFO();
 			BassTags.BASS_TAG_GetFromFile(stream, tags);
 			int mixerStream = BassMix.BASS_Mixer_StreamCreate(targetSampleRate, 1, BASSFlag.BASS_STREAM_DECODE | BASSFlag.BASS_SAMPLE_MONO | BASSFlag.BASS_SAMPLE_FLOAT);
-			if (BassMix.BASS_Mixer_StreamAddChannel(mixerStream, stream, BASSFlag.BASS_MIXER_FILTER))
+			if (BassMix.BASS_Mixer_StreamAddChannel(mixerStream, stream, BASSFlag.BASS_DEFAULT))
 			{
 				var waveWriter = new WaveWriter(outFileName, mixerStream, true);
 				const int length = 5512 * 10 * 4;
