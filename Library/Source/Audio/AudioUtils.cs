@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Collections.Generic;
 
 namespace CommonUtils.Audio
@@ -80,7 +81,7 @@ namespace CommonUtils.Audio
 				count += a;
 
 				beginning = count;
-				System.Diagnostics.Debug.WriteLine("Detected beginning at sample: {0}", beginning);
+				Debug.WriteLine(string.Format("Detected beginning at sample: {0}", beginning));
 			}
 			
 			// detect end silence
@@ -116,9 +117,9 @@ namespace CommonUtils.Audio
 
 			// Crop Audio here
 			int croppedAudioLength = end-beginning;
-			float[] croppedAudio = new float[croppedAudioLength];
+			var croppedAudio = new float[croppedAudioLength];
 			Array.Copy(data, beginning, croppedAudio, 0, croppedAudioLength);
-			System.Diagnostics.Debug.WriteLine("Successfully cropping to selection: {0} to {1} (Original Length: {2} samples).", beginning, end, dataLength);
+			Debug.WriteLine(string.Format("Successfully cropping to selection: {0} to {1} (Original Length: {2} samples).", beginning, end, dataLength));
 			return croppedAudio;
 		}
 
@@ -550,7 +551,7 @@ namespace CommonUtils.Audio
 			// int numberOfSamplesToConsider = 50;
 			
 			// list to store the silence's found
-			List<Silence> silence = new List<Silence>();
+			var silence = new List<Silence>();
 			
 			// internal
 			bool isZero = false;
@@ -594,7 +595,7 @@ namespace CommonUtils.Audio
 			List<Silence> silence = CalculateSilenceGaps(data, zero, numberOfSamplesToConsider);
 			if (silence.Count > 0) {
 				silence.Sort();
-				int[] silenceLengths = new int[silence.Count];
+				var silenceLengths = new int[silence.Count];
 				int silenceCount = 0;
 				foreach (Silence sil in silence) {
 					//Console.Out.WriteLine("{0} {1:0.000} ms {2:0.000} hz", sil, sil.Milliseconds(sampleRate), sil.Hertz(sampleRate));

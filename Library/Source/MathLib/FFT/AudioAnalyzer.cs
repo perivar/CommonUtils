@@ -813,413 +813,107 @@ namespace CommonUtils.MathLib.FFT
 		}
 
 		/// <summary>
+		/// Draw a mono waveform
+		/// </summary>
+		/// <param name="audioData">The audio data (mono)</param>
+		/// <param name="imageSize">Size of the image</param>
+		/// <param name="amplitude">Amplitude (1 is default)</param>
+		/// <param name="sampleRate">Samplerate of the audio data (to calculate time)</param>
+		public static Bitmap DrawWaveformMono(float[] audioData, Size imageSize, int amplitude, double sampleRate) {
+			return DrawWaveformMono(audioData, imageSize, amplitude, 0, 0, sampleRate, false);
+		}
+
+		/// <summary>
+		/// Draw a mono waveform
+		/// </summary>
+		/// <param name="audioData">The audio data (mono)</param>
+		/// <param name="imageSize">Size of the image</param>
+		/// <param name="amplitude">Amplitude (1 is default)</param>
+		/// <param name="sampleRate">Samplerate of the audio data (to calculate time)</param>
+		/// <param name="drawRaw">Whether to draw only the raw image (no margins)</param>
+		public static Bitmap DrawWaveformMono(float[] audioData, Size imageSize, int amplitude, double sampleRate, bool drawRaw) {
+			return DrawWaveformMono(audioData, imageSize, amplitude, 0, 0, sampleRate, drawRaw);
+		}
+
+		/// <summary>
+		/// Draw a mono waveform using start and end zoom sample position
+		/// </summary>
+		/// <param name="audioData">The audio data (mono)</param>
+		/// <param name="imageSize">Size of the image</param>
+		/// <param name="amplitude">Amplitude (1 is default)</param>
+		/// <param name="startZoomSamplePosition">First Sample to Zoom in on</param>
+		/// <param name="endZoomSamplePosition">Last Sample to Zoom in on</param>
+		/// <param name="sampleRate">Samplerate of the audio data (to calculate time)</param>
+		/// <returns>A bitmap of the waveform</returns>
+		public static Bitmap DrawWaveformMono(float[] audioData, Size imageSize, int amplitude, int startZoomSamplePosition, int endZoomSamplePosition, double sampleRate) {
+			DrawingProperties prop = DrawingProperties.Blue;
+			
+			return DrawWaveform(audioData, imageSize, amplitude, startZoomSamplePosition, endZoomSamplePosition, sampleRate, 1, prop);
+		}
+
+		/// <summary>
+		/// Draw a mono waveform using start and end zoom sample position
+		/// </summary>
+		/// <param name="audioData">The audio data (mono)</param>
+		/// <param name="imageSize">Size of the image</param>
+		/// <param name="amplitude">Amplitude (1 is default)</param>
+		/// <param name="startZoomSamplePosition">First Sample to Zoom in on</param>
+		/// <param name="endZoomSamplePosition">Last Sample to Zoom in on</param>
+		/// <param name="sampleRate">Samplerate of the audio data (to calculate time)</param>
+		/// <param name="drawRaw">Whether to draw only the raw image (no margins)</param>
+		/// <returns>A bitmap of the waveform</returns>
+		public static Bitmap DrawWaveformMono(float[] audioData, Size imageSize, int amplitude, int startZoomSamplePosition, int endZoomSamplePosition, double sampleRate, bool drawRaw) {
+			DrawingProperties prop = DrawingProperties.Blue;
+			prop.DrawRaw = drawRaw;
+			
+			return DrawWaveform(audioData, imageSize, amplitude, startZoomSamplePosition, endZoomSamplePosition, sampleRate, 1, prop);
+		}
+
+		/// <summary>
 		/// Draw a waveform
 		/// </summary>
-		/// <param name="audioData">The audio data (mono)</param>
+		/// <param name="audioData">The audio data (interleaved 32-bit floating-point sample data)</param>
 		/// <param name="imageSize">Size of the image</param>
 		/// <param name="amplitude">Amplitude (1 is default)</param>
 		/// <param name="sampleRate">Samplerate of the audio data (to calculate time)</param>
-		/// <param name="drawRaw">Whether to draw only the raw image (no margins)</param>
-		public static Bitmap DrawWaveform(float[] audioData, Size imageSize, int amplitude, double sampleRate, bool drawRaw=false) {
-			return DrawWaveform(audioData, imageSize, amplitude, 0, 0, sampleRate, drawRaw);
-		}
-
-		/// <summary>
-		/// Draw a waveform using start and end zoom sample position
-		/// </summary>
-		/// <param name="audioData">The audio data (mono)</param>
-		/// <param name="imageSize">Size of the image</param>
-		/// <param name="amplitude">Amplitude (1 is default)</param>
-		/// <param name="startZoomSamplePosition">First Sample to Zoom in on</param>
-		/// <param name="endZoomSamplePosition">Last Sample to Zoom in on</param>
-		/// <param name="sampleRate">Samplerate of the audio data (to calculate time)</param>
-		/// <param name="drawRaw">Whether to draw only the raw image (no margins)</param>
+		/// <param name="channels">Number of channels</param>
 		/// <returns>A bitmap of the waveform</returns>
-		public static Bitmap DrawWaveform(float[] audioData, Size imageSize, int amplitude, int startZoomSamplePosition, int endZoomSamplePosition, double sampleRate, bool drawRaw=false) {
+		public static Bitmap DrawWaveform(float[] audioData, Size imageSize, int amplitude, double sampleRate, int channels) {
 			DrawingProperties prop = DrawingProperties.Blue;
 			prop.DrawRaw = true;
 			
-			return DrawWaveform(audioData, imageSize, amplitude, startZoomSamplePosition, endZoomSamplePosition, sampleRate, prop);
+			return DrawWaveform(audioData, imageSize, amplitude, 0, 0, sampleRate, channels, prop);
 		}
 
 		/// <summary>
 		/// Draw a waveform using start and end zoom sample position
 		/// </summary>
-		/// <param name="audioData">The audio data (mono)</param>
+		/// <param name="audioData">The audio data (interleaved 32-bit floating-point sample data)</param>
 		/// <param name="imageSize">Size of the image</param>
 		/// <param name="amplitude">Amplitude (1 is default)</param>
 		/// <param name="startZoomSamplePosition">First Sample to Zoom in on</param>
 		/// <param name="endZoomSamplePosition">Last Sample to Zoom in on</param>
 		/// <param name="sampleRate">Samplerate of the audio data (to calculate time)</param>
+		/// <param name="channels">Number of channels</param>
+		/// <returns>A bitmap of the waveform</returns>
+		public static Bitmap DrawWaveform(float[] audioData, Size imageSize, int amplitude, int startZoomSamplePosition, int endZoomSamplePosition, double sampleRate, int channels) {
+			DrawingProperties prop = DrawingProperties.Blue;
+			prop.DrawRaw = true;
+			
+			return DrawWaveform(audioData, imageSize, amplitude, startZoomSamplePosition, endZoomSamplePosition, sampleRate, channels, prop);
+		}
+		
+		/// <summary>
+		/// Draw a waveform using start and end zoom sample position
+		/// </summary>
+		/// <param name="audioData">The audio data (interleaved 32-bit floating-point sample data)</param>
+		/// <param name="imageSize">Size of the image</param>
+		/// <param name="amplitude">Amplitude (1 is default)</param>
+		/// <param name="startZoomSamplePosition">First Sample to Zoom in on (0-index based)</param>
+		/// <param name="endZoomSamplePosition">Last Sample to Zoom in on (0-index based. I.e. the last possible sample to zoom in on is Sample Length - 1)</param>
+		/// <param name="sampleRate">Samplerate of the audio data (to calculate time)</param>
+		/// <param name="channels">Number of channels</param>
 		/// <param name="properties">DrawingProperties properties, like colors and margins</param>
-		/// <seealso cref="https://github.com/aalin/canvas_waveform"></seealso>
-		/// <seealso cref="http://www.hisschemoller.com/2010/mp3-wave-display/"></seealso>
-		/// <seealso cref="http://www.marinbezhanov.com/web-development/14/actionscript-3-sound-extract-demystified-or-how-to-draw-a-waveform-in-flash/"></seealso>
-		/// <seealso cref="http://stackoverflow.com/questions/1215326/open-source-c-sharp-code-to-present-wave-form"></seealso>
-		/// <returns>A bitmap of the waveform</returns>
-		public static Bitmap DrawWaveform(float[] audioData, Size imageSize, int amplitude, int startZoomSamplePosition, int endZoomSamplePosition, double sampleRate, DrawingProperties properties) {
-
-			#region Define Basic Variables and Properties
-			int TOTAL_HEIGHT = imageSize.Height;    // Height of graph
-			int TOTAL_WIDTH = imageSize.Width;      // Width of graph
-
-			int TOP_MARGIN = properties.Margin;               	// Top of graph
-			int LEFT_MARGIN = properties.Margin;                 	// Left edge of graph
-			if (properties.DrawRaw) {
-				TOP_MARGIN = 0;                     		// Top of graph
-				LEFT_MARGIN = 0;                    		// Left edge of graph
-			}
-			int HEIGHT = imageSize.Height-2*TOP_MARGIN;		// Height of graph
-			int WIDTH = imageSize.Width-2*LEFT_MARGIN;     	// Width of graph
-			
-			// make sure amplitude doesn't exceed a sensible treshold
-			if (amplitude > 5000) {
-				amplitude = 5000;
-			}
-			float MIN_AMPLITUDE = -1.0f / amplitude;
-			float MAX_AMPLITUDE = 1.0f / amplitude;
-			float AMPLITUDE_STEP = MAX_AMPLITUDE / 2;
-			
-			// Derived constants
-			int CENTER = TOTAL_HEIGHT / 2;
-			int RIGHT = WIDTH;
-			int BOTTOM = TOTAL_HEIGHT-TOP_MARGIN; // Bottom of graph
-			#endregion
-			
-			int totalNumberOfSamples = 0;
-			float[] data = null;
-			float samplesPerPixel = 0;
-			
-			#region Setup data array taking zoom into account
-			if (audioData != null && audioData.Length > 0) {
-
-				totalNumberOfSamples = audioData.Length;
-				
-				// make sure the zoom start and zoom end is correct
-				if (startZoomSamplePosition < 0)
-					startZoomSamplePosition = 0;
-				if (endZoomSamplePosition > audioData.Length || endZoomSamplePosition < 0)
-					endZoomSamplePosition = audioData.Length;
-				
-				if (endZoomSamplePosition != 0) {
-					data = new float[endZoomSamplePosition-startZoomSamplePosition];
-					Array.Copy(audioData, startZoomSamplePosition, data, 0, endZoomSamplePosition-startZoomSamplePosition);
-					samplesPerPixel = (float) (endZoomSamplePosition - startZoomSamplePosition) / (float) WIDTH;
-				} else {
-					data = audioData;
-					samplesPerPixel = (float) totalNumberOfSamples / (float) WIDTH;
-				}
-			}
-			#endregion
-			
-			#region Calculate time variables
-			double totalDurationMs = totalNumberOfSamples / sampleRate * 1000;
-			
-			float MAX_TIME = (float) (endZoomSamplePosition / sampleRate * 1000);
-			float MIN_TIME = 0.0f;
-			if (startZoomSamplePosition > 0) {
-				MIN_TIME = (float) (startZoomSamplePosition / sampleRate * 1000);
-			}
-			
-			float TIME_STEP = (float) MathUtils.GetNicerNumber((MAX_TIME-MIN_TIME) / 5);
-			float AMPLITUDETOPIXEL = (float) HEIGHT/(MAX_AMPLITUDE-MIN_AMPLITUDE); 	// Pixels/tick
-			float TIMETOPIXEL = (float) WIDTH/(MAX_TIME-MIN_TIME); 					// Pixels/second
-			#endregion
-			
-			// Set up for drawing
-			var png = new Bitmap( TOTAL_WIDTH, TOTAL_HEIGHT, PixelFormat.Format32bppArgb );
-			Graphics g = Graphics.FromImage(png);
-			g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality; // Set pixeloffsetmode to high quality to make sure we can draw small filled circles
-			var eg = new ExtendedGraphics(g);
-			
-			#region Define Pens and Brushes
-			var centreLinePen = new Pen(properties.CenterLineColor, 1.0f);
-			var linePen = new Pen(properties.LineColor, 0.5f);
-			var middleLinePen = new Pen(properties.MiddleLineColor, 0.5f);
-			var textPen = new Pen(properties.TextColor, 1.0f);
-			var samplePen = new Pen(properties.SampleColor, 1.0f);
-			var infoBoxPen = new Pen(properties.DebugBoxTextColor, 1.0f);
-
-			Brush sampleDotBrush = new SolidBrush(properties.SampleColor);
-			Brush fillBrushOuter = new SolidBrush(properties.FillOuterColor);
-			Brush fillBrush = new SolidBrush(properties.FillColor);
-			Brush drawLabelBrush = new SolidBrush(textPen.Color);
-			Brush drawBrush = new SolidBrush(textPen.Color);
-			#endregion
-
-			#region Draw a Rectangular Box marking the boundaries of the graph
-			
-			// Create outer rectangle.
-			var rectOuter = new Rectangle(0, 0, TOTAL_WIDTH, TOTAL_HEIGHT);
-			g.FillRectangle(fillBrushOuter, rectOuter);
-			
-			// Create rectangle.
-			var rect = new Rectangle(LEFT_MARGIN, TOP_MARGIN, WIDTH, HEIGHT);
-			if (properties.DrawRoundedRectangles) {
-				eg.FillRoundRectangle(fillBrush, rect.X, rect.Y, rect.Width, rect.Height, 10);
-				eg.DrawRoundRectangle(linePen, rect.X, rect.Y, rect.Width, rect.Height, 10);
-			} else {
-				g.FillRectangle(fillBrush, rect);
-				g.DrawRectangle(linePen, rect);
-			}
-			#endregion
-			
-			#region Draw Grid with Labels and Ticks
-			
-			// Label for horizontal axis
-			var drawLabelFont = new Font("Arial", 8);
-			if (properties.DrawLabels) {
-				SizeF drawLabelTextSize = g.MeasureString(properties.LabelXaxis, drawLabelFont);
-				g.DrawString(properties.LabelXaxis, drawLabelFont, drawLabelBrush, (TOTAL_WIDTH/2) - (drawLabelTextSize.Width/2), TOTAL_HEIGHT - drawLabelFont.GetHeight(g) -3);
-			}
-
-			float y = 0;
-			float yMiddle = 0;
-			float x = 0;
-			float xMiddle = 0;
-			for ( float amplitudeTick = MIN_AMPLITUDE; amplitudeTick <= MAX_AMPLITUDE; amplitudeTick += AMPLITUDE_STEP )
-			{
-				// draw horizontal main line
-				y = BOTTOM - AMPLITUDETOPIXEL*(amplitudeTick-MIN_AMPLITUDE);
-				if (y < BOTTOM && y > TOP_MARGIN+1) {
-					g.DrawLine(linePen, LEFT_MARGIN, y, LEFT_MARGIN+WIDTH, y);
-				}
-
-				// draw horizontal middle line (between the main lines)
-				yMiddle = y-(AMPLITUDETOPIXEL*AMPLITUDE_STEP)/2;
-				if (yMiddle > 0) {
-					g.DrawLine(middleLinePen, LEFT_MARGIN, yMiddle, LEFT_MARGIN+WIDTH, yMiddle);
-				}
-
-				if ( amplitudeTick != MAX_AMPLITUDE ) {
-					// Numbers on the tick marks
-					var drawFont = new Font("Arial", 7);
-					g.DrawString(amplitudeTick.ToString("0.000000"), drawFont, drawBrush, LEFT_MARGIN+5, y - drawFont.GetHeight(g) -2);
-				}
-			}
-			
-			if (properties.DrawLabels) {
-				// Label for vertical axis
-				g.DrawString(properties.LabelYaxis, drawLabelFont, drawLabelBrush, 1, TOP_MARGIN + HEIGHT/2 - drawLabelFont.GetHeight(g)/2);
-			}
-			
-			// Tick marks on the horizontal axis
-			for ( double timeTick = MIN_TIME; timeTick <= MAX_TIME; timeTick += TIME_STEP )
-			{
-				// draw vertical main line
-				x = (float) (LEFT_MARGIN + TIMETOPIXEL*(timeTick-MIN_TIME));
-				if (x > LEFT_MARGIN  && x < WIDTH) {
-					g.DrawLine(linePen, x, BOTTOM, x, TOP_MARGIN);
-				}
-
-				// draw vertical middle line (between the main lines)
-				xMiddle = x + TIMETOPIXEL*TIME_STEP/2;
-				if (xMiddle < TOTAL_WIDTH) {
-					g.DrawLine(middleLinePen, xMiddle, BOTTOM, xMiddle, TOP_MARGIN);
-				}
-
-				if ( timeTick != MIN_TIME && timeTick != MAX_TIME )
-				{
-					// Numbers on the tick marks
-					var drawFont = new Font("Arial", 7);
-					TimeSpan time = TimeSpan.FromMilliseconds(timeTick);
-					g.DrawString(time.ToString(@"hh\:mm\:ss\.FFFFFFF"), drawFont, drawBrush, x, TOP_MARGIN +2);
-				}
-			}
-
-			if (properties.DisplayTime) {
-				string displayTimeString = String.Format("Duration: {0} samples @ {1:0.0000} ms", totalNumberOfSamples, totalDurationMs);
-				SizeF displayTimeStringTextSize = g.MeasureString(displayTimeString, drawLabelFont);
-				g.DrawString(displayTimeString, drawLabelFont, drawLabelBrush, TOTAL_WIDTH - displayTimeStringTextSize.Width - 10, TOTAL_HEIGHT - drawLabelFont.GetHeight(g) - 10);
-			}
-			
-			// draw centre line
-			g.DrawLine(centreLinePen, LEFT_MARGIN, CENTER, WIDTH, CENTER);
-			#endregion
-			
-			#region Draw waveform
-			if (data != null && data.Length > 0) {
-				if (samplesPerPixel >= 1) {
-					// the number of samples are greater than the available drawing space
-					// (i.e. greater than the number of pixles in the X-Axis)
-
-					#region Draw When More Samples than Width
-					int yMax = 0;
-					int yMin = 0;
-					for (int xAxis = 0; xAxis < WIDTH; xAxis++)
-					{
-						// determine start and end points within WAV (for this single pixel on the X axis)
-						int start 	= (int)((float)(xAxis) 		* samplesPerPixel);
-						int end 	= (int)((float)(xAxis + 1) 	* samplesPerPixel);
-						
-						// reset the min and max values
-						yMax = 0;
-						yMin = 0;
-						
-						// determine the min and max values within this specific range
-						float min = float.MaxValue;
-						float max = float.MinValue;
-						for (int i = start; i <= end; i++)
-						{
-							if (i < data.Length) {
-								float val = data[i];
-								min = val < min ? val : min;
-								max = val > max ? val : max;
-							}
-						}
-						
-						yMax = TOP_MARGIN + HEIGHT - (int)((max * amplitude + 1) * 0.5 * HEIGHT);
-						yMin = TOP_MARGIN + HEIGHT - (int)((min * amplitude + 1) * 0.5 * HEIGHT);
-
-						// limit within the drawing space
-						if (yMax < 0) yMax = 0;
-						if (yMin > HEIGHT) yMin = HEIGHT;
-						
-						// make sure that we always draw something
-						if (yMin == yMax) {
-							yMin += 1;
-						}
-
-						// draw waveform
-						// use yMax and yMin
-						// original from example: http://stackoverflow.com/questions/1215326/open-source-c-sharp-code-to-present-wave-form
-						// basically don't care about previous x or y, but draw vertical lines
-						// from y min to y max value
-						g.DrawLine(samplePen, xAxis + LEFT_MARGIN, yMin, xAxis + LEFT_MARGIN, yMax);
-					}
-					#endregion
-					
-				} else {
-					// the number of samples are less than the available drawing space
-					// (i.e. less than the number of pixles in the X-Axis)
-					
-					#region Draw When Less Samples than Width
-					int samples = data.Length;
-					if (samples > 1) {
-						
-						// at least two samples
-						float mult_x = (float) WIDTH / (endZoomSamplePosition-startZoomSamplePosition - 1);
-
-						var ps = new List<Point>();
-						for (int i = 0; i < data.Length; i++) {
-							x = (i * mult_x) + LEFT_MARGIN;
-							y = TOP_MARGIN + HEIGHT - (int)((data[i] * amplitude + 1) * 0.5 * HEIGHT);
-							var p = new Point((int)x, (int)y);
-							ps.Add(p);
-						}
-
-						if (ps.Count > 0) {
-							g.DrawLines(samplePen, ps.ToArray());
-
-							// draw small dots for each sample
-							// make sure we have at least space for a dot with 5 pixels width
-							if ( ps.Count < (float) (WIDTH / 5)) {
-								foreach(Point p in ps) {
-									g.FillEllipse(sampleDotBrush, p.X-2, p.Y-2, 4, 4);
-								}
-							}
-						}
-						
-					} else {
-						// we have only one sample, draw a flat line
-						g.DrawLine(linePen, 0, 0.5f * HEIGHT, WIDTH, 0.5f * HEIGHT);
-					}
-					#endregion
-				}
-			}
-			#endregion
-			
-			#region Draw right upper debug box
-			if (properties.DisplayDebugBox) {
-				var drawInfoBoxFont = new Font("Arial", 8);
-				var drawInfoBoxBrush = new SolidBrush(infoBoxPen.Color);
-				
-				string infoBoxLine1Text = String.Format("SamplesPerPixel Orig: {0:0.000} => New: {1:0.000}", (float) totalNumberOfSamples / WIDTH, samplesPerPixel);
-				string infoBoxLine2Text = String.Format("Time (Min->Max): {0} -> {1}", MIN_TIME, MAX_TIME);
-				string infoBoxLine3Text = String.Format("Timestep: {0}, TimeToPixel: {1}", TIME_STEP, TIMETOPIXEL);
-
-				// get box width
-				const int infoBoxMargin = 5;
-				var textLineSizes = new List<float>();
-				textLineSizes.Add(g.MeasureString(infoBoxLine1Text, drawInfoBoxFont).Width + infoBoxMargin*2);
-				textLineSizes.Add(g.MeasureString(infoBoxLine2Text, drawInfoBoxFont).Width + infoBoxMargin*2);
-				textLineSizes.Add(g.MeasureString(infoBoxLine3Text, drawInfoBoxFont).Width + infoBoxMargin*2);
-				textLineSizes.Add(150.0f); // info box minimum width
-				
-				float infoBoxLineTextWidth = 0.0f;
-				float minWidth = 0.0f;
-				MathUtils.ComputeMinAndMax(textLineSizes.ToArray(), out minWidth, out infoBoxLineTextWidth);
-
-				int infoBoxWidth = (int) infoBoxLineTextWidth;
-				
-				float infoBoxLineTextHeight = drawInfoBoxFont.GetHeight(g);
-				int infoBoxHeight = (int) (infoBoxMargin + (infoBoxLineTextHeight + infoBoxMargin)*4);
-				
-				var rectInfoBox = new Rectangle(WIDTH - infoBoxWidth - 20, 30, infoBoxWidth, infoBoxHeight);
-				Brush fillBrushInfoBox = new SolidBrush(properties.DebugBoxBgColor);
-				g.FillRectangle(fillBrushInfoBox, rectInfoBox);
-				g.DrawRectangle(linePen, rectInfoBox);
-				
-				g.DrawString(infoBoxLine1Text, drawInfoBoxFont, drawInfoBoxBrush, WIDTH - infoBoxWidth - 20 + infoBoxMargin, 30 + infoBoxMargin);
-				g.DrawString(infoBoxLine2Text, drawInfoBoxFont, drawInfoBoxBrush, WIDTH - infoBoxWidth - 20 + infoBoxMargin, 30 + infoBoxMargin + (infoBoxLineTextHeight + infoBoxMargin));
-				g.DrawString(infoBoxLine3Text, drawInfoBoxFont, drawInfoBoxBrush, WIDTH - infoBoxWidth - 20 + infoBoxMargin, 30 + infoBoxMargin + (infoBoxLineTextHeight + infoBoxMargin)*2);
-			}
-			#endregion
-			
-			#region Clean Up variables
-			centreLinePen.Dispose();
-			linePen.Dispose();
-			middleLinePen.Dispose();
-			textPen.Dispose();
-			samplePen.Dispose();
-			infoBoxPen.Dispose();
-
-			sampleDotBrush.Dispose();
-			fillBrushOuter.Dispose();
-			fillBrush.Dispose();
-			drawLabelBrush.Dispose();
-			drawBrush.Dispose();
-			#endregion
-			
-			return png;
-		}
-		
-		/// <summary>
-		/// Draw a waveform using start and end zoom sample position
-		/// </summary>
-		/// <param name = "audioData">The audio data (interleaved 32-bit floating-point sample data)</param>
-		/// <param name = "imageSize">Size of the image</param>
-		/// <param name = "amplitude">Amplitude (1 is default)</param>
-		/// <param name = "startZoomSamplePosition">First Sample to Zoom in on</param>
-		/// <param name = "endZoomSamplePosition">Last Sample to Zoom in on</param>
-		/// <param name = "startSelectSamplePosition">What sample to start selection at</param>
-		/// <param name = "endSelectSamplePosition">What sample to end selection at</param>
-		/// <param name = "samplePosition">What sample position the cursor/playhead is at</param>
-		/// <param name = "sampleRate">Samplerate of the audio data (to calculate time)</param>
-		/// <param name = "channels">Number of channels</param>
-		/// <returns>A bitmap of the waveform</returns>
-		public static Bitmap DrawWaveform(float[] audioData, Size imageSize, int amplitude, int startZoomSamplePosition, int endZoomSamplePosition, int startSelectSamplePosition, int endSelectSamplePosition, int samplePosition, double sampleRate, int channels) {
-			DrawingProperties prop = DrawingProperties.Blue;
-			prop.DrawRaw = true;
-			prop.DisplayDebugBox = false;
-			
-			return DrawWaveform(audioData, imageSize, amplitude, startZoomSamplePosition, endZoomSamplePosition, startSelectSamplePosition, endSelectSamplePosition, samplePosition, sampleRate, channels, prop);
-		}
-		
-		/// <summary>
-		/// Draw a waveform using start and end zoom sample position
-		/// </summary>
-		/// <param name = "audioData">The audio data (interleaved 32-bit floating-point sample data)</param>
-		/// <param name = "imageSize">Size of the image</param>
-		/// <param name = "amplitude">Amplitude (1 is default)</param>
-		/// <param name = "startZoomSamplePosition">First Sample to Zoom in on (0-index based)</param>
-		/// <param name = "endZoomSamplePosition">Last Sample to Zoom in on (0-index based. I.e. the last possible sample to zoom in on is Sample Length - 1)</param>
-		/// <param name = "startSelectSamplePosition">What sample to start selection at</param>
-		/// <param name = "endSelectSamplePosition">What sample to end selection at</param>
-		/// <param name = "samplePosition">What sample position the cursor/playhead is at</param>
-		/// <param name = "sampleRate">Samplerate of the audio data (to calculate time)</param>
-		/// <param name = "channels">Number of channels</param>
-		/// <param name = "properties">DrawingProperties properties, like colors and margins</param>
 		/// <returns>A bitmap of the waveform</returns>
 		/// <remarks>
 		/// Audio data should be structured in an array where each sucessive index
@@ -1227,7 +921,7 @@ namespace CommonUtils.MathLib.FFT
 		/// should be the first left level, index 1 should be the first right level, index
 		/// 2 should be the second left level, etc.
 		/// </remarks>
-		public static Bitmap DrawWaveform(float[] audioData, Size imageSize, int amplitude, int startZoomSamplePosition, int endZoomSamplePosition, int startSelectSamplePosition, int endSelectSamplePosition, int samplePosition, double sampleRate, int channels, DrawingProperties properties) {
+		public static Bitmap DrawWaveform(float[] audioData, Size imageSize, int amplitude, int startZoomSamplePosition, int endZoomSamplePosition, double sampleRate, int channels, DrawingProperties properties) {
 			
 			#region Define Basic Variables and Properties
 			int TOTAL_HEIGHT = imageSize.Height;    		// Height of graph
@@ -1373,45 +1067,49 @@ namespace CommonUtils.MathLib.FFT
 			// Tick marks on the horizontal axis
 			int x = 0;
 			int y = 0;
-			int yMiddle = 0;
 			int xMiddle = 0;
 			if (properties.DrawVerticalTickMarks) {
-				for ( double timeTick = MIN_TIME; timeTick <= MAX_TIME; timeTick += TIME_STEP )
-				{
-					// draw vertical main line
-					x = (int) (LEFT_MARGIN + TIMETOPIXEL*(timeTick-MIN_TIME));
-					if (x > LEFT_MARGIN  && x < WIDTH) {
-						g.DrawLine(linePen, x, BOTTOM, x, TOP_MARGIN);
-					}
-
-					// draw vertical middle line (between the main lines)
-					xMiddle = (int) (x + TIMETOPIXEL*TIME_STEP/2);
-					if (xMiddle < TOTAL_WIDTH) {
-						g.DrawLine(middleLinePen, xMiddle, BOTTOM, xMiddle, TOP_MARGIN);
-					}
-
-					if ( timeTick != MIN_TIME && timeTick != MAX_TIME )
+				if (samplesPerPixel > 0) { // ensure we have samples
+					for ( double timeTick = MIN_TIME; timeTick <= MAX_TIME; timeTick += TIME_STEP )
 					{
-						// draw numbers on the tick marks
-						string displayTimeTickString = "";
-						TimeSpan time;
-
-						switch (properties.TimeLineUnit) {
-							case TimelineUnit.Time:
-								time = TimeSpan.FromMilliseconds(timeTick);
-								displayTimeTickString = time.ToString(@"hh\:mm\:ss\.fff");
-								break;
-							case TimelineUnit.Samples:
-								int samples = (int)(timeTick * sampleRate / 1000);
-								displayTimeTickString = samples.ToString("0");
-								break;
-							case TimelineUnit.Seconds:
-								time = TimeSpan.FromMilliseconds(timeTick);
-								displayTimeTickString = time.ToString(@"s\.fff");
-								break;
+						// draw vertical main line
+						x = (int) (LEFT_MARGIN + TIMETOPIXEL*(timeTick-MIN_TIME));
+						if (x > LEFT_MARGIN  && x < WIDTH) {
+							g.DrawLine(linePen, x, BOTTOM, x, TOP_MARGIN);
 						}
-						SizeF displayTimeTickStringSize = g.MeasureString(displayTimeTickString, drawTickFont);
-						g.DrawString(displayTimeTickString, drawTickFont, drawBrush, x - displayTimeTickStringSize.Width/2, 2);
+
+						// draw vertical middle line (between the main lines)
+						xMiddle = (int) (x + TIMETOPIXEL*TIME_STEP/2);
+						if (xMiddle < TOTAL_WIDTH) {
+							g.DrawLine(middleLinePen, xMiddle, BOTTOM, xMiddle, TOP_MARGIN);
+						}
+
+						if ( timeTick != MIN_TIME && timeTick != MAX_TIME )
+						{
+							// draw numbers on the tick marks
+							string displayTimeTickString = "";
+							TimeSpan time;
+
+							switch (properties.TimeLineUnit) {
+								case TimelineUnit.Time:
+									time = TimeSpan.FromMilliseconds(timeTick);
+									//displayTimeTickString = time.ToString(@"hh\:mm\:ss\.fff");
+									displayTimeTickString = string.Format("{0:hh\\:mm\\:ss\\.fff}", time);
+									break;
+								case TimelineUnit.Samples:
+									int samples = (int)(timeTick * sampleRate / 1000);
+									//displayTimeTickString = samples.ToString("0");
+									displayTimeTickString = string.Format("{0}", samples);
+									break;
+								case TimelineUnit.Seconds:
+									time = TimeSpan.FromMilliseconds(timeTick);
+									//displayTimeTickString = time.ToString(@"s\.fff");
+									displayTimeTickString = string.Format("{0:s\\.fff}", time);
+									break;
+							}
+							SizeF displayTimeTickStringSize = g.MeasureString(displayTimeTickString, drawTickFont);
+							g.DrawString(displayTimeTickString, drawTickFont, drawBrush, x - displayTimeTickStringSize.Width/2, 2);
+						}
 					}
 				}
 			}
@@ -1436,7 +1134,6 @@ namespace CommonUtils.MathLib.FFT
 
 				x = 0;
 				y = 0;
-				yMiddle = 0;
 				xMiddle = 0;
 
 				#region draw amplitude tick marks
@@ -1500,16 +1197,6 @@ namespace CommonUtils.MathLib.FFT
 								int spanY1 = Transform(max, HEIGHT/channels, channelCounter, amplitude) + TOP_MARGIN;
 								int spanY2 = Transform(min, HEIGHT/channels, channelCounter, amplitude) + TOP_MARGIN;
 								
-								// erase any background above vertical span
-								//g.FillRectangle(Brushes.Green, curX, curY, 1, spanY1);
-
-								// erase any background below vertical span
-								//g.FillRectangle(Brushes.Azure, curX, curY + spanY2 + 1, 1, HEIGHT/channels - spanY2);
-								
-								// if vertical span doesn't cross origin, draw origin
-								//if (!(spanY1 < 0 && spanY2 > HEIGHT/channels/2 ))
-								//	g.FillRectangle(Brushes.Brown, curX, curY + HEIGHT/channels/2, 1, 1);
-
 								// if vertical spans aren't adjacent in x, or don't overlap in y
 								if ((curX != prevSpanX + 1 || spanY1 > prevSpanY2 || spanY2 < prevSpanY1)) // && prevSpanX != int.MaxValue))
 								{
@@ -1590,9 +1277,7 @@ namespace CommonUtils.MathLib.FFT
 				string infoBoxLine3Text = String.Format("Timestep: {0}, TimeToPixel: {1}", TIME_STEP, TIMETOPIXEL);
 				string infoBoxLine4Text = String.Format("TotalNumSamples: {0}, ChannelNumSamples: {1}", totalNumberOfSamples, maxChannelNumberOfSamples);
 				string infoBoxLine5Text = String.Format("StartZoomSamplePos: {0}, EndZoomSamplePos: {1}", startZoomSamplePosition, endZoomSamplePosition);
-				string infoBoxLine6Text = String.Format("StartSelectSamplePos: {0}, EndSelectSamplePos: {1}", startSelectSamplePosition, endSelectSamplePosition);
-				string infoBoxLine7Text = String.Format("Sample Pos: {0}", samplePosition);
-				string infoBoxLine8Text = String.Format("Graph Width: {0}, Graph Height: {1}", WIDTH, HEIGHT);
+				string infoBoxLine6Text = String.Format("Graph Width: {0}, Graph Height: {1}", WIDTH, HEIGHT);
 				
 				// get box width
 				const int infoBoxMargin = 5;
@@ -1603,8 +1288,6 @@ namespace CommonUtils.MathLib.FFT
 				textLineSizes.Add(g.MeasureString(infoBoxLine4Text, drawInfoBoxFont).Width + infoBoxMargin*2);
 				textLineSizes.Add(g.MeasureString(infoBoxLine5Text, drawInfoBoxFont).Width + infoBoxMargin*2);
 				textLineSizes.Add(g.MeasureString(infoBoxLine6Text, drawInfoBoxFont).Width + infoBoxMargin*2);
-				textLineSizes.Add(g.MeasureString(infoBoxLine7Text, drawInfoBoxFont).Width + infoBoxMargin*2);
-				textLineSizes.Add(g.MeasureString(infoBoxLine8Text, drawInfoBoxFont).Width + infoBoxMargin*2);
 				textLineSizes.Add(150.0f); // info box minimum width
 				
 				float infoBoxLineTextWidth = 0.0f;
@@ -1627,8 +1310,6 @@ namespace CommonUtils.MathLib.FFT
 				g.DrawString(infoBoxLine4Text, drawInfoBoxFont, drawInfoBoxBrush, WIDTH - infoBoxWidth - 20 + infoBoxMargin, 30 + infoBoxMargin + (infoBoxLineTextHeight + infoBoxMargin)*3);
 				g.DrawString(infoBoxLine5Text, drawInfoBoxFont, drawInfoBoxBrush, WIDTH - infoBoxWidth - 20 + infoBoxMargin, 30 + infoBoxMargin + (infoBoxLineTextHeight + infoBoxMargin)*4);
 				g.DrawString(infoBoxLine6Text, drawInfoBoxFont, drawInfoBoxBrush, WIDTH - infoBoxWidth - 20 + infoBoxMargin, 30 + infoBoxMargin + (infoBoxLineTextHeight + infoBoxMargin)*5);
-				g.DrawString(infoBoxLine7Text, drawInfoBoxFont, drawInfoBoxBrush, WIDTH - infoBoxWidth - 20 + infoBoxMargin, 30 + infoBoxMargin + (infoBoxLineTextHeight + infoBoxMargin)*6);
-				g.DrawString(infoBoxLine8Text, drawInfoBoxFont, drawInfoBoxBrush, WIDTH - infoBoxWidth - 20 + infoBoxMargin, 30 + infoBoxMargin + (infoBoxLineTextHeight + infoBoxMargin)*7);
 			}
 			#endregion
 			
@@ -1659,11 +1340,11 @@ namespace CommonUtils.MathLib.FFT
 		/// <summary>
 		/// Transforms a value in the range of -1.0 to +1.0
 		/// </summary>
-		/// <param name="peak"></param>
-		/// <param name="channelHeight"></param>
-		/// <param name="channelIndex"></param>
-		/// <param name="zoom"></param>
-		/// <returns></returns>
+		/// <param name="peak">max value within this specific range (sample bucket)</param>
+		/// <param name="channelHeight">pixel height of the waveform channel</param>
+		/// <param name="channelIndex">channel counter (0, 1 ...)</param>
+		/// <param name="zoom">amplitude</param>
+		/// <returns>y position</returns>
 		private static int Transform(float peak, int channelHeight, int channelIndex, double zoom)
 		{
 			int top = channelIndex * channelHeight;
@@ -1675,17 +1356,16 @@ namespace CommonUtils.MathLib.FFT
 		/// <summary>
 		/// Draw a waveform of the signal
 		/// </summary>
-		/// <param name = "data">Data to be drawn</param>
-		/// <param name = "width">Width of the image</param>
-		/// <param name = "height">Height of the image</param>
+		/// <param name="data">Data to be drawn</param>
+		/// <param name="width">Width of the image</param>
+		/// <param name="height">Height of the image</param>
 		/// <returns>Bitmap</returns>
 		/// <remarks>This is a copy of the method GetSignalImage from
 		/// Soundfingerprinting.SoundTools.Imaging.cs in
 		/// https://code.google.com/p/soundfingerprinting/
 		/// </remarks>
-		public static Bitmap DrawWaveform(float[] data, int width, int height)
+		public static Bitmap DrawWaveformMono(float[] data, int width, int height)
 		{
-			#if SAFE
 			// create new image
 			if (data == null)
 				throw new ArgumentException("Bitmap data was not supplied");
@@ -1693,36 +1373,39 @@ namespace CommonUtils.MathLib.FFT
 				throw new ArgumentException("width should be bigger than 0");
 			if (height < 0)
 				throw new ArgumentException("height should be bigger than 0");
-			#endif
 			
 			var image = new Bitmap(width, height);
 			Graphics graphics = Graphics.FromImage(image);
-			/*Fill Back color*/
+			
+			// Fill Back color
 			using (Brush brush = new SolidBrush(Color.Black))
 			{
 				graphics.FillRectangle(brush, new Rectangle(0, 0, width, height));
 			}
-			const int gridline = 50; /*Every 50 pixels draw gridline*/
-			/*Draw gridlines*/
+			
+			const int gridline = 50; // Every 50 pixels draw gridline
+			// Draw gridlines
 			using (var pen = new Pen(Color.Red, 1))
 			{
-				/*Draw horizontal gridlines*/
+				// Draw horizontal gridlines
 				for (int i = 1; i < height/gridline; i++)
 				{
 					graphics.DrawLine(pen, 0, i*gridline, width, i*gridline);
 				}
 
-				/*Draw vertical gridlines*/
+				// Draw vertical gridlines
 				for (int i = 1; i < width/gridline; i++)
 				{
 					graphics.DrawLine(pen, i*gridline, 0, i*gridline, height);
 				}
 			}
+			
 			int center = height/2;
-			/*Draw lines*/
+			
+			// Draw lines
 			using (var pen = new Pen(Color.MediumSpringGreen, 1))
 			{
-				/*Find delta X, by which the lines will be drawn*/
+				// Find delta X, by which the lines will be drawn
 				double deltaX = (double) width/data.Length;
 				double normalizeFactor = data.Max((a) => Math.Abs(a))/((double) height/2);
 				for (int i = 0, n = data.Length; i < n; i++)
@@ -1730,9 +1413,10 @@ namespace CommonUtils.MathLib.FFT
 					graphics.DrawLine(pen, (float) (i*deltaX), center, (float) (i*deltaX), (float) (center - (data[i]/normalizeFactor)));
 				}
 			}
+
 			using (var pen = new Pen(Color.DarkGreen, 1))
 			{
-				/*Draw center line*/
+				// Draw center line
 				graphics.DrawLine(pen, 0, center, width, center);
 			}
 			return image;
@@ -1836,8 +1520,10 @@ namespace CommonUtils.MathLib.FFT
 		
 		public DrawingProperties() {
 			
-			// Set some default values, setting DrawRaw also sets the default values for the other bool parameters
+			// Set some default values,
+			// setting DrawRaw also sets the default values for the other bool parameters
 			DrawRaw = false;
+			
 			DrawHorizontalTickMarks = true;
 			DrawVerticalTickMarks = true;
 			

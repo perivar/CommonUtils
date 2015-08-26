@@ -1,11 +1,7 @@
 ﻿using System;
 using System.Drawing;
-using System.Drawing.Imaging;
-
 using System.Windows.Forms;
-
 using CommonUtils.MathLib.FFT;
-using CommonUtils.Audio;
 
 namespace CommonUtils.GUI
 {
@@ -15,9 +11,9 @@ namespace CommonUtils.GUI
 	public partial class WaveDisplayUserControl : UserControl
 	{
 		private Bitmap bmp;
-		private int waveDisplayResolution = 1;
 		private int waveDisplayAmplitude = 1;
-		private int waveDisplayStartPosition = 0;
+		private int waveDisplayStartZoomPosition = 0;
+		private int waveDisplayEndZoomPosition = 0;
 		private double sampleRate = 44100;
 		
 		public double SampleRate
@@ -26,37 +22,22 @@ namespace CommonUtils.GUI
 			get { return sampleRate; }
 		}
 
-		public int Resolution
-		{
-			set { waveDisplayResolution = value; }
-			get { return waveDisplayResolution; }
-		}
-
 		public int Amplitude
 		{
 			set { waveDisplayAmplitude = value; }
 			get { return waveDisplayAmplitude; }
 		}
 
-		public int StartPosition
+		public int StartZoomPosition
 		{
-			set { waveDisplayStartPosition = value; }
-			get { return waveDisplayStartPosition; }
+			set { waveDisplayStartZoomPosition = value; }
+			get { return waveDisplayStartZoomPosition; }
 		}
 		
-		public float MaxResolution {
-			get {
-				int numberOfSamples = 0;
-				if (this.audioData != null && this.audioData.Length > 0) {
-					numberOfSamples = this.audioData.Length;
-					
-					// allow some extra margins
-					float sampleToPixel = numberOfSamples / (this.Width-2*10);
-					return sampleToPixel;
-				} else {
-					return 100;
-				}
-			}
+		public int EndZoomPosition
+		{
+			set { waveDisplayEndZoomPosition = value; }
+			get { return waveDisplayEndZoomPosition; }
 		}
 
 		public int NumberOfSamples {
@@ -109,12 +90,12 @@ namespace CommonUtils.GUI
 		public void SetAudioData(float[] audioData)
 		{
 			this.audioData = audioData;
-			bmp = AudioAnalyzer.DrawWaveform(audioData,
-			                                 new Size(this.Width, this.Height),
-			                                 waveDisplayResolution,
-			                                 waveDisplayAmplitude,
-			                                 waveDisplayStartPosition,
-			                                 sampleRate);
+			bmp = AudioAnalyzer.DrawWaveformMono(audioData,
+			                                     new Size(this.Width, this.Height),
+			                                     waveDisplayAmplitude,
+			                                     waveDisplayStartZoomPosition,
+			                                     waveDisplayEndZoomPosition,
+			                                     sampleRate, true);
 			
 			// force redraw
 			this.Invalidate();

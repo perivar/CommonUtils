@@ -184,7 +184,7 @@ namespace CommonUtils
 		public static string TrimMultiLine(string multiLineString) {
 			string trimmedByLine = string.Join(
 				"\n",
-				multiLineString.Split('\n').Select(s => s.Trim())).Trim();
+				multiLineString.Split('\n').Select(s => s.Trim()).ToArray()).Trim();
 			return trimmedByLine;
 		}
 		
