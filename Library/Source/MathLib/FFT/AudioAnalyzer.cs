@@ -315,7 +315,7 @@ namespace CommonUtils.MathLib.FFT
 			Color fillColor = ColorTranslator.FromHtml("#F9C998");
 			
 			// Derived constants
-			int BOTTOM = TOTAL_HEIGHT-TOP_MARGIN;                   		// Bottom of graph
+			int BOTTOM = TOTAL_HEIGHT-TOP_MARGIN;                  	// Bottom of graph
 			float DBTOPIXEL = (float) HEIGHT/(MAX_DB-MIN_DB);    	// Pixels/tick
 			float FREQTOPIXEL = (float) WIDTH/(MAX_FREQ-MIN_FREQ);	// Pixels/Hz
 			
@@ -532,12 +532,11 @@ namespace CommonUtils.MathLib.FFT
 		/// </remarks>
 		public static Bitmap GetSpectrogramImage(float[][] spectrogram, int width, int height)
 		{
-			#if SAFE
 			if (width < 0)
 				throw new ArgumentException("width should be bigger than 0");
 			if (height < 0)
 				throw new ArgumentException("height should be bigger than 0");
-			#endif
+
 			var image = new Bitmap(width, height);
 			Graphics graphics = Graphics.FromImage(image);
 			
@@ -549,8 +548,8 @@ namespace CommonUtils.MathLib.FFT
 			
 			int bands = spectrogram[0].Length;
 			double max = spectrogram.Max((b) => b.Max((v) => Math.Abs(v)));
-			double deltaX = (double) (width - 1)/spectrogram.Length; /*By how much the image will move to the left*/
-			double deltaY = (double) (height - 1)/(bands + 1); /*By how much the image will move upward*/
+			double deltaX = (double) (width - 1)/spectrogram.Length; 	// By how much the image will move to the left
+			double deltaY = (double) (height - 1)/(bands + 1); 			// By how much the image will move upward
 			int prevX = 0;
 			for (int i = 0, n = spectrogram.Length; i < n; i++)
 			{
@@ -585,16 +584,14 @@ namespace CommonUtils.MathLib.FFT
 		/// <returns>Spectral image of the signal</returns>
 		public static Bitmap GetSpectrogramImage(float[][] spectrogram, int width, int height, double milliseconds, double sampleRate, ColorUtils.ColorPaletteType colorPalette, bool doLogScale, int[] logFrequenciesIndex, float[] logFrequencies)
 		{
-			#if SAFE
 			if (width < 0)
 				throw new ArgumentException("width should be bigger than 0");
 			if (height < 0)
 				throw new ArgumentException("height should be bigger than 0");
-			#endif
 
 			bool drawLabels = true;
-			float minDb = -90.0f; // -80.0f also works good
-			float maxDb = 10.0f; // with the current color palettes 10.0f works well
+			float minDb = -90.0f; 	// -80.0f also works good
+			float maxDb = 10.0f; 	// with the current color palettes 10.0f works well
 			
 			// Basic constants
 			int TOTAL_HEIGHT = height;    // Height of graph
@@ -604,8 +601,8 @@ namespace CommonUtils.MathLib.FFT
 			int LEFT_MARGIN = 60;                   // Left edge of graph
 			int HEIGHT = height-2*TOP_MARGIN;		// Height of graph
 			int WIDTH = width-2*LEFT_MARGIN;     	// Width of graph
-			string LABEL_X = "Time (ms)"; 		// Label for X axis
-			string LABEL_Y = "Frequency (Hz)";  // Label for Y axis
+			string LABEL_X = "Time (ms)"; 			// Label for X axis
+			string LABEL_Y = "Frequency (Hz)";  	// Label for Y axis
 			
 			float MAX_FREQ = (float) sampleRate / 2;	// Maximum frequency (Hz) on vertical axis.
 			float MIN_FREQ = 27.5f;        	// Minimum frequency (Hz) on vertical axis.
@@ -820,7 +817,7 @@ namespace CommonUtils.MathLib.FFT
 		/// <param name="amplitude">Amplitude (1 is default)</param>
 		/// <param name="sampleRate">Samplerate of the audio data (to calculate time)</param>
 		public static Bitmap DrawWaveformMono(float[] audioData, Size imageSize, int amplitude, double sampleRate) {
-			return DrawWaveformMono(audioData, imageSize, amplitude, 0, 0, sampleRate, false);
+			return DrawWaveformMono(audioData, imageSize, amplitude, 0, 0, sampleRate, true);
 		}
 
 		/// <summary>
@@ -847,7 +844,6 @@ namespace CommonUtils.MathLib.FFT
 		/// <returns>A bitmap of the waveform</returns>
 		public static Bitmap DrawWaveformMono(float[] audioData, Size imageSize, int amplitude, int startZoomSamplePosition, int endZoomSamplePosition, double sampleRate) {
 			DrawingProperties prop = DrawingProperties.Blue;
-			
 			return DrawWaveform(audioData, imageSize, amplitude, startZoomSamplePosition, endZoomSamplePosition, sampleRate, 1, prop);
 		}
 
@@ -865,7 +861,6 @@ namespace CommonUtils.MathLib.FFT
 		public static Bitmap DrawWaveformMono(float[] audioData, Size imageSize, int amplitude, int startZoomSamplePosition, int endZoomSamplePosition, double sampleRate, bool drawRaw) {
 			DrawingProperties prop = DrawingProperties.Blue;
 			prop.DrawRaw = drawRaw;
-			
 			return DrawWaveform(audioData, imageSize, amplitude, startZoomSamplePosition, endZoomSamplePosition, sampleRate, 1, prop);
 		}
 
@@ -881,7 +876,6 @@ namespace CommonUtils.MathLib.FFT
 		public static Bitmap DrawWaveform(float[] audioData, Size imageSize, int amplitude, double sampleRate, int channels) {
 			DrawingProperties prop = DrawingProperties.Blue;
 			prop.DrawRaw = true;
-			
 			return DrawWaveform(audioData, imageSize, amplitude, 0, 0, sampleRate, channels, prop);
 		}
 
@@ -899,7 +893,6 @@ namespace CommonUtils.MathLib.FFT
 		public static Bitmap DrawWaveform(float[] audioData, Size imageSize, int amplitude, int startZoomSamplePosition, int endZoomSamplePosition, double sampleRate, int channels) {
 			DrawingProperties prop = DrawingProperties.Blue;
 			prop.DrawRaw = true;
-			
 			return DrawWaveform(audioData, imageSize, amplitude, startZoomSamplePosition, endZoomSamplePosition, sampleRate, channels, prop);
 		}
 		
@@ -917,9 +910,9 @@ namespace CommonUtils.MathLib.FFT
 		/// <returns>A bitmap of the waveform</returns>
 		/// <remarks>
 		/// Audio data should be structured in an array where each sucessive index
-		/// alternates between left or right channel data, starting with left. Index 0
-		/// should be the first left level, index 1 should be the first right level, index
-		/// 2 should be the second left level, etc.
+		/// alternates between left or right channel data, starting with left.
+		/// Index 0 should be the first left level, index 1 should be the first right level,
+		/// index 2 should be the second left level, etc.
 		/// </remarks>
 		public static Bitmap DrawWaveform(float[] audioData, Size imageSize, int amplitude, int startZoomSamplePosition, int endZoomSamplePosition, double sampleRate, int channels, DrawingProperties properties) {
 			
@@ -1069,7 +1062,7 @@ namespace CommonUtils.MathLib.FFT
 			int y = 0;
 			int xMiddle = 0;
 			if (properties.DrawVerticalTickMarks) {
-				if (samplesPerPixel > 0) { // ensure we have samples
+				if (audioData != null && audioData.Length > 0) { // ensure we have samples
 					for ( double timeTick = MIN_TIME; timeTick <= MAX_TIME; timeTick += TIME_STEP )
 					{
 						// draw vertical main line
@@ -1088,23 +1081,20 @@ namespace CommonUtils.MathLib.FFT
 						{
 							// draw numbers on the tick marks
 							string displayTimeTickString = "";
-							TimeSpan time;
+							TimeSpan timespan;
 
 							switch (properties.TimeLineUnit) {
 								case TimelineUnit.Time:
-									time = TimeSpan.FromMilliseconds(timeTick);
-									//displayTimeTickString = time.ToString(@"hh\:mm\:ss\.fff");
-									displayTimeTickString = string.Format("{0:hh\\:mm\\:ss\\.fff}", time);
+									timespan = TimeSpan.FromMilliseconds(timeTick);
+									displayTimeTickString = string.Format("{0:hh\\:mm\\:ss\\.FFF}", timespan);
 									break;
 								case TimelineUnit.Samples:
 									int samples = (int)(timeTick * sampleRate / 1000);
-									//displayTimeTickString = samples.ToString("0");
 									displayTimeTickString = string.Format("{0}", samples);
 									break;
 								case TimelineUnit.Seconds:
-									time = TimeSpan.FromMilliseconds(timeTick);
-									//displayTimeTickString = time.ToString(@"s\.fff");
-									displayTimeTickString = string.Format("{0:s\\.fff}", time);
+									timespan = TimeSpan.FromMilliseconds(timeTick);
+									displayTimeTickString = string.Format("{0:s\\.FFF}", timespan);
 									break;
 							}
 							SizeF displayTimeTickStringSize = g.MeasureString(displayTimeTickString, drawTickFont);
