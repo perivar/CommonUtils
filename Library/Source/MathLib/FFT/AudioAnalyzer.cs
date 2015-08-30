@@ -997,7 +997,8 @@ namespace CommonUtils.MathLib.FFT
 			}
 			
 			// add 1 to ensure this is correct in terms of sample view
-			double TIME_STEP = MathUtils.GetNicerNumber((MAX_TIME-MIN_TIME + 1) / 10);
+			int numberOfVerticalLines = (int) WIDTH / 60;
+			double TIME_STEP = MathUtils.GetNicerNumber((MAX_TIME-MIN_TIME + 1) / numberOfVerticalLines);
 			double AMPLITUDETOPIXEL = (HEIGHT/channels)/(MAX_AMPLITUDE-MIN_AMPLITUDE);	// Pixels/tick
 			double TIMETOPIXEL = WIDTH/(MAX_TIME-MIN_TIME); 							// Pixels/second
 			#endregion
@@ -1086,7 +1087,7 @@ namespace CommonUtils.MathLib.FFT
 							switch (properties.TimeLineUnit) {
 								case TimelineUnit.Time:
 									timespan = TimeSpan.FromMilliseconds(timeTick);
-									displayTimeTickString = string.Format("{0:hh\\:mm\\:ss\\.FFF}", timespan);
+									displayTimeTickString = string.Format("{0:00}:{1:00}:{2:00}.{3:000}", timespan.Hours, timespan.Minutes, timespan.Seconds, timespan.Milliseconds);
 									break;
 								case TimelineUnit.Samples:
 									int samples = (int)(timeTick * sampleRate / 1000);
@@ -1094,7 +1095,7 @@ namespace CommonUtils.MathLib.FFT
 									break;
 								case TimelineUnit.Seconds:
 									timespan = TimeSpan.FromMilliseconds(timeTick);
-									displayTimeTickString = string.Format("{0:s\\.FFF}", timespan);
+									displayTimeTickString = string.Format("{0:00}.{1:000}", timespan.TotalSeconds, timespan.Milliseconds);
 									break;
 							}
 							SizeF displayTimeTickStringSize = g.MeasureString(displayTimeTickString, drawTickFont);
