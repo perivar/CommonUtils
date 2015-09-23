@@ -214,12 +214,15 @@
     <Compile Include="Source\VST\VstHost.cs" />
     <Compile Include="Source\VST\VstPlaybackNAudio.cs" />
     <Compile Include="Source\XmlUtils.cs" />
+    <Compile Include="Tests\AudioUtilsTests.cs" />
     <Compile Include="Tests\MatrixLibTests.cs" />
     <Compile Include="Tests\FFTTest.cs" />
     <Compile Include="Tests\FFTTesting.cs" />
     <Compile Include="Tests\FilterTests.cs" />
     <Compile Include="Tests\ImageTests.cs" />
     <Compile Include="Tests\MidiTests.cs" />
+    <Compile Include="Tests\MidiUtilsTest.cs" />
+    <Compile Include="Tests\NumberUtilsTest.cs" />
     <Compile Include="Tests\WaveletTest.cs" />
   </ItemGroup>
   <ItemGroup>

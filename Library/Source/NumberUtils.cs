@@ -9,13 +9,39 @@ namespace CommonUtils
 	/// </summary>
 	public static class NumberUtils
 	{
-
+		/// <summary>
+		/// Parse a string into a decimal object treating both comma and dot as decimal point.
+		/// This method uses the InvariantCulture locale.
+		/// If it fails return 0.
+		/// </summary>
+		/// <param name="input">string</param>
+		/// <returns>parsed decimal or zero</returns>
+		public static Decimal DecimalTryParseDecimalPointOrZero(String input) {
+			input = input.Replace(',', '.');
+			Decimal d;
+			Decimal.TryParse(input, NumberStyles.Any, CultureInfo.InvariantCulture, out d);
+			return d;
+		}
+		
+		/// <summary>
+		/// Parse a string into decimal object. If it fails return 0.
+		/// This method uses the default locale.
+		/// </summary>
+		/// <param name="input">string</param>
+		/// <returns>parsed decimal or zero</returns>
 		public static Decimal DecimalTryParseOrZero(String input) {
 			Decimal d;
 			Decimal.TryParse(input, out d);
 			return d;
 		}
 
+		/// <summary>
+		/// Parse a string into decimal object. If it fails return the passed default value.
+		/// This method uses the default locale.
+		/// </summary>
+		/// <param name="input">string</param>
+		/// <param name="defaultValue">default value to use if parsing fails</param>
+		/// <returns>parsed decimal or passed default value</returns>
 		public static Decimal DecimalTryParse(String input, decimal defaultValue) {
 			Decimal result;
 			if (!Decimal.TryParse(input, out result)) {
@@ -24,6 +50,13 @@ namespace CommonUtils
 			return result;
 		}
 
+		/// <summary>
+		/// Parse a string into an int object. If it fails return the passed default value.
+		/// This method uses the default locale.
+		/// </summary>
+		/// <param name="input">string</param>
+		/// <param name="defaultValue">default value to use if parsing fails</param>
+		/// <returns>parsed int or passed default value</returns>
 		public static int IntTryParse(String input, int defaultValue) {
 			int result;
 			if (!int.TryParse(input, out result)) {
@@ -32,40 +65,60 @@ namespace CommonUtils
 			return result;
 		}
 		
-		public static Boolean BooleanTryParseOrZero(String str)
+		/// <summary>
+		/// Parse a string into a boolean. If it fails return false.
+		/// Supports 0, off, no and false for returning false.
+		/// </summary>
+		/// <param name="input">string</param>
+		/// <returns>a boolean</returns>
+		public static Boolean BooleanTryParseOrZero(String input)
 		{
-			return BooleanTryParse(str, false);
+			return BooleanTryParse(input, false);
 		}
 
-		public static Boolean BooleanTryParse(String str, Boolean bDefault)
+		/// <summary>
+		/// Parse a string into a boolean. If it fails return default value.
+		/// Supports 0, off, no and false for returning false.
+		/// </summary>
+		/// <param name="input">string</param>
+		/// <param name="defaultValue">default value to use if parsing fails</param>
+		/// <returns>a boolean</returns>
+		public static Boolean BooleanTryParse(String input, Boolean defaultValue)
 		{
 			String[] BooleanStringOff = { "0", "off", "no", "false" };
 
-			if (str == null) {
-				return bDefault;
-			} else if (str.Equals("")) {
-				return bDefault;
-			} else if(BooleanStringOff.Contains(str,StringComparer.InvariantCultureIgnoreCase)) {
+			if (input == null) {
+				return defaultValue;
+			} else if (input.Equals("")) {
+				return defaultValue;
+			} else if(BooleanStringOff.Contains(input,StringComparer.InvariantCultureIgnoreCase)) {
 				return false;
 			}
 
 			Boolean result;
-			if (!Boolean.TryParse(str, out result)) {
+			if (!Boolean.TryParse(input, out result)) {
 				result = true;
 			}
 
 			return result;
 		}
 		
-		public static double DoubleTryParse(string value, double defaultValue) {
+		/// <summary>
+		/// Parse a string into double object. If it fails return the passed default value.
+		/// This method tries several locales before giving up.
+		/// </summary>
+		/// <param name="input">string</param>
+		/// <param name="defaultValue">default value to use if parsing fails</param>
+		/// <returns>a double</returns>
+		public static double DoubleTryParse(String input, double defaultValue) {
 			double result;
 
 			//Try parsing in the current culture
-			if (!double.TryParse(value, System.Globalization.NumberStyles.Any, CultureInfo.CurrentCulture, out result) &&
+			if (!double.TryParse(input, System.Globalization.NumberStyles.Any, CultureInfo.CurrentCulture, out result) &&
 			    //Then try in US english
-			    !double.TryParse(value, System.Globalization.NumberStyles.Any, CultureInfo.GetCultureInfo("en-US"), out result) &&
+			    !double.TryParse(input, System.Globalization.NumberStyles.Any, CultureInfo.GetCultureInfo("en-US"), out result) &&
 			    //Then in neutral language
-			    !double.TryParse(value, System.Globalization.NumberStyles.Any, CultureInfo.InvariantCulture, out result))
+			    !double.TryParse(input, System.Globalization.NumberStyles.Any, CultureInfo.InvariantCulture, out result))
 			{
 				result = defaultValue;
 			}
