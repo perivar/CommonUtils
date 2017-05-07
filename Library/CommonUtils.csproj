@@ -8,7 +8,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>CommonUtils</RootNamespace>
     <AssemblyName>CommonUtils</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <NoWin32Manifest>False</NoWin32Manifest>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
@@ -17,7 +17,8 @@
     <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
     <WarningLevel>4</WarningLevel>
     <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
-    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
+    <TargetFrameworkProfile>
+    </TargetFrameworkProfile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Platform)' == 'AnyCPU' ">
     <PlatformTarget>x86</PlatformTarget>
@@ -34,6 +35,7 @@
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <BaseIntermediateOutputPath>obj\</BaseIntermediateOutputPath>
+    <StartAction>Project</StartAction>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <OutputPath>bin\Release\</OutputPath>
@@ -290,8 +292,12 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Source\Midi\gnu\sound\midi\info\resources\Controllers.properties" />
-    <None Include="Source\Midi\gnu\sound\midi\info\resources\GM1Instruments.properties" />
+    <None Include="Source\Midi\gnu\sound\midi\info\resources\Controllers.properties">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+    <None Include="Source\Midi\gnu\sound\midi\info\resources\GM1Instruments.properties">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
     <Content Include="Tests\Passacaglia, Handel-Piano-86bmp.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -320,6 +326,7 @@
 xcopy /ey "$(ProjectDir)NativeLibraries\libfftw.x86\*.dll" "$(TargetDir)"
 xcopy /ey "$(ProjectDir)NativeLibraries\DiffPlex\*.dll" "$(TargetDir)"
 xcopy /ey "$(ProjectDir)NativeLibraries\NAudio\*.dll" "$(TargetDir)"
-xcopy /ey "$(ProjectDir)NativeLibraries\ZedGraph\*.dll" "$(TargetDir)"</PreBuildEvent>
+xcopy /ey "$(ProjectDir)NativeLibraries\ZedGraph\*.dll" "$(TargetDir)"
+xcopy /y "$(ProjectDir)Source\Midi\gnu\sound\midi\info\resources\*.properties" "$(TargetDir)resources\"</PreBuildEvent>
   </PropertyGroup>
 </Project>

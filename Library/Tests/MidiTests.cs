@@ -84,7 +84,7 @@ namespace CommonUtils.Tests
 			// Generate C# Code
 			string outputCodePath = fileIn.Name + "_code.cs";
 			sequence.SaveGenerateMidiCode(outputCodePath);
-
+			
 			if (!CompileAndRunSource(outputCodePath)) {
 				Assert.Fail("Could not compile and run generated code!");
 			}
@@ -106,12 +106,22 @@ namespace CommonUtils.Tests
 			
 			string source = File.ReadAllText(filePath);
 			
+			/*
+			 * I'm posting this in the hope that it helps someone. We were dynamically compiling code with the version 2 of the framework and on a .net 4 only server we got the error message. 
+             * It was simply because we hard coded the framework version:
+			 * var provider = new CSharpCodeProvider(new Dictionary<String, String> { { "CompilerVersion", "v3.5" } });
+			 * So it was just a matter of removing that - presumably so it compiles with whatever version of the framework is in use at the time.
+			 * var provider = new CSharpCodeProvider();
+			 */
+			/*
 			var providerOptions = new Dictionary<string, string>
 			{
 				{"CompilerVersion", "v3.5"}
 			};
 			var cSharpCodeProvider = new CSharpCodeProvider(providerOptions);
-
+			*/
+			var cSharpCodeProvider = new CSharpCodeProvider();
+			
 			var compilerParameters = new CompilerParameters {
 				GenerateInMemory = true,
 				GenerateExecutable = false

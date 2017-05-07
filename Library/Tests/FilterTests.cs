@@ -16,8 +16,8 @@ namespace CommonUtils.Tests
 		{
 			var audio = BassProxy.Instance;
 			
-			//const string fileName = @"C:\Users\perivar.nerseth\Documents\My Projects\CommonUtils\Library\Tests\Passacaglia, Handel-Sine-86bmp.wav";
-			const string fileName = @"C:\Users\perivar.nerseth\Documents\My Projects\CommonUtils\Library\Tests\Passacaglia, Handel-Saw-86bmp.wav";
+			//const string fileName = @"Tests\Passacaglia, Handel-Saw-86bmp.wav";
+			const string fileName = @"Tests\Passacaglia, Handel-Sine-86bmp.wav";
 
 			const int sampleRate = 44100;
 			const int fftWindowsSize = 2048;
