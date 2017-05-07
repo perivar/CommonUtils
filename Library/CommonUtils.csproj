@@ -107,6 +107,8 @@
     <Compile Include="Source\BinaryFile.cs" />
     <Compile Include="Source\BitCounter.cs" />
     <Compile Include="Source\ColorUtils.cs" />
+    <Compile Include="Source\ImageHash\ImageAverageHash.cs" />
+    <Compile Include="Source\ImageHash\ImagePHash.cs" />
     <Compile Include="Source\MathLib\MatrixLib\CholeskyDecomposition.cs" />
     <Compile Include="Source\MathLib\MatrixLib\DctMatrix.cs" />
     <Compile Include="Source\MathLib\MatrixLib\DctMethods.cs" />
@@ -217,6 +219,7 @@
     <Compile Include="Source\VST\VstPlaybackNAudio.cs" />
     <Compile Include="Source\XmlUtils.cs" />
     <Compile Include="Tests\AudioUtilsTests.cs" />
+    <Compile Include="Tests\ImageHashTest.cs" />
     <Compile Include="Tests\MatrixLibTests.cs" />
     <Compile Include="Tests\FFTTest.cs" />
     <Compile Include="Tests\FFTTesting.cs" />
@@ -242,6 +245,7 @@
     <Folder Include="Source\Midi\gnu\sound\midi\info" />
     <Folder Include="Source\Midi\gnu\sound\midi\info\resources" />
     <Folder Include="Source\Midi\gnu\sound\midi\spi" />
+    <Folder Include="Source\ImageHash" />
     <Folder Include="Tests" />
     <Folder Include="Source" />
     <Folder Include="Source\Audio" />
@@ -316,6 +320,12 @@
     <Content Include="Tests\Passacaglia, Handel_Sample_Cubase_Format0.mid">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <None Include="Tests\forest-copyright.jpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Tests\forest-high.jpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Tests\Passacaglia, Handel_Sample_Cubase_Format0_Default.mid" />
     <None Include="Tests\Passacaglia, Handel_Sample_Cubase_Format1.mid" />
     <None Include="Tests\Passacaglia, Handel_Sample_Cubase_Format1_Default.mid" />
