@@ -62,7 +62,7 @@ namespace CommonUtils.MathLib.FeatureExtraction
 		
 		/// <summary>
 		/// Apply internal DCT and Mel Filterbands
-		/// This method is faster than ApplyComirvaWay since it uses fewer loops.
+		/// This method is faster than ApplyMelScaleDCTComirva since it uses fewer loops.
 		/// </summary>
 		/// <param name="m">matrix (stftdata)</param>
 		/// <returns>matrix mel scaled and dct'ed</returns>
