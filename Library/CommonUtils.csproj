@@ -218,6 +218,7 @@
     <Compile Include="Source\VST\VstHost.cs" />
     <Compile Include="Source\VST\VstPlaybackNAudio.cs" />
     <Compile Include="Source\XmlUtils.cs" />
+    <Compile Include="Tests\Audio2MidiTests.cs" />
     <Compile Include="Tests\AudioUtilsTests.cs" />
     <Compile Include="Tests\ImageHashTest.cs" />
     <Compile Include="Tests\MatrixLibTests.cs" />
@@ -337,6 +338,7 @@ xcopy /ey "$(ProjectDir)NativeLibraries\libfftw.x86\*.dll" "$(TargetDir)"
 xcopy /ey "$(ProjectDir)NativeLibraries\DiffPlex\*.dll" "$(TargetDir)"
 xcopy /ey "$(ProjectDir)NativeLibraries\NAudio\*.dll" "$(TargetDir)"
 xcopy /ey "$(ProjectDir)NativeLibraries\ZedGraph\*.dll" "$(TargetDir)"
-xcopy /y "$(ProjectDir)Source\Midi\gnu\sound\midi\info\resources\*.properties" "$(TargetDir)resources\"</PreBuildEvent>
+xcopy /y "$(ProjectDir)Source\Midi\gnu\sound\midi\info\resources\*.properties" "$(TargetDir)resources\"
+xcopy /ey "$(ProjectDir)data\*.*" "$(TargetDir)\data\"</PreBuildEvent>
   </PropertyGroup>
 </Project>

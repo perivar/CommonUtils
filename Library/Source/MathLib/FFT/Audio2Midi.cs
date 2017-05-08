@@ -17,6 +17,21 @@ namespace CommonUtils.MathLib.FFT
 	/// </summary>
 	public class Audio2Midi : IDSPPlugin
 	{
+		// smoothing
+		public enum Smoothing {
+			PEAK = 1,
+			HARMONIC = 3
+		}
+
+		// Types of FFT bin weighting algorithms
+		public enum FFTBinWeighting {
+			UNIFORM = 0,
+			DISCRETE = 1,
+			LINEAR = 2,
+			QUADRATIC = 3,
+			EXPONENTIAL = 4
+		}
+
 		// using iZotope Spectrogram Demo.exe
 		// which can be found at http://audio.rightmark.org/lukin/pub/aes_adapt/
 		// the following seems like the best settings for:
@@ -32,13 +47,12 @@ namespace CommonUtils.MathLib.FFT
 		// FFT Zero Padding: None
 		// FFT Overlap: None
 		// Window: Hann
-
 		
 		// const int bufferSize = 32768;
 		// const int bufferSize = 16384;
 		// const int bufferSize = 8192;
 		// const int bufferSize = 4096;
-		const int bufferSize = 2048;
+		public const int bufferSize = 2048;
 		//const int bufferSize = 1024;
 		// const int bufferSize = 512;
 
@@ -54,7 +68,7 @@ namespace CommonUtils.MathLib.FFT
 
 		double[] bufferPadded = new double[fftBufferSize];
 		double[] spectrum = new double[fftSize];
-		int[] peak = new int[fftSize];
+		Smoothing[] peak = new Smoothing[fftSize];
 		double[][] spectrogram;
 
 		const int PEAK_THRESHOLD = 20; // default peak threshold (default = 50)
@@ -62,21 +76,26 @@ namespace CommonUtils.MathLib.FFT
 		// MIDI notes span from 0 - 128, octaves -1 -> 9. Specify start and end for piano
 		const int keyboardStart = 12; // 12 is octave C0
 		const int keyboardEnd = 108;
+		
+		// fftBins span 8 octaves
+		int[] fftBinStart = new int[8];
+		int[] fftBinEnd = new int[8];
 
 		BassProxy audioSystem = BassProxy.Instance;
-		bool TRACK_LOADED = false;
-		string loadedAudioFile;
+		bool isTrackLoaded = false;
+
+		string loadedAudioFilePath;
 		double sampleRate;
-		double audioLength;
+		double audioLength; // length in milliseconds
 		int audioChannels;
-		int audioPosition;
+		int audioPosition; // position in milliseconds
 		
 		FFTWindow window;
 
 		int frames; // total horizontal audio frames
 		int frameNumber = -1; // current audio frame
 
-		int cuePosition; // cue position in miliseconds
+		int cuePosition; // cue position in milliseconds
 
 		double[][] pcp; // pitch class profile
 
@@ -84,34 +103,24 @@ namespace CommonUtils.MathLib.FFT
 
 		Note[] notesOpen = new Note[128];
 
-		int[] fftBinStart = new int[8];
-		int[] fftBinEnd = new int[8];
-
 		const double linearEQIntercept = 1f; // default no eq boost
 		const double linearEQSlope = 0f; // default no slope boost
 
-		bool[] OCTAVE_TOGGLE = {true, true, true, true, true, true, true, true};
-		//bool[] OCTAVE_TOGGLE = {false, true, true, true, true, true, true, true};
-		int[] OCTAVE_CHANNEL = {0,0,0,0,0,0,0,0}; // set all octaves to channel 0 (0-indexed channel 1)
+		// octave toggle determines if any octaves should be disabled
+		bool[] OCTAVE_ACTIVE = {true, true, true, true, true, true, true, true};
+		
+		// octave channel determines what midi channel midi event within the octave should output to
+		// set all octaves to channel 0 (0-indexed channel 1)
+		int[] OCTAVE_OUTPUT_CHANNEL = {0,0,0,0,0,0,0,0};
 
 		// Toggles and their defaults
-		bool LINEAR_EQ_TOGGLE = false;
-		bool PCP_TOGGLE = true;
-		bool HARMONICS_TOGGLE = true;
-		bool MIDI_TOGGLE = false; // true
+		bool LINEAR_EQ_ACTIVE = false;
+		bool PCP_ACTIVE = true;
+		bool HARMONICS_ACTIVE = true;
+		bool MIDI_ACTIVE = false;
 
-		// smoothing
-		const int PEAK = 1;
-		const int HARMONIC = 3;
-
-		// Types of FFT bin weighting algorithms
-		const int UNIFORM = 0;
-		const int DISCRETE = 1;
-		const int LINEAR = 2;
-		const int QUADRATIC = 3;
-		const int EXPONENTIAL = 4;
-
-		int WEIGHT_TYPE = UNIFORM; // default
+		// default fft bin weighting is uniform
+		FFTBinWeighting weightType = FFTBinWeighting.UNIFORM;
 
 		// UI Images
 		Image bg;
@@ -136,8 +145,25 @@ namespace CommonUtils.MathLib.FFT
 				frameNumber = value;
 			}
 		}
+
+		public bool IsTrackLoaded {
+			get {
+				return isTrackLoaded;
+			}
+			set {
+				isTrackLoaded = value;
+			}
+		}
 		#endregion
 
+		public bool IsLoaded() {
+			if ( isTrackLoaded && frameNumber > -1 ) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+		
 		// constructor
 		public Audio2Midi() {
 
@@ -197,19 +223,19 @@ namespace CommonUtils.MathLib.FFT
 
 		#region FFT bin weighting
 		// Applies FFT bin weighting. x is the distance from a real semi-tone
-		public static double BinWeight(int type, double x)
+		public static double BinWeight(FFTBinWeighting weightType, double x)
 		{
-			switch(type)
+			switch(weightType)
 			{
-				case DISCRETE:
+				case FFTBinWeighting.DISCRETE:
 					return (x <= 0.2f) ? 1.0f : 0.0f;
-				case LINEAR:
+				case FFTBinWeighting.LINEAR:
 					return 1 - x;
-				case QUADRATIC:
+				case FFTBinWeighting.QUADRATIC:
 					return 1.0f - Math.Pow(x, 2);
-				case EXPONENTIAL:
+				case FFTBinWeighting.EXPONENTIAL:
 					return Math.Pow(Math.Exp(1.0f), 1.0f - x)/Math.Exp(1.0f);
-				case UNIFORM:
+				case FFTBinWeighting.UNIFORM:
 				default:
 					return 1.0f;
 			}
@@ -227,73 +253,93 @@ namespace CommonUtils.MathLib.FFT
 
 		public void ZeroPadBuffer()
 		{
-			for (int i = 0; i < fftBufferSize; i++)
-			{
+			for (int i = 0; i < fftBufferSize; i++) {
 				bufferPadded[i] = 0f;
 			}
 		}
 
-		public void PrecomputeOctaveRegions()
-		{
-			for (int j = 0; j < 8; j++)
-			{
+		public void PrecomputeOctaveRegions() {
+			
+			for (int j = 0; j < 8; j++) {
 				fftBinStart[j] = 0;
 				fftBinEnd[j] = 0;
-				for (int k = 0; k < fftSize; k++)
-				{
+				for (int k = 0; k < fftSize; k++) {
 					double freq = k / (double)fftBufferSize * sampleRate;
-					if (freq >= OctaveLowRange(j) && fftBinStart[j] == 0)
-					{
+					if (freq >= OctaveLowRange(j) && fftBinStart[j] == 0) {
 						fftBinStart[j] = k;
-					}
-					else if (freq > OctaveHighRange(j) && fftBinEnd[j] == 0)
-					{
+					} else if (freq > OctaveHighRange(j) && fftBinEnd[j] == 0) {
 						fftBinEnd[j] = k;
 						break;
 					}
 				}
 			}
-			Console.WriteLine("Start: " + fftBinStart[0] + " End: " + fftBinEnd[7] + " (" + fftSize + " total)");
+			Console.WriteLine("PrecomputeOctaveRegions. Start: " + fftBinStart[0] + " End: " + fftBinEnd[7] + " (" + fftSize + " total)");
 		}
 		
-		public int OpenAudioFile(string audioFile)
-		{
-			if (TRACK_LOADED)
-			{
+		public int OpenAudioFile(string audioFilePath) {
+			if (isTrackLoaded) {
 				audioSystem.Stop();
 
-				loadedAudioFile = "";
+				loadedAudioFilePath = "";
 
 				//sliderProgress.Value = 0;
 				//sliderProgress.setMax(0);
 
-				TRACK_LOADED = false;
+				isTrackLoaded = false;
 			}
 
-			//audio = minim.loadFile(sketchPath + "/music/" + audioFile, bufferSize);
 			audioSystem.DspPlugin = this;
-			audioSystem.OpenFileUsingFileStream(audioFile);
-			audioLength = audioSystem.ChannelLength * 1000;
-			sampleRate = audioSystem.SampleRate;
-			audioChannels = audioSystem.Channels;
+			audioSystem.OpenFileUsingFileStream(audioFilePath);
+			Console.WriteLine("Audio source: {0}", audioFilePath);
 			
-			frames = MathUtils.RoundAwayFromZero(audioLength / 1000f * (double)sampleRate / (double)bufferSize);
+			// read values from the audio system
+			double audioLength = audioSystem.ChannelLength * 1000;
+			double sampleRate = audioSystem.SampleRate;
+			int audioChannels = audioSystem.Channels;
+			
+			// calculate frames
+			int frames = MathUtils.RoundAwayFromZero(audioLength / 1000f * (double)sampleRate / (double)bufferSize);
 
+			// initialise
+			Initialize(sampleRate, audioChannels, audioLength, frames);
+
+			//sliderProgress.setMax(audioLength);
+			cuePosition = audioPosition;
+
+			frameNumber = -1;
+
+			loadedAudioFilePath = audioFilePath;
+			isTrackLoaded = true;
+			
+			/*
+			audioSystem.Play();
+			
+			while (audioSystem.IsPlaying) {
+				System.Threading.Thread.Sleep(100);
+			}
+			 */
+			
+			return frameNumber;
+		}
+		
+		public bool Initialize(double sampleRate, int audioChannels, double audioLength, int frames) {
+			
+			this.sampleRate = sampleRate;
+			this.audioChannels = audioChannels;
+			this.audioLength = audioLength;
+			this.frames = frames;
+			
 			Console.WriteLine();
-			Console.WriteLine("Audio source: {0}", audioFile);
-			Console.WriteLine("{0:N2} seconds ({1} frames)", audioLength / 1000, frames);
+			Console.WriteLine("Duration: {0:N2} seconds ({1} frames)", audioLength / 1000, frames);
 			Console.WriteLine("Time size: {0} Bytes, Samplerate: {1:N2} kHz", bufferSize, sampleRate / 1000f);
 			Console.WriteLine("FFT bandwidth: {0:N2} Hz", (2.0f / fftBufferSize) * ((double)sampleRate / 2.0f));
 
-			if (audioChannels == 2)
-			{
+			if (audioChannels == 2) {
 				Console.WriteLine("Channels: 2 (STEREO)\n");
-			}
-			else
-			{
+			} else {
 				Console.WriteLine("Channels: 1 (MONO)\n");
 			}
-
+			
 			// Setup Arrays
 			notes = new List<Note>[frames];
 			for (int i = 0; i < frames; i++) {
@@ -311,52 +357,32 @@ namespace CommonUtils.MathLib.FFT
 			}
 			
 			PrecomputeOctaveRegions();
-
-			//sliderProgress.setMax(audioLength);
-			cuePosition = audioPosition;
-
-			frameNumber = -1;
-
-			loadedAudioFile = audioFile;
-			TRACK_LOADED = true;
 			
-			//audioSystem.Play();
-			
-			while (audioSystem.IsPlaying) {
-				System.Threading.Thread.Sleep(100);
-			}
-			
-			return frameNumber;
+			return true;
 		}
 		
 		#region Midi
 		public void OutputMIDINotes()
 		{
-			if (MIDI_TOGGLE)
-			{
+			if (MIDI_ACTIVE) {
 				// send NoteOns
 				foreach (var note in notes[frameNumber]) {
-					if (OCTAVE_TOGGLE[note.octave] && notesOpen[note.pitch] == null) {
+					if (OCTAVE_ACTIVE[note.octave] && notesOpen[note.pitch] == null) {
 						//midiOut.sendNoteOn(note.channel, note.pitch, note.velocity);
 						notesOpen[note.pitch] = note;
 					}
 				}
 
 				// send NoteOffs
-				for (int i = 0; i < notesOpen.Length; i++)
-				{
+				for (int i = 0; i < notesOpen.Length; i++) {
 					bool isOpen = false;
-					if (notesOpen[i] != null)
-					{
-						for (int j = 0; j < notes[frameNumber].Count; j++)
-						{
-							if (notes[frameNumber][j].pitch == i)
-							{
+					if (notesOpen[i] != null) {
+						for (int j = 0; j < notes[frameNumber].Count; j++) {
+							if (notes[frameNumber][j].pitch == i) {
 								isOpen = true;
 							}
 						}
-						if (!isOpen)
-						{
+						if (!isOpen) {
 							//midiOut.sendNoteOff(notesOpen[i].channel, i, notesOpen[i].velocity);
 							notesOpen[i] = null;
 						}
@@ -367,10 +393,8 @@ namespace CommonUtils.MathLib.FFT
 
 		public void CloseMIDINotes()
 		{
-			for (int i = 0; i < notesOpen.Length; i++)
-			{
-				if (notesOpen[i] != null)
-				{
+			for (int i = 0; i < notesOpen.Length; i++) {
+				if (notesOpen[i] != null) {
 					//midiOut.sendNoteOff(notesOpen[i].channel, i, notesOpen[i].velocity);
 					notesOpen[i] = null;
 				}
@@ -378,83 +402,27 @@ namespace CommonUtils.MathLib.FFT
 		}
 		#endregion
 		
-		public bool IsLoaded() {
-			if ( TRACK_LOADED && frameNumber > -1 ) {
-				return true;
-			} else {
-				return false;
-			}
-		}
-		
-		#region Test Methods
-		public static object CsvDoubleParser(string[] splittedLine) {
-			// only store the second element (the first is a counter)
-			return float.Parse(splittedLine[1]);
-		}
-		
-		private static float[] ReadTestSignal() {
-			string filePath = @"C:\Users\perivar.nerseth\Documents\Processing\fft_testing\data\fft.csv";
-			
-			var objects = IOUtils.ReadCSV(filePath, true, CsvDoubleParser);
-			var floats = objects.Cast<float>().ToArray();
-			return floats;
-		}
-		#endregion
-		
-		private void ProcessWaveform(float[] waveform) {
-			// stereo waveform
-			float[] monoSignal = BassProxy.GetMonoSignal(waveform, audioChannels, BassProxy.MonoSummingType.Mix);
-			//float[] monoSignal = ReadTestSignal();
-			
-			// divide it into chunks of bufferSize
-			var chunks = monoSignal.Split(bufferSize);
-			//var chunks = MathUtils.Split(monoSignal, bufferSize);
-			
-			int chunkLength = chunks.Count();
-			Console.WriteLine("Chunk count: {0}", chunkLength);
-			
-			int count = 1;
-			foreach (var chunk in chunks) {
-				//Console.Write("Processing chunk: {0}      \r", count);
-				Process(chunk.ToArray());
-				count++;
-			}
-			
-			Render(RenderType.Windowing).Save("windowing.png");
-			for (int i = 0; i < frames; i++) {
-				FrameNumber = i;
-				Render(RenderType.FFT).Save("fft_" + i + ".png");
-				Render(RenderType.MidiPeaks).Save("peaks_" + i + ".png");
-			}
-		}
-		
-		public void Process(float[] buffer)
-		{
-			if (frameNumber < frames - 1)
-			{
+		public void Process(float[] buffer) {
+			if (frameNumber < frames - 1) {
 				// need to apply the window transform before we zeropad
 				window.Apply(buffer); // add window to samples
 
 				Array.Copy(buffer, 0, bufferPadded, 0, buffer.Length);
 
 				//if (audioSystem.IsPlaying)
-				if (true)
-				{
+				if (true) {
 					frameNumber++;
-					Console.Write("Processing frame: {0}      \n", frameNumber);
+					//Console.Write("Processing frame: {0}      \n", frameNumber);
 					Analyze();
 					OutputMIDINotes();
 				}
-			}
-			else
-			{
+			} else {
 				audioSystem.Pause();
 				CloseMIDINotes();
 			}
 		}
 
-		public void Analyze()
-		{
+		public void Analyze() {
 			//fft = new FFT(fftBufferSize, audio.sampleRate());
 			//fft.forward(bufferPadded); // run fft on the buffer
 
@@ -478,15 +446,13 @@ namespace CommonUtils.MathLib.FFT
 			double freqLowRange = OctaveLowRange(0);
 			double freqHighRange = OctaveHighRange(7);
 
-			for (int k = 0; k < fftSize; k++)
-			{
+			for (int k = 0; k < fftSize; k++) {
 				freq[k] = k / (double)fftBufferSize * sampleRate;
 
 				//Console.Write("Processing frame: {0}, {1:N2} Hz\r", frameNumber, freq[k]);
 				
 				// skip FFT bins that lay outside of octaves 0-9
-				if (freq[k] < freqLowRange || freq[k] > freqHighRange)
-				{
+				if (freq[k] < freqLowRange || freq[k] > freqHighRange) {
 					continue;
 				}
 
@@ -495,12 +461,9 @@ namespace CommonUtils.MathLib.FFT
 
 				// Filter out frequncies from disabled octaves
 				bool filterOutFreq = false;
-				for (int i = 0; i < 8; i ++)
-				{
-					if (!OCTAVE_TOGGLE[i])
-					{
-						if (closestFreq >= OctaveLowRange(i) && closestFreq <= OctaveHighRange(i))
-						{
+				for (int i = 0; i < 8; i ++) {
+					if (!OCTAVE_ACTIVE[i]) {
+						if (closestFreq >= OctaveLowRange(i) && closestFreq <= OctaveHighRange(i)) {
 							filterOutFreq = true;
 							break;
 						}
@@ -508,30 +471,25 @@ namespace CommonUtils.MathLib.FFT
 				}
 
 				// Set spectrum
-				if (!filterOutFreq)
-				{
+				if (!filterOutFreq) {
 					binDistance[k] = 2 * Math.Abs((12 * Math.Log(freq[k]/440.0f) / Math.Log(2)) - (12 * Math.Log(closestFreq/440.0f) / Math.Log(2)));
 
-					spectrum[k] = spectrum_fft_abs[k] * BinWeight(WEIGHT_TYPE, binDistance[k]);
+					spectrum[k] = spectrum_fft_abs[k] * BinWeight(weightType, binDistance[k]);
 
-					if (LINEAR_EQ_TOGGLE)
-					{
+					if (LINEAR_EQ_ACTIVE) {
 						spectrum[k] *= (linearEQIntercept + k * linearEQSlope);
 					}
 
 					// Sum PCP bins
-					pcp[frameNumber][FreqToPitch(freq[k]) % 12] += Math.Pow(spectrum_fft_abs[k], 2) * BinWeight(WEIGHT_TYPE, binDistance[k]);
+					pcp[frameNumber][FreqToPitch(freq[k]) % 12] += Math.Pow(spectrum_fft_abs[k], 2) * BinWeight(weightType, binDistance[k]);
 				}
 			}
 
 			NormalizePCP();
 
-			if (PCP_TOGGLE)
-			{
-				for (int k = 0; k < fftSize; k++)
-				{
-					if (freq[k] < freqLowRange || freq[k] > freqHighRange)
-					{
+			if (PCP_ACTIVE) {
+				for (int k = 0; k < fftSize; k++) {
+					if (freq[k] < freqLowRange || freq[k] > freqHighRange) {
 						continue;
 					}
 
@@ -547,10 +505,8 @@ namespace CommonUtils.MathLib.FFT
 			var foundLevel = new List<double>();
 			
 			// find the peaks and valleys
-			for (int k = 1; k < fftSize -1; k++)
-			{
-				if (freq[k] < freqLowRange || freq[k] > freqHighRange)
-				{
+			for (int k = 1; k < fftSize -1; k++) {
+				if (freq[k] < freqLowRange || freq[k] > freqHighRange) {
 					continue;
 				}
 
@@ -558,8 +514,8 @@ namespace CommonUtils.MathLib.FFT
 				scurr = spectrum[k];
 				snext = spectrum[k+1];
 
-				if (scurr > sprev && scurr > snext && (scurr > PEAK_THRESHOLD)) // peak
-				{
+				if (scurr > sprev && scurr > snext && (scurr > PEAK_THRESHOLD)) {
+					// found peak
 					// Parobolic Peak Interpolation to estimate the real peak frequency and magnitude
 					double ym1 = sprev;
 					double y0 = scurr;
@@ -571,8 +527,7 @@ namespace CommonUtils.MathLib.FFT
 
 					double interpolatedFrequency = (k + p) * sampleRate / fftBufferSize;
 
-					if (FreqToPitch(interpolatedFrequency) != FreqToPitch(freq[k]))
-					{
+					if (FreqToPitch(interpolatedFrequency) != FreqToPitch(freq[k])) {
 						freq[k] = interpolatedFrequency;
 						spectrum[k] = interpolatedAmplitude;
 					}
@@ -580,10 +535,9 @@ namespace CommonUtils.MathLib.FFT
 					bool isHarmonic = false;
 
 					// filter harmonics from peaks
-					if (HARMONICS_TOGGLE)
-					{
-						for (int f = 0; f < foundPeak.Count; f++)
-						{
+					if (HARMONICS_ACTIVE) {
+						for (int f = 0; f < foundPeak.Count; f++) {
+							
 							//TODO: Cant remember why this is here
 							/*
 							if (foundPeak.Count > 2)
@@ -592,24 +546,23 @@ namespace CommonUtils.MathLib.FFT
 								break;
 							}
 							 */
-							// If the current frequencies note has already peaked in a lower octave check to see if its level is lower probably a harmonic
-							if (FreqToPitch(freq[k]) % 12 == FreqToPitch(foundPeak[f]) % 12 && spectrum[k] < foundLevel[f])
-							{
+							// If the current frequencies note has already peaked in a lower octave
+							// check to see if its level is lower.
+							// if so it's probably a harmonic
+							if (FreqToPitch(freq[k]) % 12 == FreqToPitch(foundPeak[f]) % 12
+							    && spectrum[k] < foundLevel[f]) {
 								isHarmonic = true;
 								break;
 							}
 						}
 					}
 
-					if (isHarmonic)
-					{
-						peak[k] = HARMONIC;
-					}
-					else
-					{
-						peak[k] = PEAK;
+					if (isHarmonic) {
+						peak[k] = Smoothing.HARMONIC;
+					} else {
+						peak[k] = Smoothing.PEAK;
 						
-						notes[frameNumber].Add(new Note(freq[k], spectrum[k]));
+						notes[frameNumber].Add(new Note(this, freq[k], spectrum[k]));
 
 						// Track Peaks and Levels in this pass so we can detect harmonics
 						foundPeak.Add(freq[k]);
@@ -627,76 +580,74 @@ namespace CommonUtils.MathLib.FFT
 		{
 			//Process(buffer);
 		}
-
 		#endregion
 		
 		#region render methods
 		public enum RenderType {
-			Windowing,
-			FFT,
+			FFTWindow,
+			FFTSpectrum,
 			MidiPeaks
 		}
 		
 		public Bitmap Render(RenderType type)
 		{
 			var bitmap = new Bitmap( TOTAL_WIDTH, TOTAL_HEIGHT, PixelFormat.Format32bppArgb );
-			using(Graphics g = Graphics.FromImage(bitmap))
-			{
+			
+			using(Graphics g = Graphics.FromImage(bitmap)) {
 				g.DrawImage(bg, 0, 0); // Render the background image
 
 				// Render octave toggle buttons for active octaves
-				for (int i = 0; i < 8; i++)
-				{
-					if (OCTAVE_TOGGLE[i])
-					{
+				for (int i = 0; i < 8; i++) {
+					if (OCTAVE_ACTIVE[i]) {
 						g.DrawImage(octaveBtn, 0, bitmap.Height - (i * 36) - 36);
 					}
 				}
 
-				if (type == RenderType.Windowing)
-				{
-					RenderWindowCurve(bitmap);
-				}
-				else if (type == RenderType.FFT)
-				{
-					RenderFFTSpectrogram(bitmap);
-				}
-				else if (type == RenderType.MidiPeaks)
-				{
-					RenderPeaks(bitmap);
-				}
-				else
-				{
-					RenderPeaks(bitmap);
+				if (type == RenderType.FFTWindow) {
+					RenderFFTWindow(bitmap);
+				} else if (type == RenderType.FFTSpectrum) {
+					RenderFFTSpectrum(bitmap);
+				} else if (type == RenderType.MidiPeaks) {
+					RenderMidiPeaks(bitmap);
+				} else {
+					RenderMidiPeaks(bitmap);
 				}
 
 				// Update progress bar
-				if (IsLoaded())
-				{
+				if (IsLoaded()) {
 					//if (audio.isPlaying())
-					if (false)
-					{
+					if (false) {
 						double percentComplete = audioPosition / (double)audioLength * 100;
 						//sliderProgress.Value = audioPosition;
 						//sliderProgress.setValueLabel(nf(round(percentComplete), 2) + "%");
 					}
-				}
-				else
-				{
+				} else {
 					//sliderProgress.setValueLabel("NO FILE LOADED");
 				}
 			}
 			return bitmap;
 		}
 
-		public void RenderPeaks(Bitmap bitmap)
-		{
-			using(Graphics g = Graphics.FromImage(bitmap))
-			{
+		public void RenderFFTWindow(Bitmap bitmap) {
+			const int windowX = 50;
+			const int windowY = 160;
+			const int windowHeight = 80;
+
+			double[] windowCurve = window.DrawCurve();
+
+			using(Graphics g = Graphics.FromImage(bitmap)) {
+				for (int i = 0; i < windowCurve.Length - 1; i++) {
+					g.DrawLine(Pens.White, i + windowX, (int) (windowY - windowCurve[i] * windowHeight), i+1 + windowX, (int) (windowY - windowCurve[i+1] * windowHeight));
+				}
+			}
+		}
+
+		public void RenderMidiPeaks(Bitmap bitmap) {
+			
+			using(Graphics g = Graphics.FromImage(bitmap)) {
 				int keyHeight = bitmap.Height / (keyboardEnd - keyboardStart);
 
-				if (IsLoaded())
-				{
+				if (IsLoaded()) {
 					// render key presses for detected peaks
 					foreach (var note in notes[frameNumber]) {
 						if (note.isWhiteKey()) {
@@ -710,8 +661,7 @@ namespace CommonUtils.MathLib.FFT
 					const int keyLength = 15;
 					int scroll = (frameNumber * keyLength > bitmap.Width) ? frameNumber - bitmap.Width/keyLength: 0;
 
-					for (int x = frameNumber; x >= scroll; x--)
-					{
+					for (int x = frameNumber; x >= scroll; x--) {
 						foreach (var note in notes[x]) {
 							Color noteColor;
 							if (pcp[x][note.pitch % 12] == 1.0f) {
@@ -734,38 +684,16 @@ namespace CommonUtils.MathLib.FFT
 
 					// output semitone text labels
 					foreach (var note in notes[frameNumber]) {
-						//fill(20);
-						//text(note.label(), LEFT_MARGIN + 1, bitmap.Height - ((note.pitch - keyboardStart) * keyHeight + keyHeight + 1));
-						//fill(140);
-						//text(note.label(), LEFT_MARGIN, bitmap.Height - ((note.pitch - keyboardStart) * keyHeight + keyHeight + 2));
 						Color gray = Color.FromArgb(140, 140, 140);
 						g.DrawString(note.label(), textFont, new SolidBrush(gray), LEFT_MARGIN, bitmap.Height - ((note.pitch - keyboardStart) * keyHeight + keyHeight + 6));
 					}
 				}
 			}
 		}
-
-		public void RenderWindowCurve(Bitmap bitmap)
+	
+		public void RenderFFTSpectrum(Bitmap bitmap)
 		{
-			const int windowX = 50;
-			const int windowY = 160;
-			const int windowHeight = 80;
-
-			double[] windowCurve = window.DrawCurve();
-
-			using(Graphics g = Graphics.FromImage(bitmap))
-			{
-				for (int i = 0; i < windowCurve.Length - 1; i++)
-				{
-					g.DrawLine(Pens.White, i + windowX, (int) (windowY - windowCurve[i] * windowHeight), i+1 + windowX, (int) (windowY - windowCurve[i+1] * windowHeight));
-				}
-			}
-		}
-
-		public void RenderFFT(Bitmap bitmap)
-		{
-			using(Graphics g = Graphics.FromImage(bitmap))
-			{
+			using(Graphics g = Graphics.FromImage(bitmap)) {
 				int keyHeight = bitmap.Height / (keyboardEnd - keyboardStart);
 				Color noteColor = Color.FromArgb(0, 255, 240);
 				var amp = new double[128];
@@ -773,76 +701,21 @@ namespace CommonUtils.MathLib.FFT
 				int previousPitch = -1;
 				int currentPitch;
 
-				if (IsLoaded())
-				{
-					for (int k = 0; k < spectrum.Length; k++)
-					{
+				if (IsLoaded()) {
+					for (int k = 0; k < spectrogram[frameNumber].Length; k++) {
 						double freq = k / (double)fftBufferSize * sampleRate;
 
 						currentPitch = FreqToPitch(freq);
 
-						if (currentPitch == previousPitch)
-						{
-							amp[currentPitch] = amp[currentPitch] > spectrum[k] ? amp[currentPitch] : spectrum[k];
-						}
-						else
-						{
-							amp[currentPitch] = spectrum[k];
-							previousPitch = currentPitch;
-						}
-					}
-
-					for (int i = keyboardStart; i < keyboardEnd; i++)
-					{
-						//fill(red(noteColor)/4, green(noteColor)/4, blue(noteColor)/4);
-						//rect(LEFT_MARGIN, height - ((i - keyboardStart) * keyHeight), 25 + amp[i], height - ((i - keyboardStart) * keyHeight + keyHeight)); // shadow
-
-						//fill(noteColor);
-						//rect(LEFT_MARGIN, height - ((i - keyboardStart) * keyHeight) - 1, LEFT_MARGIN + amp[i], height - ((i - keyboardStart) * keyHeight + keyHeight));
-						//var rect = new Rectangle(LEFT_MARGIN, bitmap.Height - ((i - keyboardStart) * keyHeight) - 1, LEFT_MARGIN + (int) amp[i], bitmap.Height - ((i - keyboardStart) * keyHeight + keyHeight));
-						var rect = new Rectangle(LEFT_MARGIN, bitmap.Height - ((i - keyboardStart) * keyHeight) - 2, LEFT_MARGIN + (int) amp[i], keyHeight - 1);
-						g.FillRectangle(new SolidBrush(noteColor), rect);
-					}
-				}
-				
-				//labelThreshold.setPosition(PEAK_THRESHOLD + 26, 60);
-				//line(PEAK_THRESHOLD + LEFT_MARGIN, 0, PEAK_THRESHOLD + LEFT_MARGIN, height);
-				g.DrawLine(Pens.Black, PEAK_THRESHOLD + LEFT_MARGIN, 0, PEAK_THRESHOLD + LEFT_MARGIN, bitmap.Height);
-			}
-		}
-		
-		public void RenderFFTSpectrogram(Bitmap bitmap)
-		{
-			using(Graphics g = Graphics.FromImage(bitmap))
-			{
-				int keyHeight = bitmap.Height / (keyboardEnd - keyboardStart);
-				Color noteColor = Color.FromArgb(0, 255, 240);
-				var amp = new double[128];
-
-				int previousPitch = -1;
-				int currentPitch;
-
-				if (IsLoaded())
-				{
-					for (int k = 0; k < spectrogram[frameNumber].Length; k++)
-					{
-						double freq = k / (double)fftBufferSize * sampleRate;
-
-						currentPitch = FreqToPitch(freq);
-
-						if (currentPitch == previousPitch)
-						{
+						if (currentPitch == previousPitch) {
 							amp[currentPitch] = amp[currentPitch] > spectrogram[frameNumber][k] ? amp[currentPitch] : spectrogram[frameNumber][k];
-						}
-						else
-						{
+						} else {
 							amp[currentPitch] = spectrogram[frameNumber][k];
 							previousPitch = currentPitch;
 						}
 					}
 
-					for (int i = keyboardStart; i < keyboardEnd; i++)
-					{
+					for (int i = keyboardStart; i < keyboardEnd; i++) {
 						//fill(red(noteColor)/4, green(noteColor)/4, blue(noteColor)/4);
 						//rect(LEFT_MARGIN, height - ((i - keyboardStart) * keyHeight), 25 + amp[i], height - ((i - keyboardStart) * keyHeight + keyHeight)); // shadow
 
@@ -867,12 +740,11 @@ namespace CommonUtils.MathLib.FFT
 			switch (e.PropertyName)
 			{
 				case "WaveformData":
-					ProcessWaveform(audioSystem.WaveformData);
+					//ProcessWaveform(audioSystem.WaveformData);
 					break;
 			}
 		}
 		#endregion
-
 		
 		#region internal classes
 		internal class Note
@@ -890,18 +762,17 @@ namespace CommonUtils.MathLib.FFT
 			public int pitch;
 			public int velocity;
 
-			public Note(double frequency, double amplitude)
+			public Note(Audio2Midi audio2midi, double frequency, double amplitude)
 			{
 				this.frequency = frequency;
 				this.amplitude = amplitude;
 				this.pitch = FreqToPitch(frequency);
 				this.octave = this.pitch / 12 - 1;
 				this.semitone = this.pitch % 12;
-				//this.channel = OCTAVE_CHANNEL[this.octave];
+				this.channel = audio2midi.OCTAVE_OUTPUT_CHANNEL[this.octave];
 				this.velocity = MathUtils.RoundAwayFromZero((amplitude - PEAK_THRESHOLD) / (255f + PEAK_THRESHOLD) * 128f);
 
-				if (this.velocity > 127)
-				{
+				if (this.velocity > 127) {
 					this.velocity = 127;
 				}
 			}
