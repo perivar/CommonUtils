@@ -24,9 +24,10 @@ namespace CommonUtils.Tests
 			
 			// init audio system
 			var audioSystem = BassProxy.Instance;
-			float[] wavData = BassProxy.ReadMonoFromFile(inputFilepath, (int) sampleRate, 1000, 0);
-		
-			// calculate number of frames and the duration			
+			//float[] wavData = BassProxy.ReadMonoFromFile(inputFilepath, (int) sampleRate, 1000, 0);
+			float[] wavData = BassProxy.ReadMonoFromFile(inputFilepath, (int) sampleRate);
+			
+			// calculate number of frames and the duration
 			frames = MathUtils.RoundAwayFromZero((double)wavData.Length / (double)bufferSize);
 			audioLength = (double)wavData.Length / (double)sampleRate * 1000;
 			
@@ -68,7 +69,7 @@ namespace CommonUtils.Tests
 				
 				var chunkArray = chunk.ToArray();
 				if (chunkArray.Length < bufferSize ) {
-					// zero pad
+					// zero pad the last chunk
 					Array.Resize<float>(ref chunkArray, bufferSize);
 				}
 				audio2midi.Process(chunkArray);

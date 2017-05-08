@@ -17,21 +17,6 @@ namespace CommonUtils.MathLib.FFT
 	/// </summary>
 	public class Audio2Midi : IDSPPlugin
 	{
-		// smoothing
-		public enum Smoothing {
-			PEAK = 1,
-			HARMONIC = 3
-		}
-
-		// Types of FFT bin weighting algorithms
-		public enum FFTBinWeighting {
-			UNIFORM = 0,
-			DISCRETE = 1,
-			LINEAR = 2,
-			QUADRATIC = 3,
-			EXPONENTIAL = 4
-		}
-
 		// using iZotope Spectrogram Demo.exe
 		// which can be found at http://audio.rightmark.org/lukin/pub/aes_adapt/
 		// the following seems like the best settings for:
@@ -71,7 +56,7 @@ namespace CommonUtils.MathLib.FFT
 		Smoothing[] peak = new Smoothing[fftSize];
 		double[][] spectrogram;
 
-		const int PEAK_THRESHOLD = 20; // default peak threshold (default = 50)
+		const int PEAK_THRESHOLD = 50; // default peak threshold (default = 50)
 
 		// MIDI notes span from 0 - 128, octaves -1 -> 9. Specify start and end for piano
 		const int keyboardStart = 12; // 12 is octave C0
@@ -114,10 +99,10 @@ namespace CommonUtils.MathLib.FFT
 		int[] OCTAVE_OUTPUT_CHANNEL = {0,0,0,0,0,0,0,0};
 
 		// Toggles and their defaults
-		bool LINEAR_EQ_ACTIVE = false;
-		bool PCP_ACTIVE = true;
-		bool HARMONICS_ACTIVE = true;
-		bool MIDI_ACTIVE = false;
+		bool isLinearEQActive = false;
+		bool isPCPActive = true;
+		bool isHarmonicsActive = true;
+		bool isMIDIActive = false;
 
 		// default fft bin weighting is uniform
 		FFTBinWeighting weightType = FFTBinWeighting.UNIFORM;
@@ -129,14 +114,74 @@ namespace CommonUtils.MathLib.FFT
 		Image octaveBtn;
 		
 		// Font
-		Font textFont = new Font("Arial", 10.0f, FontStyle.Regular);
+		Font textFont = new Font("Arial", 8.0f, FontStyle.Regular);
 		
 		// render size
 		int TOTAL_WIDTH;
 		int TOTAL_HEIGHT;
 		int LEFT_MARGIN;
 
+		#region Enums
+		// Smoothing
+		public enum Smoothing {
+			PEAK,
+			HARMONIC
+		}
+
+		// Types of FFT bin weighting algorithms
+		public enum FFTBinWeighting {
+			UNIFORM,
+			DISCRETE,
+			LINEAR,
+			QUADRATIC,
+			EXPONENTIAL
+		}
+		
+		public enum RenderType {
+			FFTWindow,
+			FFTSpectrum,
+			MidiPeaks
+		}
+		#endregion
+		
 		#region Properties
+
+		public bool IsLinearEQActive {
+			get {
+				return isLinearEQActive;
+			}
+			set {
+				isLinearEQActive = value;
+			}
+		}
+
+		public bool IsPCPActive {
+			get {
+				return isPCPActive;
+			}
+			set {
+				isPCPActive = value;
+			}
+		}
+
+		public bool IsHarmonicsActive {
+			get {
+				return isHarmonicsActive;
+			}
+			set {
+				isHarmonicsActive = value;
+			}
+		}
+
+		public bool IsMIDIActive {
+			get {
+				return isMIDIActive;
+			}
+			set {
+				isMIDIActive = value;
+			}
+		}
+		
 		public int FrameNumber {
 			get {
 				return frameNumber;
@@ -186,55 +231,49 @@ namespace CommonUtils.MathLib.FFT
 		}
 		
 		#region Freq to Pitch or Pitch to Freq
-		public static int FreqToPitch(double f)
-		{
+		public static int FreqToPitch(double f) {
+			
 			int p = MathUtils.RoundAwayFromZero(69.0f + 12.0f *(Math.Log(f/440.0f) / Math.Log(2.0f)));
-			if (p > 0 && p < 128)
-			{
+			if (p > 0 && p < 128) {
 				return p;
-			}
-			else
-			{
+			} else {
 				return 0;
 			}
 		}
 
-		public static double PitchToFreq(int p)
-		{
+		public static double PitchToFreq(int p) {
 			return 440.0f * Math.Pow(2, (p - 69) / 12.0f);
 		}
 		#endregion
 
 		#region Lowest and Highest Frequencies
 		// Find the lowest frequency in an octave range
-		public static double OctaveLowRange(int octave)
-		{
+		public static double OctaveLowRange(int octave) {
 			// find C - C0 is MIDI note 12
 			return PitchToFreq(12 + octave * 12);
 		}
 
 		// Find the highest frequency in an octave range
-		public static double OctaveHighRange(int octave)
-		{
+		public static double OctaveHighRange(int octave) {
 			// find B - B0 is MIDI note 23
 			return PitchToFreq(23 + octave * 12);
 		}
 		#endregion
 
 		#region FFT bin weighting
-		// Applies FFT bin weighting. x is the distance from a real semi-tone
-		public static double BinWeight(FFTBinWeighting weightType, double x)
-		{
-			switch(weightType)
-			{
+		// Applies FFT bin weighting.
+		// x is the distance from a real semi-tone
+		public static double BinWeight(FFTBinWeighting weightType, double x) {
+			
+			switch(weightType) {
 				case FFTBinWeighting.DISCRETE:
 					return (x <= 0.2f) ? 1.0f : 0.0f;
 				case FFTBinWeighting.LINEAR:
-					return 1 - x;
+					return 1.0f - x;
 				case FFTBinWeighting.QUADRATIC:
 					return 1.0f - Math.Pow(x, 2);
 				case FFTBinWeighting.EXPONENTIAL:
-					return Math.Pow(Math.Exp(1.0f), 1.0f - x)/Math.Exp(1.0f);
+					return Math.Pow(Math.Exp(1.0f), 1.0f - x) / Math.Exp(1.0f);
 				case FFTBinWeighting.UNIFORM:
 				default:
 					return 1.0f;
@@ -243,22 +282,14 @@ namespace CommonUtils.MathLib.FFT
 		#endregion
 
 		// Normalize the pitch class profile
-		public void NormalizePCP()
-		{
+		void NormalizePCP() {
 			double pcpMax = MathUtils.Max(pcp[frameNumber]);
 			for ( int k = 0; k < 12; k++ ) {
 				pcp[frameNumber][k] /= pcpMax;
 			}
 		}
 
-		public void ZeroPadBuffer()
-		{
-			for (int i = 0; i < fftBufferSize; i++) {
-				bufferPadded[i] = 0f;
-			}
-		}
-
-		public void PrecomputeOctaveRegions() {
+		void PrecomputeOctaveRegions() {
 			
 			for (int j = 0; j < 8; j++) {
 				fftBinStart[j] = 0;
@@ -362,9 +393,8 @@ namespace CommonUtils.MathLib.FFT
 		}
 		
 		#region Midi
-		public void OutputMIDINotes()
-		{
-			if (MIDI_ACTIVE) {
+		public void OutputMIDINotes() {
+			if (isMIDIActive) {
 				// send NoteOns
 				foreach (var note in notes[frameNumber]) {
 					if (OCTAVE_ACTIVE[note.octave] && notesOpen[note.pitch] == null) {
@@ -391,8 +421,7 @@ namespace CommonUtils.MathLib.FFT
 			}
 		}
 
-		public void CloseMIDINotes()
-		{
+		public void CloseMIDINotes() {
 			for (int i = 0; i < notesOpen.Length; i++) {
 				if (notesOpen[i] != null) {
 					//midiOut.sendNoteOff(notesOpen[i].channel, i, notesOpen[i].velocity);
@@ -476,7 +505,7 @@ namespace CommonUtils.MathLib.FFT
 
 					spectrum[k] = spectrum_fft_abs[k] * BinWeight(weightType, binDistance[k]);
 
-					if (LINEAR_EQ_ACTIVE) {
+					if (isLinearEQActive) {
 						spectrum[k] *= (linearEQIntercept + k * linearEQSlope);
 					}
 
@@ -487,7 +516,7 @@ namespace CommonUtils.MathLib.FFT
 
 			NormalizePCP();
 
-			if (PCP_ACTIVE) {
+			if (isPCPActive) {
 				for (int k = 0; k < fftSize; k++) {
 					if (freq[k] < freqLowRange || freq[k] > freqHighRange) {
 						continue;
@@ -535,7 +564,7 @@ namespace CommonUtils.MathLib.FFT
 					bool isHarmonic = false;
 
 					// filter harmonics from peaks
-					if (HARMONICS_ACTIVE) {
+					if (isHarmonicsActive) {
 						for (int f = 0; f < foundPeak.Count; f++) {
 							
 							//TODO: Cant remember why this is here
@@ -582,13 +611,12 @@ namespace CommonUtils.MathLib.FFT
 		}
 		#endregion
 		
-		#region render methods
-		public enum RenderType {
-			FFTWindow,
-			FFTSpectrum,
-			MidiPeaks
-		}
-		
+		#region Render methods
+		// draw directly in c# ?
+		// https://gist.github.com/Folyd/e59d100900b8720bf17b
+		// https://github.com/tranchis/project-blink/blob/master/src/main/java/midi/Piano.java
+		// and
+		// https://github.com/tranchis/project-blink/blob/master/src/main/java/midi/Key.java
 		public Bitmap Render(RenderType type)
 		{
 			var bitmap = new Bitmap( TOTAL_WIDTH, TOTAL_HEIGHT, PixelFormat.Format32bppArgb );
@@ -658,25 +686,34 @@ namespace CommonUtils.MathLib.FFT
 					}
 
 					// render detected peaks
-					const int keyLength = 15;
-					int scroll = (frameNumber * keyLength > bitmap.Width) ? frameNumber - bitmap.Width/keyLength: 0;
+					const int keyLength = 10;
+					int scroll = (frameNumber * keyLength > bitmap.Width) ? frameNumber - bitmap.Width/keyLength : 0;
 
 					for (int x = frameNumber; x >= scroll; x--) {
 						foreach (var note in notes[x]) {
 							Color noteColor;
+							int greenHue = 0;
 							if (pcp[x][note.pitch % 12] == 1.0f) {
-								noteColor = Color.FromArgb(255, (int) (100 * note.amplitude / 400), 0);
+								greenHue = (int) (100 * note.amplitude / 400);
+								if (greenHue < 0 || greenHue > 255) {
+									greenHue = 0;
+								}
+								noteColor = Color.FromArgb(255, greenHue, 0);
 							} else {
-								noteColor = Color.FromArgb(0, (int) (255 * note.amplitude / 400), 200); // blue
+								greenHue = (int) (255 * note.amplitude / 400);
+								if (greenHue < 0 || greenHue > 255) {
+									greenHue = 255;
+								}
+								noteColor = Color.FromArgb(0, greenHue, 200); // blue
 							}
 							/*
-							fill(red(noteColor) / 4, green(noteColor) / 4, blue(noteColor) / 4);
-							rect(abs(x - frameNumber) * keyLength + LEFT_MARGIN, bitmap.Height - ((note.pitch - keyboardStart) * keyHeight), Math.Abs(x - frameNumber) * keyLength + keyLength + 25, bitmap.Height - ((note.pitch - keyboardStart) * keyHeight + keyHeight));
-							
-							fill(noteColor);
-							rect(abs(x - frameNumber) * keyLength + LEFT_MARGIN, bitmap.Height - ((note.pitch - keyboardStart) * keyHeight) - 1, Math.Abs(x - frameNumber) * keyLength + keyLength + LEFT_MARGIN, bitmap.Height - ((note.pitch - keyboardStart) * keyHeight + keyHeight));
+							// draw twice to get a shadow effect
+							fill(red(noteColor)/4, green(noteColor)/4, blue(noteColor)/4);
+        					rect(abs(x - frameNumber) * keyLength + 24, height - ((note.pitch - keyboardStart) * keyHeight), abs(x - frameNumber) * keyLength + keyLength + 25 , height - ((note.pitch - keyboardStart) * keyHeight + keyHeight));
+          
+        					fill(noteColor);
+        					rect(abs(x - frameNumber) * keyLength + 24, height - ((note.pitch - keyboardStart) * keyHeight) - 1, abs(x - frameNumber) * keyLength + keyLength + 24 , height - ((note.pitch - keyboardStart) * keyHeight + keyHeight));
 							 */
-							//var rect = new Rectangle(Math.Abs(x - frameNumber) * keyLength + LEFT_MARGIN, bitmap.Height - ((note.pitch - keyboardStart) * keyHeight) - 1, Math.Abs(x - frameNumber) * keyLength + keyLength + LEFT_MARGIN, bitmap.Height - ((note.pitch - keyboardStart) * keyHeight + keyHeight));
 							var rect = new Rectangle(Math.Abs(x - frameNumber) * keyLength + LEFT_MARGIN, bitmap.Height - ((note.pitch - keyboardStart) * keyHeight) - 3, keyLength + LEFT_MARGIN, keyHeight);
 							g.FillRectangle(new SolidBrush(noteColor), rect);
 						}
@@ -690,7 +727,7 @@ namespace CommonUtils.MathLib.FFT
 				}
 			}
 		}
-	
+		
 		public void RenderFFTSpectrum(Bitmap bitmap)
 		{
 			using(Graphics g = Graphics.FromImage(bitmap)) {
@@ -716,19 +753,19 @@ namespace CommonUtils.MathLib.FFT
 					}
 
 					for (int i = keyboardStart; i < keyboardEnd; i++) {
-						//fill(red(noteColor)/4, green(noteColor)/4, blue(noteColor)/4);
-						//rect(LEFT_MARGIN, height - ((i - keyboardStart) * keyHeight), 25 + amp[i], height - ((i - keyboardStart) * keyHeight + keyHeight)); // shadow
-
-						//fill(noteColor);
-						//rect(LEFT_MARGIN, height - ((i - keyboardStart) * keyHeight) - 1, LEFT_MARGIN + amp[i], height - ((i - keyboardStart) * keyHeight + keyHeight));
-						//var rect = new Rectangle(LEFT_MARGIN, bitmap.Height - ((i - keyboardStart) * keyHeight) - 1, LEFT_MARGIN + (int) amp[i], bitmap.Height - ((i - keyboardStart) * keyHeight + keyHeight));
+						/*
+						// draw twice to get a shadow effect
+						fill(red(noteColor)/4, green(noteColor)/4, blue(noteColor)/4);
+						rect(24, height - ((i - keyboardStart) * keyHeight), 25 + amp[i], height - ((i - keyboardStart) * keyHeight + keyHeight)); // shadow
+        
+						fill(noteColor);
+						rect(24, height - ((i - keyboardStart) * keyHeight) - 1, 24 + amp[i] , height - ((i - keyboardStart) * keyHeight + keyHeight));
+						 */
 						var rect = new Rectangle(LEFT_MARGIN, bitmap.Height - ((i - keyboardStart) * keyHeight) - 2, LEFT_MARGIN + (int) amp[i], keyHeight - 1);
 						g.FillRectangle(new SolidBrush(noteColor), rect);
 					}
 				}
 				
-				//labelThreshold.setPosition(PEAK_THRESHOLD + 26, 60);
-				//line(PEAK_THRESHOLD + LEFT_MARGIN, 0, PEAK_THRESHOLD + LEFT_MARGIN, height);
 				g.DrawLine(Pens.Black, PEAK_THRESHOLD + LEFT_MARGIN, 0, PEAK_THRESHOLD + LEFT_MARGIN, bitmap.Height);
 			}
 		}
