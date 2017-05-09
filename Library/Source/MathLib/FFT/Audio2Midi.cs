@@ -631,14 +631,17 @@ namespace CommonUtils.MathLib.FFT
 			var bitmap = new Bitmap( TOTAL_WIDTH, TOTAL_HEIGHT, PixelFormat.Format32bppArgb );
 			
 			using(Graphics g = Graphics.FromImage(bitmap)) {
-				g.DrawImage(bg, 0, 0); // Render the background image
+				//g.DrawImage(bg, 0, 0); // Render the background image
+				RenderPianoRoll(bitmap, 30, TOTAL_HEIGHT);
 
+				/*
 				// Render octave toggle buttons for active octaves
 				for (int i = 0; i < 8; i++) {
 					if (OCTAVE_ACTIVE[i]) {
 						g.DrawImage(octaveBtn, 0, bitmap.Height - (i * 36) - 36);
 					}
 				}
+				*/
 
 				if (type == RenderType.FFTWindow) {
 					RenderFFTWindow(bitmap);
@@ -673,16 +676,17 @@ namespace CommonUtils.MathLib.FFT
 		float ComputeSpecificDividerY(int i) {
 			return i * whiteKeyHeight;
 		}
-				
+		
 		public void RenderPianoRoll(Bitmap bitmap, int width, int height) {
 			
 			int whiteKeyCount = TYPE_PIANO;
 			
 			whiteKeyWidth = width;
-			whiteKeyHeight = (float) (height - 1) / whiteKeyCount;
+			whiteKeyHeight = MathUtils.RoundAwayFromZero((float) (height) / whiteKeyCount);
+			//whiteKeyHeight = MathUtils.RoundAwayFromZero(height / (keyboardEnd - keyboardStart));
 
 			float blackWhiteHeightRatio = 13f / 20f;
-			blackKeyHeight = whiteKeyHeight * blackWhiteHeightRatio;
+			blackKeyHeight = MathUtils.RoundAwayFromZero(whiteKeyHeight * blackWhiteHeightRatio);
 			
 			float blackWhiteWidthRatio = 90f / 150f;
 			blackKeyWidth = whiteKeyWidth * blackWhiteWidthRatio;
@@ -709,7 +713,7 @@ namespace CommonUtils.MathLib.FFT
 					// draw octave label
 					string octaveLabel = "C" + i;
 					SizeF octaveLabelSize = g.MeasureString(octaveLabel, textFont);
-					g.DrawString(octaveLabel, textFont, Brushes.Black, whiteKeyWidth-octaveLabelSize.Width, (baseY + startY) - whiteKeyHeight - ( (whiteKeyHeight - octaveLabelSize.Height) / 2) );
+					g.DrawString(octaveLabel, textFont, Brushes.Black, whiteKeyWidth-octaveLabelSize.Width, (baseY + startY) - octaveLabelSize.Height);
 				}
 			}
 		}
@@ -774,7 +778,7 @@ namespace CommonUtils.MathLib.FFT
 				var rect = new RectangleF(x, y, width, height);
 				//bitmap.drawRoundRect(rect, ROUND_X, ROUND_Y, mPaint);
 				g.FillRectangle(Brushes.Black, rect);
-				//eg.FillRoundRectangle(Brushes.Black, rect.X, rect.Y, rect.Width, rect.Height, ROUND_RADIUS);								
+				//eg.FillRoundRectangle(Brushes.Black, rect.X, rect.Y, rect.Width, rect.Height, ROUND_RADIUS);
 			}
 		}
 		#endregion
@@ -796,7 +800,7 @@ namespace CommonUtils.MathLib.FFT
 		public void RenderMidiPeaks(Bitmap bitmap) {
 			
 			using(Graphics g = Graphics.FromImage(bitmap)) {
-				int keyHeight = bitmap.Height / (keyboardEnd - keyboardStart);
+				int keyHeight = MathUtils.RoundAwayFromZero(bitmap.Height / (keyboardEnd - keyboardStart));
 
 				if (IsLoaded()) {
 					// render key presses for detected peaks
@@ -837,15 +841,16 @@ namespace CommonUtils.MathLib.FFT
         					fill(noteColor);
         					rect(abs(x - frameNumber) * keyLength + 24, height - ((note.pitch - keyboardStart) * keyHeight) - 1, abs(x - frameNumber) * keyLength + keyLength + 24 , height - ((note.pitch - keyboardStart) * keyHeight + keyHeight));
 							 */
-							var rect = new Rectangle(Math.Abs(x - frameNumber) * keyLength + LEFT_MARGIN, bitmap.Height - ((note.pitch - keyboardStart) * keyHeight) - 3, keyLength + LEFT_MARGIN, keyHeight);
+							var rect = new Rectangle(Math.Abs(x - frameNumber) * keyLength + LEFT_MARGIN, bitmap.Height - ((note.pitch - keyboardStart) * keyHeight), keyLength + LEFT_MARGIN, keyHeight);
 							g.FillRectangle(new SolidBrush(noteColor), rect);
 						}
 					}
 
 					// output semitone text labels
 					foreach (var note in notes[frameNumber]) {
-						Color gray = Color.FromArgb(140, 140, 140);
-						g.DrawString(note.label(), textFont, new SolidBrush(gray), LEFT_MARGIN, bitmap.Height - ((note.pitch - keyboardStart) * keyHeight + keyHeight + 6));
+						//Color gray = Color.FromArgb(140, 140, 140);
+						//g.DrawString(note.label(), textFont, new SolidBrush(gray), LEFT_MARGIN, bitmap.Height - ((note.pitch - keyboardStart) * keyHeight + keyHeight + 6));
+						g.DrawString(note.label(), textFont, Brushes.Black, LEFT_MARGIN + 5, bitmap.Height - ((note.pitch - keyboardStart) * keyHeight + keyHeight + 3));
 					}
 				}
 			}
