@@ -4,6 +4,8 @@ using System.Linq;
 using CommonUtils;
 using CommonUtils.MathLib.FFT;
 using CommonUtils.Audio;
+using System.Drawing;
+using System.Drawing.Imaging;
 
 namespace CommonUtils.Tests
 {
@@ -20,7 +22,11 @@ namespace CommonUtils.Tests
 		[Test]
 		public void TestPianoRoll() {
 			var audio2Midi = new Audio2Midi();
-			audio2Midi.GetTestPianoRoll().Save("piano_roll.png");
+
+			var bitmap = new Bitmap(600, 800, PixelFormat.Format32bppArgb );
+			audio2Midi.RenderPianoRoll(bitmap, 50, 800);
+			//bitmap.RotateFlip(RotateFlipType.Rotate90FlipXY);
+			bitmap.Save("piano_roll.png");
 		}
 		
 		[Test]
