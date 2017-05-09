@@ -18,6 +18,12 @@ namespace CommonUtils.Tests
 		int frames; // total horizontal audio frames
 		
 		[Test]
+		public void TestPianoRoll() {
+			var audio2Midi = new Audio2Midi();
+			audio2Midi.GetTestPianoRoll().Save("piano_roll.png");
+		}
+		
+		[Test]
 		public void TestMethod()
 		{
 			const string inputFilepath = @"Tests\Passacaglia, Handel-Sine-86bmp.wav";

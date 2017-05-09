@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.ComponentModel;
 using System.Drawing;
+using System.Drawing.Extended; // Rounded Rectangles
 using System.Drawing.Imaging;
+using System.Drawing.Drawing2D;
 
 using CommonUtils;
 using CommonUtils.Audio;
@@ -656,6 +658,125 @@ namespace CommonUtils.MathLib.FFT
 			return bitmap;
 		}
 
+		
+		#region Draw Piano Roll
+		const int TYPE_PIANO = 56; // 56 white keys = 8 octaves
+
+		int ROUND_RADIUS = 5;
+		float mWhiteKeyWidth, mWhiteKeyHeight, mBlackKeyWidth, mBlackKeyHeight;
+
+		float ComputeSpecificDividerX(int i) {
+			return i * mWhiteKeyWidth;
+		}
+		
+		public Bitmap GetTestPianoRoll() {
+			var bitmap = new Bitmap( 1000, 50, PixelFormat.Format32bppArgb );
+			RenderPianoRoll(bitmap);
+			return bitmap;
+		}
+		
+		public void RenderPianoRoll(Bitmap bitmap) {
+			
+			int whiteKeyCount = TYPE_PIANO;
+			
+			mWhiteKeyWidth = (float) (bitmap.Width - 1) / whiteKeyCount;
+			float blackWhiteWidthRatio = 15f / 20f;
+			mBlackKeyWidth = mWhiteKeyWidth * blackWhiteWidthRatio;
+			mWhiteKeyHeight = bitmap.Height;
+			
+			float blackWhiteHeightRatio = 90f / 150f;
+			mBlackKeyHeight = mWhiteKeyHeight * blackWhiteHeightRatio;
+			
+			DrawForPianoKeyboard(bitmap);
+		}
+		
+		void DrawForPianoKeyboard(Bitmap bitmap) {
+			
+			using(Graphics g = Graphics.FromImage(bitmap)) {
+				g.Clear(Color.White);
+			}
+			
+			//int whiteCount = DrawKeys(bitmap, 0, 3);
+			//float baseValue = ComputeSpecificDividerX(whiteCount);
+			int whiteCount = 0; // start with C key
+			float baseValue = 0;
+			
+			// 8 octaves
+			for (int i = 0; i < 8; i++) {
+				float start = i * 7 * mWhiteKeyWidth;
+				whiteCount = whiteCount + DrawOctave(bitmap, baseValue + start);
+			}
+
+			//baseValue = ComputeSpecificDividerX(whiteCount);
+			//DrawKeys(bitmap, baseValue, 1);
+		}
+		
+		int DrawOctave(Bitmap bitmap, float baseValue) {
+			return DrawKeys(bitmap, baseValue, 12);
+		}
+
+		int DrawKeys(Bitmap bitmap, float baseValue, int count) {
+			if (count <= 0) {
+				return 0;
+			}
+
+			if (count > 12) {
+				count = 12;
+			}
+
+			int whiteCount = 0;
+			float left, top, right, bottom;
+			for (int i = 0; i < count; i++) {
+				if (i == 1 || i == 3 || i == 6 || i == 8 || i == 10) {
+					// Black key
+					float axis = ComputeSpecificDividerX(whiteCount);
+					left = axis - mBlackKeyWidth / 2;
+					right = axis + mBlackKeyWidth / 2;
+					top = 0;
+					bottom = mBlackKeyHeight;
+
+					DrawBlackKey(bitmap, baseValue + left, top, baseValue + right, bottom);
+				} else {
+					// White key
+					left = ComputeSpecificDividerX(whiteCount);
+					right = ComputeSpecificDividerX(whiteCount + 1);
+					top = -1; // don't draw border on either end of the key
+					bottom = mWhiteKeyHeight;
+
+					DrawWhiteKey(bitmap, baseValue + left, top, baseValue + right, bottom);
+					whiteCount++;
+				}
+			}
+			return whiteCount;
+		}
+
+		void DrawWhiteKey(Bitmap bitmap, float left, float top, float right, float bottom) {
+			using(Graphics g = Graphics.FromImage(bitmap)) {
+				var eg = new ExtendedGraphics(g);
+				//Color darkGray = Color.FromArgb(52,52,52);
+				//var pen = new Pen(darkGray, 1);
+				var pen = new Pen(Color.Black, 1);
+				//pen.Alignment = PenAlignment.Inset; // draw border on inside
+
+				var rect = new RectangleF(left, top, right-left, bottom-top);
+				//bitmap.drawRoundRect(rect, ROUND_X, ROUND_Y, mPaint);
+				g.DrawRectangle(pen, rect.X, rect.Y, rect.Width, rect.Height);
+				//eg.DrawRoundRectangle(pen, rect.X, rect.Y, rect.Width, rect.Height, ROUND_RADIUS);
+			}
+		}
+
+		void DrawBlackKey(Bitmap bitmap, float left, float top, float right, float bottom) {
+			using(Graphics g = Graphics.FromImage(bitmap)) {
+				var eg = new ExtendedGraphics(g);
+				var rect = new RectangleF(left, top, right-left, bottom-top);
+				//bitmap.drawRoundRect(rect, ROUND_X, ROUND_Y, mPaint);
+				g.FillRectangle(Brushes.Black, rect);
+				//eg.FillRoundRectangle(Brushes.Black, rect.X, rect.Y, rect.Width, rect.Height, ROUND_RADIUS);
+			}
+		}
+		#endregion
+		
+		
 		public void RenderFFTWindow(Bitmap bitmap) {
 			const int windowX = 50;
 			const int windowY = 160;
