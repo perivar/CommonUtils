@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.ComponentModel;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Drawing.Extended; // Rounded Rectangles
 using System.Drawing.Imaging;
 using System.Diagnostics; // Debug
@@ -62,7 +63,8 @@ namespace CommonUtils.MathLib.FFT
 
 		// MIDI notes span from 0 - 128, octaves -1 -> 9. Specify start and end for piano
 		const int keyboardStart = 12; // 12 is octave C0
-		const int keyboardEnd = 108;
+		const int keyboardEnd = 108; 
+		// 108 - 12 = 96 keys in total
 		
 		// fftBins span 8 octaves
 		int[] fftBinStart = new int[8];
@@ -214,9 +216,9 @@ namespace CommonUtils.MathLib.FFT
 		// constructor
 		public Audio2Midi() {
 
-			TOTAL_WIDTH = 510;
-			TOTAL_HEIGHT = 288;
-			LEFT_MARGIN = 24;
+			TOTAL_WIDTH = 1536;
+			TOTAL_HEIGHT = 768; // 96 keys
+			LEFT_MARGIN = 41;
 			
 			// UI Images
 			bg = Image.FromFile(@"data\background.png");
@@ -632,7 +634,7 @@ namespace CommonUtils.MathLib.FFT
 			
 			using(Graphics g = Graphics.FromImage(bitmap)) {
 				//g.DrawImage(bg, 0, 0); // Render the background image
-				RenderPianoRoll(bitmap, 30, TOTAL_HEIGHT);
+				RenderPianoRoll(bitmap, 40, TOTAL_HEIGHT);
 
 				/*
 				// Render octave toggle buttons for active octaves
@@ -683,7 +685,6 @@ namespace CommonUtils.MathLib.FFT
 			
 			whiteKeyWidth = width;
 			whiteKeyHeight = MathUtils.RoundAwayFromZero((float) (height) / whiteKeyCount);
-			//whiteKeyHeight = MathUtils.RoundAwayFromZero(height / (keyboardEnd - keyboardStart));
 
 			float blackWhiteHeightRatio = 13f / 20f;
 			blackKeyHeight = MathUtils.RoundAwayFromZero(whiteKeyHeight * blackWhiteHeightRatio);
@@ -747,7 +748,7 @@ namespace CommonUtils.MathLib.FFT
 					// White key
 					width = whiteKeyWidth;
 					height = whiteKeyHeight;
-					x = -1; // don't draw border on left side of the white key
+					x = 0; // don't draw border on left side of the white key, -1
 					y = baseY - ComputeSpecificDividerY(whiteCount + 1) - 1;
 
 					DrawWhiteKey(bitmap, x, y, width, height);
@@ -763,7 +764,7 @@ namespace CommonUtils.MathLib.FFT
 				//Color darkGray = Color.FromArgb(52,52,52);
 				//var pen = new Pen(darkGray, 1);
 				var pen = new Pen(Color.Black, 1);
-				//pen.Alignment = PenAlignment.Inset; // draw border on inside
+				pen.Alignment = PenAlignment.Inset; // draw border on inside
 
 				var rect = new RectangleF(x, y, width, height);
 				//bitmap.drawRoundRect(rect, ROUND_X, ROUND_Y, mPaint);
@@ -800,7 +801,7 @@ namespace CommonUtils.MathLib.FFT
 		public void RenderMidiPeaks(Bitmap bitmap) {
 			
 			using(Graphics g = Graphics.FromImage(bitmap)) {
-				int keyHeight = MathUtils.RoundAwayFromZero(bitmap.Height / (keyboardEnd - keyboardStart));
+				int keyHeight = bitmap.Height / (keyboardEnd - keyboardStart);
 
 				if (IsLoaded()) {
 					// render key presses for detected peaks
@@ -850,7 +851,7 @@ namespace CommonUtils.MathLib.FFT
 					foreach (var note in notes[frameNumber]) {
 						//Color gray = Color.FromArgb(140, 140, 140);
 						//g.DrawString(note.label(), textFont, new SolidBrush(gray), LEFT_MARGIN, bitmap.Height - ((note.pitch - keyboardStart) * keyHeight + keyHeight + 6));
-						g.DrawString(note.label(), textFont, Brushes.Black, LEFT_MARGIN + 5, bitmap.Height - ((note.pitch - keyboardStart) * keyHeight + keyHeight + 3));
+						g.DrawString(note.label(), textFont, Brushes.Black, LEFT_MARGIN, bitmap.Height - ((note.pitch - keyboardStart) * keyHeight + keyHeight + 3));
 					}
 				}
 			}
@@ -880,7 +881,7 @@ namespace CommonUtils.MathLib.FFT
 						}
 					}
 
-					for (int i = keyboardStart; i < keyboardEnd; i++) {
+					for (int i = keyboardStart; i < keyboardEnd + 1; i++) {
 						/*
 						// draw twice to get a shadow effect
 						fill(red(noteColor)/4, green(noteColor)/4, blue(noteColor)/4);
@@ -889,7 +890,7 @@ namespace CommonUtils.MathLib.FFT
 						fill(noteColor);
 						rect(24, height - ((i - keyboardStart) * keyHeight) - 1, 24 + amp[i] , height - ((i - keyboardStart) * keyHeight + keyHeight));
 						 */
-						var rect = new Rectangle(LEFT_MARGIN, bitmap.Height - ((i - keyboardStart) * keyHeight) - 2, LEFT_MARGIN + (int) amp[i], keyHeight - 1);
+						var rect = new Rectangle(LEFT_MARGIN, bitmap.Height - ((i - keyboardStart) * keyHeight) + 1, LEFT_MARGIN + (int) amp[i], keyHeight - 2);
 						g.FillRectangle(new SolidBrush(noteColor), rect);
 					}
 				}
