@@ -6,6 +6,7 @@ using System.Drawing;
 using System.Drawing.Extended; // Rounded Rectangles
 using System.Drawing.Imaging;
 using System.Drawing.Drawing2D;
+using System.Diagnostics; // Debug
 
 using CommonUtils;
 using CommonUtils.Audio;
@@ -305,8 +306,11 @@ namespace CommonUtils.MathLib.FFT
 						break;
 					}
 				}
+				
+				#if DEBUG
+				Debug.WriteLine("PrecomputeOctaveRegion: " + j + ". Start: " + fftBinStart[j] + " End: " + fftBinEnd[j] + " (" + fftSize + " total)");
+				#endif
 			}
-			Console.WriteLine("PrecomputeOctaveRegions. Start: " + fftBinStart[0] + " End: " + fftBinEnd[7] + " (" + fftSize + " total)");
 		}
 		
 		public int OpenAudioFile(string audioFilePath) {
@@ -323,7 +327,10 @@ namespace CommonUtils.MathLib.FFT
 
 			audioSystem.DspPlugin = this;
 			audioSystem.OpenFileUsingFileStream(audioFilePath);
-			Console.WriteLine("Audio source: {0}", audioFilePath);
+			
+			#if DEBUG
+			Debug.WriteLine("Audio source: {0}", audioFilePath);
+			#endif
 			
 			// read values from the audio system
 			double audioLength = audioSystem.ChannelLength * 1000;
@@ -362,16 +369,17 @@ namespace CommonUtils.MathLib.FFT
 			this.audioLength = audioLength;
 			this.frames = frames;
 			
-			Console.WriteLine();
-			Console.WriteLine("Duration: {0:N2} seconds ({1} frames)", audioLength / 1000, frames);
-			Console.WriteLine("Time size: {0} Bytes, Samplerate: {1:N2} kHz", bufferSize, sampleRate / 1000f);
-			Console.WriteLine("FFT bandwidth: {0:N2} Hz", (2.0f / fftBufferSize) * ((double)sampleRate / 2.0f));
+			#if DEBUG
+			Debug.WriteLine("Duration: {0:N2} seconds ({1} frames)", audioLength / 1000, frames);
+			Debug.WriteLine("Time size: {0} Bytes, Samplerate: {1:N2} kHz", bufferSize, sampleRate / 1000f);
+			Debug.WriteLine("FFT bandwidth: {0:N2} Hz", (2.0f / fftBufferSize) * ((double)sampleRate / 2.0f));
 
 			if (audioChannels == 2) {
-				Console.WriteLine("Channels: 2 (STEREO)\n");
+				Debug.WriteLine("Channels: 2 (STEREO)\n");
 			} else {
-				Console.WriteLine("Channels: 1 (MONO)\n");
+				Debug.WriteLine("Channels: 1 (MONO)\n");
 			}
+			#endif
 			
 			// Setup Arrays
 			notes = new List<Note>[frames];
@@ -670,8 +678,9 @@ namespace CommonUtils.MathLib.FFT
 		}
 		
 		public Bitmap GetTestPianoRoll() {
-			var bitmap = new Bitmap( 1000, 50, PixelFormat.Format32bppArgb );
+			var bitmap = new Bitmap(800, 40, PixelFormat.Format32bppArgb );
 			RenderPianoRoll(bitmap);
+			bitmap.RotateFlip(RotateFlipType.Rotate90FlipXY);
 			return bitmap;
 		}
 		
@@ -697,25 +706,32 @@ namespace CommonUtils.MathLib.FFT
 			}
 			
 			//int whiteCount = DrawKeys(bitmap, 0, 3);
-			//float baseValue = ComputeSpecificDividerX(whiteCount);
+			//float basePos = ComputeSpecificDividerX(whiteCount);
 			int whiteCount = 0; // start with C key
-			float baseValue = 0;
+			float basePos = 0;
 			
 			// 8 octaves
 			for (int i = 0; i < 8; i++) {
 				float start = i * 7 * mWhiteKeyWidth;
-				whiteCount = whiteCount + DrawOctave(bitmap, baseValue + start);
+				whiteCount = whiteCount + DrawOctave(bitmap, basePos + start);
+				
+				using(Graphics g = Graphics.FromImage(bitmap)) {
+					// draw octave number
+					string octaveLabel = "" + (i+1);
+					SizeF octaveLabelSize = g.MeasureString(octaveLabel, textFont);
+					g.DrawString(octaveLabel, textFont, Brushes.Black, basePos + start, mWhiteKeyHeight-octaveLabelSize.Height);
+				}
 			}
 
-			//baseValue = ComputeSpecificDividerX(whiteCount);
-			//DrawKeys(bitmap, baseValue, 1);
+			//basePos = ComputeSpecificDividerX(whiteCount);
+			//DrawKeys(bitmap, basePos, 1);
 		}
 		
-		int DrawOctave(Bitmap bitmap, float baseValue) {
-			return DrawKeys(bitmap, baseValue, 12);
+		int DrawOctave(Bitmap bitmap, float basePos) {
+			return DrawKeys(bitmap, basePos, 12);
 		}
 
-		int DrawKeys(Bitmap bitmap, float baseValue, int count) {
+		int DrawKeys(Bitmap bitmap, float basePos, int count) {
 			if (count <= 0) {
 				return 0;
 			}
@@ -735,7 +751,7 @@ namespace CommonUtils.MathLib.FFT
 					top = 0;
 					bottom = mBlackKeyHeight;
 
-					DrawBlackKey(bitmap, baseValue + left, top, baseValue + right, bottom);
+					DrawBlackKey(bitmap, basePos + left, top, basePos + right, bottom);
 				} else {
 					// White key
 					left = ComputeSpecificDividerX(whiteCount);
@@ -743,7 +759,7 @@ namespace CommonUtils.MathLib.FFT
 					top = -1; // don't draw border on either end of the key
 					bottom = mWhiteKeyHeight;
 
-					DrawWhiteKey(bitmap, baseValue + left, top, baseValue + right, bottom);
+					DrawWhiteKey(bitmap, basePos + left, top, basePos + right, bottom);
 					whiteCount++;
 				}
 			}
@@ -817,7 +833,7 @@ namespace CommonUtils.MathLib.FFT
 							if (pcp[x][note.pitch % 12] == 1.0f) {
 								greenHue = (int) (100 * note.amplitude / 400);
 								if (greenHue < 0 || greenHue > 255) {
-									greenHue = 0;
+									greenHue = 100;
 								}
 								noteColor = Color.FromArgb(255, greenHue, 0);
 							} else {
