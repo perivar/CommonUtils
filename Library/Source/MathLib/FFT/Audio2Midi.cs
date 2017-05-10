@@ -218,13 +218,15 @@ namespace CommonUtils.MathLib.FFT
 
 			TOTAL_WIDTH = 1536;
 			TOTAL_HEIGHT = 785; // 96 keys, 56 white keys
-			LEFT_MARGIN = 41;
+			LEFT_MARGIN = 60;
 			
 			// UI Images
+			/*
 			bg = Image.FromFile(@"data\background.png");
 			whiteKey = Image.FromFile(@"data\whitekey.png");
 			blackKey = Image.FromFile(@"data\blackkey.png");
 			octaveBtn = Image.FromFile(@"data\octavebutton.png");
+			 */
 			
 			window = new FFTWindow(FFTWindowType.RECTANGULAR, bufferSize);
 		}
@@ -672,42 +674,51 @@ namespace CommonUtils.MathLib.FFT
 
 		#region Draw Piano Roll
 		const int TYPE_PIANO = 56; // 56 white keys = 8 octaves
-		const int ROUND_RADIUS = 5;
-		float whiteKeyHeight, whiteKeyWidth, blackKeyHeight, blackKeyWidth;
+		int whiteKeyHeight, whiteKeyWidth, blackKeyHeight, blackKeyWidth;
+		Dictionary<int, PianoKey> keys = new Dictionary<int, PianoKey>();
 
-		float ComputeSpecificDividerY(int i) {
-			return i * whiteKeyHeight;
-		}
-		
 		public void RenderPianoRoll(Bitmap bitmap, int width, int height) {
 			
-			var keys = new Dictionary<int, PianoKey>();
+			keys.Clear();
 			var whiteKeys = new List<PianoKey>();
 			var blackKeys = new List<PianoKey>();
 			
-			int keyWidth = width;
-			int keyHeight = 14; // 14 x 56 = 784 pixles
+			int whiteKeyCount = TYPE_PIANO;
+			
+			whiteKeyWidth = width;
+			whiteKeyHeight = MathUtils.RoundAwayFromZero((float) (height) / whiteKeyCount);
+			//whiteKeyHeight = 14; // 14 x 56 = 784 pixles
+			
+			//float blackWhiteHeightRatio = 13f / 20f;
+			//blackKeyHeight = MathUtils.RoundAwayFromZero(whiteKeyHeight * blackWhiteHeightRatio);
+			blackKeyHeight = whiteKeyHeight / 2;
+			
+			//float blackWhiteWidthRatio = 90f / 150f;
+			//blackKeyWidth = MathUtils.RoundAwayFromZero(whiteKeyWidth * blackWhiteWidthRatio);
+			blackKeyWidth = whiteKeyWidth / 2;
+			
 			int transpose = 12;
 			int[] whiteIDs = { 0, 2, 4, 5, 7, 9, 11 };
 			
 			// 8 octaves x 7 white keys per octave = 56 white keys
-			for (int i = 0, y = height-keyHeight; i < 8; i++) {
+			for (int i = 0, y = height-whiteKeyHeight; i < 8; i++) {
 				// 7 white keys per octave
-				for (int j = 0; j < 7; j++, y -= keyHeight) {
+				for (int j = 0; j < 7; j++, y -= whiteKeyHeight) {
 					int keyNum = i * 12 + whiteIDs[j] + transpose;
-					whiteKeys.Add(new PianoKey(0, y, keyWidth, keyHeight, keyNum, false));
+					whiteKeys.Add(new PianoKey(0, y, whiteKeyWidth, whiteKeyHeight, keyNum, false));
 				}
 			}
+			
 			// 8 octaves, add black keys
 			int blackKeyShiftY = 3;
-			for (int i = 0, y = height; i < 8; i++, y -= keyHeight) {
+			for (int i = 0, y = height; i < 8; i++, y -= whiteKeyHeight) {
 				int keyNum = i * 12 + transpose;
-				blackKeys.Add(new PianoKey(0, (y -= keyHeight)-blackKeyShiftY, keyWidth/2, keyHeight/2, keyNum+1, true));
-				blackKeys.Add(new PianoKey(0, (y -= keyHeight)-blackKeyShiftY, keyWidth/2, keyHeight/2, keyNum+3, true));
-				y -= keyHeight;
-				blackKeys.Add(new PianoKey(0, (y -= keyHeight)-blackKeyShiftY, keyWidth/2, keyHeight/2, keyNum+6, true));
-				blackKeys.Add(new PianoKey(0, (y -= keyHeight)-blackKeyShiftY, keyWidth/2, keyHeight/2, keyNum+8, true));
-				blackKeys.Add(new PianoKey(0, (y -= keyHeight)-blackKeyShiftY, keyWidth/2, keyHeight/2, keyNum+10, true));
+				blackKeys.Add(new PianoKey(0, (y -= whiteKeyHeight)-blackKeyShiftY, blackKeyWidth, blackKeyHeight, keyNum+1, true));
+				blackKeys.Add(new PianoKey(0, (y -= whiteKeyHeight)-blackKeyShiftY, blackKeyWidth, blackKeyHeight, keyNum+3, true));
+				y -= whiteKeyHeight;
+				blackKeys.Add(new PianoKey(0, (y -= whiteKeyHeight)-blackKeyShiftY, blackKeyWidth, blackKeyHeight, keyNum+6, true));
+				blackKeys.Add(new PianoKey(0, (y -= whiteKeyHeight)-blackKeyShiftY, blackKeyWidth, blackKeyHeight, keyNum+8, true));
+				blackKeys.Add(new PianoKey(0, (y -= whiteKeyHeight)-blackKeyShiftY, blackKeyWidth, blackKeyHeight, keyNum+10, true));
 			}
 			
 			// add keys to dictionary for later lookup by midi note
@@ -728,120 +739,16 @@ namespace CommonUtils.MathLib.FFT
 				// to ensure the black keys overlay the white rectangles
 				foreach (var key in whiteKeys) {
 					g.DrawRectangle(Pens.DarkGray, key.Rectangle);
-					g.DrawString(""+key.MidiNote, textFont, Brushes.Black, key.X+18, key.Y);
+					g.DrawString(""+key.MidiNote, textFont, Brushes.Black, key.X+19, key.Y);
 
-					//if (key.Octave % 12 == 0) {
-						g.DrawString(""+key.Octave, textFont, Brushes.Black, key.X+41, key.Y);
-					//}
+					if (key.MidiNote % 12 == 0) {
+						g.DrawString("C"+key.Octave, textFont, Brushes.Black, key.X+42, key.Y);
+					}
 				}
 
 				foreach (var key in blackKeys) {
 					g.FillRectangle(Brushes.Black, key.Rectangle);
 				}
-			}
-		}
-		
-		public void RenderPianoRollOld(Bitmap bitmap, int width, int height) {
-			
-			int whiteKeyCount = TYPE_PIANO;
-			
-			whiteKeyWidth = width;
-			whiteKeyHeight = MathUtils.RoundAwayFromZero((float) (height) / whiteKeyCount);
-
-			float blackWhiteHeightRatio = 13f / 20f;
-			blackKeyHeight = MathUtils.RoundAwayFromZero(whiteKeyHeight * blackWhiteHeightRatio);
-			
-			float blackWhiteWidthRatio = 90f / 150f;
-			blackKeyWidth = whiteKeyWidth * blackWhiteWidthRatio;
-			
-			DrawForPianoKeyboard(bitmap, width, height);
-		}
-		
-		void DrawForPianoKeyboard(Bitmap bitmap, int width, int height) {
-			
-			using(Graphics g = Graphics.FromImage(bitmap)) {
-				g.Clear(Color.White);
-			}
-			
-			int whiteCount = 0; // start with C key
-			float baseY = 0;
-			
-			// 8 octaves
-			for (int i = 0; i < 8; i++) {
-				// 7 white keys
-				float startY = height - (i * 7 * whiteKeyHeight);
-				whiteCount = whiteCount + DrawOctave(bitmap, baseY + startY);
-				
-				using(Graphics g = Graphics.FromImage(bitmap)) {
-					// draw octave label
-					string octaveLabel = "C" + i;
-					SizeF octaveLabelSize = g.MeasureString(octaveLabel, textFont);
-					g.DrawString(octaveLabel, textFont, Brushes.Black, whiteKeyWidth-octaveLabelSize.Width, (baseY + startY) - octaveLabelSize.Height);
-				}
-			}
-		}
-		
-		int DrawOctave(Bitmap bitmap, float baseY) {
-			return DrawKeys(bitmap, baseY, 12);
-		}
-
-		int DrawKeys(Bitmap bitmap, float baseY, int count) {
-			if (count <= 0) {
-				return 0;
-			}
-
-			if (count > 12) {
-				count = 12;
-			}
-
-			int whiteCount = 0;
-			float x, y, width, height;
-			for (int i = 0; i < count; i++) {
-				if (i == 1 || i == 3 || i == 6 || i == 8 || i == 10) {
-					// Black key
-					width = blackKeyWidth;
-					height = blackKeyHeight;
-					float axis = ComputeSpecificDividerY(whiteCount);
-					x = 0;
-					y = baseY - (axis + blackKeyHeight / 2) - 1;
-
-					DrawBlackKey(bitmap, x, y, width, height);
-				} else {
-					// White key
-					width = whiteKeyWidth;
-					height = whiteKeyHeight;
-					x = 0; // don't draw border on left side of the white key, -1
-					y = baseY - ComputeSpecificDividerY(whiteCount + 1) - 1;
-
-					DrawWhiteKey(bitmap, x, y, width, height);
-					whiteCount++;
-				}
-			}
-			return whiteCount;
-		}
-
-		void DrawWhiteKey(Bitmap bitmap, float x, float y, float width, float height) {
-			using(Graphics g = Graphics.FromImage(bitmap)) {
-				var eg = new ExtendedGraphics(g);
-				//Color darkGray = Color.FromArgb(52,52,52);
-				//var pen = new Pen(darkGray, 1);
-				var pen = new Pen(Color.Black, 1);
-				pen.Alignment = PenAlignment.Inset; // draw border on inside
-
-				var rect = new RectangleF(x, y, width, height);
-				//bitmap.drawRoundRect(rect, ROUND_X, ROUND_Y, mPaint);
-				g.DrawRectangle(pen, rect.X, rect.Y, rect.Width, rect.Height);
-				//eg.DrawRoundRectangle(pen, rect.X, rect.Y, rect.Width, rect.Height, ROUND_RADIUS);
-			}
-		}
-
-		void DrawBlackKey(Bitmap bitmap, float x, float y, float width, float height) {
-			using(Graphics g = Graphics.FromImage(bitmap)) {
-				var eg = new ExtendedGraphics(g);
-				var rect = new RectangleF(x, y, width, height);
-				//bitmap.drawRoundRect(rect, ROUND_X, ROUND_Y, mPaint);
-				g.FillRectangle(Brushes.Black, rect);
-				//eg.FillRoundRectangle(Brushes.Black, rect.X, rect.Y, rect.Width, rect.Height, ROUND_RADIUS);
 			}
 		}
 		#endregion
@@ -866,19 +773,11 @@ namespace CommonUtils.MathLib.FFT
 				int keyHeight = bitmap.Height / (keyboardEnd - keyboardStart);
 
 				if (IsLoaded()) {
-					// render key presses for detected peaks
-					foreach (var note in notes[frameNumber]) {
-						if (note.isWhiteKey()) {
-							g.DrawImage(whiteKey, 10, bitmap.Height - ((note.pitch - keyboardStart) * keyHeight + keyHeight));
-						} else if (note.isBlackKey()) {
-							g.DrawImage(blackKey, 10, bitmap.Height - ((note.pitch - keyboardStart) * keyHeight + keyHeight));
-						}
-					}
-
 					// render detected peaks
 					const int keyLength = 10;
 					int scroll = (frameNumber * keyLength > bitmap.Width) ? frameNumber - bitmap.Width/keyLength : 0;
 
+					// render notes
 					for (int x = frameNumber; x >= scroll; x--) {
 						foreach (var note in notes[x]) {
 							Color noteColor;
@@ -896,24 +795,35 @@ namespace CommonUtils.MathLib.FFT
 								}
 								noteColor = Color.FromArgb(0, greenHue, 200); // blue
 							}
-							/*
-							// draw twice to get a shadow effect
-							fill(red(noteColor)/4, green(noteColor)/4, blue(noteColor)/4);
-        					rect(abs(x - frameNumber) * keyLength + 24, height - ((note.pitch - keyboardStart) * keyHeight), abs(x - frameNumber) * keyLength + keyLength + 25 , height - ((note.pitch - keyboardStart) * keyHeight + keyHeight));
-          
-        					fill(noteColor);
-        					rect(abs(x - frameNumber) * keyLength + 24, height - ((note.pitch - keyboardStart) * keyHeight) - 1, abs(x - frameNumber) * keyLength + keyLength + 24 , height - ((note.pitch - keyboardStart) * keyHeight + keyHeight));
-							 */
-							var rect = new Rectangle(Math.Abs(x - frameNumber) * keyLength + LEFT_MARGIN, bitmap.Height - ((note.pitch - keyboardStart) * keyHeight), keyLength + LEFT_MARGIN, keyHeight);
+							
+							var key = keys[note.pitch];
+							Rectangle rect;
+							if (key.IsBlack) {
+								rect = new Rectangle(Math.Abs(x - frameNumber) * keyLength + LEFT_MARGIN, key.Y, keyLength + LEFT_MARGIN, blackKeyHeight-1);
+							} else {
+								rect = new Rectangle(Math.Abs(x - frameNumber) * keyLength + LEFT_MARGIN, key.Y+4, keyLength + LEFT_MARGIN, blackKeyHeight-1);
+							}
 							g.FillRectangle(new SolidBrush(noteColor), rect);
 						}
 					}
 
-					// output semitone text labels
+					// render key presses for detected peaks
 					foreach (var note in notes[frameNumber]) {
-						//Color gray = Color.FromArgb(140, 140, 140);
-						//g.DrawString(note.label(), textFont, new SolidBrush(gray), LEFT_MARGIN, bitmap.Height - ((note.pitch - keyboardStart) * keyHeight + keyHeight + 6));
-						g.DrawString(note.label(), textFont, Brushes.Black, LEFT_MARGIN, bitmap.Height - ((note.pitch - keyboardStart) * keyHeight + keyHeight + 3));
+						// lookup coordinates from the keys dictionary
+						var key = keys[note.pitch];
+						if (note.isWhiteKey()) {
+							//g.DrawImage(whiteKey, 10, bitmap.Height - ((note.pitch - keyboardStart) * keyHeight + keyHeight));
+							g.FillEllipse(Brushes.Blue, key.X+15, key.Y+3, 6, 6);
+
+							// render note labels
+							g.DrawString(note.label(), textFont, Brushes.Black, LEFT_MARGIN, key.Y);
+						} else if (note.isBlackKey()) {
+							//g.DrawImage(blackKey, 10, bitmap.Height - ((note.pitch - keyboardStart) * keyHeight + keyHeight));
+							g.FillEllipse(Brushes.Blue, key.X+5, key.Y, 6, 6);
+
+							// render note labels
+							g.DrawString(note.label(), textFont, Brushes.Black, LEFT_MARGIN, key.Y-4);
+						}
 					}
 				}
 			}
