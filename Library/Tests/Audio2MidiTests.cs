@@ -23,8 +23,8 @@ namespace CommonUtils.Tests
 		public void TestPianoRoll() {
 			var audio2Midi = new Audio2Midi();
 
-			var bitmap = new Bitmap(600, 800, PixelFormat.Format32bppArgb );
-			audio2Midi.RenderPianoRoll(bitmap, 50, 800);
+			var bitmap = new Bitmap(600, 785, PixelFormat.Format32bppArgb );
+			audio2Midi.RenderPianoRoll(bitmap, 40, 784);
 			//bitmap.RotateFlip(RotateFlipType.Rotate90FlipXY);
 			bitmap.Save("piano_roll.png");
 		}

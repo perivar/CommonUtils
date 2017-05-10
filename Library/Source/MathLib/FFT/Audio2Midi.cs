@@ -63,7 +63,7 @@ namespace CommonUtils.MathLib.FFT
 
 		// MIDI notes span from 0 - 128, octaves -1 -> 9. Specify start and end for piano
 		const int keyboardStart = 12; // 12 is octave C0
-		const int keyboardEnd = 108; 
+		const int keyboardEnd = 108;
 		// 108 - 12 = 96 keys in total
 		
 		// fftBins span 8 octaves
@@ -217,7 +217,7 @@ namespace CommonUtils.MathLib.FFT
 		public Audio2Midi() {
 
 			TOTAL_WIDTH = 1536;
-			TOTAL_HEIGHT = 768; // 96 keys
+			TOTAL_HEIGHT = 785; // 96 keys, 56 white keys
 			LEFT_MARGIN = 41;
 			
 			// UI Images
@@ -634,7 +634,7 @@ namespace CommonUtils.MathLib.FFT
 			
 			using(Graphics g = Graphics.FromImage(bitmap)) {
 				//g.DrawImage(bg, 0, 0); // Render the background image
-				RenderPianoRoll(bitmap, 40, TOTAL_HEIGHT);
+				RenderPianoRoll(bitmap, 40, TOTAL_HEIGHT-1);
 
 				/*
 				// Render octave toggle buttons for active octaves
@@ -643,7 +643,7 @@ namespace CommonUtils.MathLib.FFT
 						g.DrawImage(octaveBtn, 0, bitmap.Height - (i * 36) - 36);
 					}
 				}
-				*/
+				 */
 
 				if (type == RenderType.FFTWindow) {
 					RenderFFTWindow(bitmap);
@@ -680,6 +680,68 @@ namespace CommonUtils.MathLib.FFT
 		}
 		
 		public void RenderPianoRoll(Bitmap bitmap, int width, int height) {
+			
+			var keys = new Dictionary<int, PianoKey>();
+			var whiteKeys = new List<PianoKey>();
+			var blackKeys = new List<PianoKey>();
+			
+			int keyWidth = width;
+			int keyHeight = 14; // 14 x 56 = 784 pixles
+			int transpose = 12;
+			int[] whiteIDs = { 0, 2, 4, 5, 7, 9, 11 };
+			
+			// 8 octaves x 7 white keys per octave = 56 white keys
+			for (int i = 0, y = height-keyHeight; i < 8; i++) {
+				// 7 white keys per octave
+				for (int j = 0; j < 7; j++, y -= keyHeight) {
+					int keyNum = i * 12 + whiteIDs[j] + transpose;
+					whiteKeys.Add(new PianoKey(0, y, keyWidth, keyHeight, keyNum, false));
+				}
+			}
+			// 8 octaves, add black keys
+			int blackKeyShiftY = 3;
+			for (int i = 0, y = height; i < 8; i++, y -= keyHeight) {
+				int keyNum = i * 12 + transpose;
+				blackKeys.Add(new PianoKey(0, (y -= keyHeight)-blackKeyShiftY, keyWidth/2, keyHeight/2, keyNum+1, true));
+				blackKeys.Add(new PianoKey(0, (y -= keyHeight)-blackKeyShiftY, keyWidth/2, keyHeight/2, keyNum+3, true));
+				y -= keyHeight;
+				blackKeys.Add(new PianoKey(0, (y -= keyHeight)-blackKeyShiftY, keyWidth/2, keyHeight/2, keyNum+6, true));
+				blackKeys.Add(new PianoKey(0, (y -= keyHeight)-blackKeyShiftY, keyWidth/2, keyHeight/2, keyNum+8, true));
+				blackKeys.Add(new PianoKey(0, (y -= keyHeight)-blackKeyShiftY, keyWidth/2, keyHeight/2, keyNum+10, true));
+			}
+			
+			// add keys to dictionary for later lookup by midi note
+			foreach (var blackKey in blackKeys) {
+				keys.Add(blackKey.MidiNote, blackKey);
+			}
+			foreach (var whiteKey in whiteKeys) {
+				keys.Add(whiteKey.MidiNote, whiteKey);
+			}
+			
+			using(Graphics g = Graphics.FromImage(bitmap)) {
+				
+				// clear
+				g.Clear(Color.White);
+				
+				// draw all white keys first
+				// then the black keys
+				// to ensure the black keys overlay the white rectangles
+				foreach (var key in whiteKeys) {
+					g.DrawRectangle(Pens.DarkGray, key.Rectangle);
+					g.DrawString(""+key.MidiNote, textFont, Brushes.Black, key.X+18, key.Y);
+
+					//if (key.Octave % 12 == 0) {
+						g.DrawString(""+key.Octave, textFont, Brushes.Black, key.X+41, key.Y);
+					//}
+				}
+
+				foreach (var key in blackKeys) {
+					g.FillRectangle(Brushes.Black, key.Rectangle);
+				}
+			}
+		}
+		
+		public void RenderPianoRollOld(Bitmap bitmap, int width, int height) {
 			
 			int whiteKeyCount = TYPE_PIANO;
 			
@@ -961,6 +1023,96 @@ namespace CommonUtils.MathLib.FFT
 			public override string ToString()
 			{
 				return string.Format("[{7}] Freq.={0}, Amp.={1}, Oct.={2}, Semit.={3}, Ch.={4}, Pitch={5}, Vel.={6}", frequency, amplitude, octave, semitone, channel, pitch, velocity, label());
+			}
+		}
+
+		internal class PianoKey
+		{
+			Rectangle rect;
+			int midiNote;
+			bool isBlack;
+			int octave;
+
+			#region properties
+			public Rectangle Rectangle {
+				get {
+					return rect;
+				}
+				set {
+					rect = value;
+				}
+			}
+
+			public int MidiNote {
+				get {
+					return midiNote;
+				}
+				set {
+					midiNote = value;
+				}
+			}
+
+			public bool IsBlack {
+				get {
+					return isBlack;
+				}
+				set {
+					isBlack = value;
+				}
+			}
+
+			public int Octave {
+				get {
+					return octave;
+				}
+				set {
+					octave = value;
+				}
+			}
+			#endregion
+
+			#region getters
+			public int X {
+				get {
+					return rect.X;
+				}
+			}
+
+			public int Y {
+				get {
+					return rect.Y;
+				}
+			}
+
+			public int Width {
+				get {
+					return rect.Width;
+				}
+			}
+
+			public int Height {
+				get {
+					return rect.Height;
+				}
+			}
+			#endregion
+			
+			public PianoKey(Rectangle rect, int midiNote, bool isBlack) {
+				this.rect = rect;
+				this.midiNote = midiNote;
+				this.isBlack = isBlack;
+				this.octave = this.midiNote / 12 - 1;
+			}
+
+			public PianoKey(int x, int y, int width, int height, int midiNote, bool isBlack) {
+				this.rect = new Rectangle(x, y, width, height);
+				this.midiNote = midiNote;
+				this.isBlack = isBlack;
+				this.octave = this.midiNote / 12 - 1;
+			}
+			
+			public override string ToString() {
+				return string.Format("{0}, {1}, black: {2}", midiNote, rect, isBlack);
 			}
 		}
 		#endregion
