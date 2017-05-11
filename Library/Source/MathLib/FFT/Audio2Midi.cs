@@ -109,7 +109,7 @@ namespace CommonUtils.MathLib.FFT
 		bool isLinearEQActive = false;
 		bool isPCPActive = true;
 		bool isHarmonicsActive = true;
-		bool isMIDIActive = false;
+		bool isMIDIActive = true;
 
 		// default fft bin weighting is uniform
 		FFTBinWeighting weightType = FFTBinWeighting.UNIFORM;
@@ -223,15 +223,9 @@ namespace CommonUtils.MathLib.FFT
 			TOTAL_HEIGHT = 785; // 96 keys, 56 white keys
 			LEFT_MARGIN = 60;
 			
-			// UI Images
-			/*
-			bg = Image.FromFile(@"data\background.png");
-			whiteKey = Image.FromFile(@"data\whitekey.png");
-			blackKey = Image.FromFile(@"data\blackkey.png");
-			octaveBtn = Image.FromFile(@"data\octavebutton.png");
-			 */
-			
 			window = new FFTWindow(FFTWindowType.RECTANGULAR, bufferSize);
+			
+			InitMidiSequence();
 		}
 		
 		#region Freq to Pitch or Pitch to Freq
@@ -412,7 +406,7 @@ namespace CommonUtils.MathLib.FFT
 				// send NoteOns
 				foreach (var note in notes[frameNumber]) {
 					if (OCTAVE_ACTIVE[note.octave] && notesOpen[note.pitch] == null) {
-						//midiOut.sendNoteOn(note.channel, note.pitch, note.velocity);
+						SendMidiNoteOn(note.channel, note.pitch, note.velocity);
 						notesOpen[note.pitch] = note;
 					}
 				}
@@ -427,7 +421,7 @@ namespace CommonUtils.MathLib.FFT
 							}
 						}
 						if (!isOpen) {
-							//midiOut.sendNoteOff(notesOpen[i].channel, i, notesOpen[i].velocity);
+							SendMidiNoteOff(notesOpen[i].channel, i, notesOpen[i].velocity);
 							notesOpen[i] = null;
 						}
 					}
@@ -438,42 +432,47 @@ namespace CommonUtils.MathLib.FFT
 		public void CloseMIDINotes() {
 			for (int i = 0; i < notesOpen.Length; i++) {
 				if (notesOpen[i] != null) {
-					//midiOut.sendNoteOff(notesOpen[i].channel, i, notesOpen[i].velocity);
+					SendMidiNoteOff(notesOpen[i].channel, i, notesOpen[i].velocity);
 					notesOpen[i] = null;
 				}
 			}
 		}
+		
+		void SendMidiNoteOn(int channel, int pitch, int velocity) {
+			int tick = frameNumber * 40;
+			//midiTrack.Add(ShortEvent.CreateShortEvent((int) MidiHelper.MidiEventType.NoteOn, channel, pitch, velocity, tick));
+			midiTrack.Add(ShortEvent.CreateShortEvent((int) MidiHelper.MidiEventType.NoteOn, channel, pitch, 100, tick));
+		}
+
+		void SendMidiNoteOff(int channel, int pitch, int velocity) {
+			int tick = frameNumber * 40;
+			//midiTrack.Add(ShortEvent.CreateShortEvent((int) MidiHelper.MidiEventType.NoteOff, channel, pitch, velocity, tick));
+			midiTrack.Add(ShortEvent.CreateShortEvent((int) MidiHelper.MidiEventType.NoteOff, channel, pitch, 0, tick));
+		}
+		
 		#endregion
 		
-		public Sequence GetMidiSequence() {
+		Sequence midiSequence;
+		Track midiTrack;
+		
+		void InitMidiSequence() {
 			// Generate midi file
-			var sequence = new Sequence(0, 120, 0, (int) MidiHelper.MidiFormat.SingleTrack);
-			
-			var track1 = sequence.CreateTrack();
-			track1.Add(MetaEvent.CreateMetaEvent((int) MidiHelper.MetaEventType.SequenceOrTrackName, "Audio2Midi", 0, 120));
-			track1.Add(MetaEvent.CreateMetaEvent((int) MidiHelper.MetaEventType.CopyrightNotice, "perivar@nerseth.com", 0, 120));
-			track1.Add(MetaEvent.CreateMetaEvent((int) MidiHelper.MetaEventType.Tempo, "100", 0, 120));
-			track1.Add(MetaEvent.CreateMetaEvent((int) MidiHelper.MetaEventType.TimeSignature, "4/4", 0, 120));
-			
-			// one frame is bufferSize length
-			int midiLength = 70;
-			
-			for (int x = 0; x < frameNumber; x++) {
-				foreach (var note in notes[x]) {
-					//track1.Add(ShortEvent.CreateShortEvent((int) MidiHelper.MidiEventType.NoteOn, 0, NoteNames.GetNoteNumber("D6"), 110, 0));
-					//track1.Add(ShortEvent.CreateShortEvent((int) MidiHelper.MidiEventType.NoteOff, 0, NoteNames.GetNoteNumber("D6"), 0, 71));
-					track1.Add(ShortEvent.CreateShortEvent((int) MidiHelper.MidiEventType.NoteOn, 0, note.pitch, 110, x*midiLength));
-					track1.Add(ShortEvent.CreateShortEvent((int) MidiHelper.MidiEventType.NoteOff, 0, note.pitch, 0, (x+1)*midiLength));
-				}
-			}
-			
-			return sequence;
+			midiSequence = new Sequence(0, 420, 0, (int) MidiHelper.MidiFormat.SingleTrack);
+			midiTrack = midiSequence.CreateTrack();
+
+			midiTrack.Add(MetaEvent.CreateMetaEvent((int) MidiHelper.MetaEventType.SequenceOrTrackName, "Audio2Midi", 0, 120));
+			midiTrack.Add(MetaEvent.CreateMetaEvent((int) MidiHelper.MetaEventType.CopyrightNotice, "perivar@nerseth.com", 0, 120));
+			midiTrack.Add(MetaEvent.CreateMetaEvent((int) MidiHelper.MetaEventType.Tempo, "100", 0, 120));
+			midiTrack.Add(MetaEvent.CreateMetaEvent((int) MidiHelper.MetaEventType.TimeSignature, "4/4", 0, 120));
 		}
 		
 		public void SaveMidiSequence(string filePath) {
-			var sequence = GetMidiSequence();
-			sequence.DumpMidi("output.mid.txt");
-			new MidiFileWriter().Write(sequence, sequence.MidiFileType, new FileInfo(filePath));
+			
+			int tick = frameNumber * 40;
+			midiTrack.Add(MetaEvent.CreateMetaEvent((int) MidiHelper.MetaEventType.EndOfTrack, "", tick, 96));
+
+			midiSequence.DumpMidi("output.mid.txt");
+			new MidiFileWriter().Write(midiSequence, midiSequence.MidiFileType, new FileInfo(filePath));
 		}
 		
 		public void Process(float[] buffer) {
@@ -491,7 +490,7 @@ namespace CommonUtils.MathLib.FFT
 					OutputMIDINotes();
 				}
 			} else {
-				audioSystem.Pause();
+				//audioSystem.Pause();
 				CloseMIDINotes();
 			}
 		}
