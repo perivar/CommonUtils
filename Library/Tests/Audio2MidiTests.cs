@@ -19,7 +19,7 @@ namespace CommonUtils.Tests
 		double audioLength;
 		int frames; // total horizontal audio frames
 		
-		[Test]
+		//[Test]
 		public void TestPianoRoll() {
 			var audio2Midi = new Audio2Midi();
 

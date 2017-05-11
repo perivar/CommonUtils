@@ -762,7 +762,7 @@ namespace CommonUtils.MathLib.FFT
 
 			using(Graphics g = Graphics.FromImage(bitmap)) {
 				for (int i = 0; i < windowCurve.Length - 1; i++) {
-					g.DrawLine(Pens.White, i + windowX, (int) (windowY - windowCurve[i] * windowHeight), i+1 + windowX, (int) (windowY - windowCurve[i+1] * windowHeight));
+					g.DrawLine(Pens.Black, i + windowX, (int) (windowY - windowCurve[i] * windowHeight), i+1 + windowX, (int) (windowY - windowCurve[i+1] * windowHeight));
 				}
 			}
 		}
@@ -777,9 +777,27 @@ namespace CommonUtils.MathLib.FFT
 					const int keyLength = 10;
 					int scroll = (frameNumber * keyLength > bitmap.Width) ? frameNumber - bitmap.Width/keyLength : 0;
 
-					// render notes
 					for (int x = frameNumber; x >= scroll; x--) {
 						foreach (var note in notes[x]) {
+							// lookup coordinates from the keys dictionary
+							var key = keys[note.pitch];
+							
+							// draw note labels for the current frame
+							if (x == frameNumber) {
+								if (note.isWhiteKey()) {
+									g.FillRectangle(Brushes.Blue, key.X+15, key.Y+5, 5, 5);
+									
+									// render note labels
+									g.DrawString(note.label(), textFont, Brushes.Black, LEFT_MARGIN-16, key.Y+2);
+								} else if (note.isBlackKey()) {
+									g.FillRectangle(Brushes.Blue, key.X+8, key.Y+1, 5, 5);
+
+									// render note labels
+									g.DrawString(note.label(), textFont, Brushes.Black, LEFT_MARGIN-16, key.Y-2);
+								}
+							}
+							
+							// render notes
 							Color noteColor;
 							int greenHue = 0;
 							if (pcp[x][note.pitch % 12] == 1.0f) {
@@ -796,7 +814,6 @@ namespace CommonUtils.MathLib.FFT
 								noteColor = Color.FromArgb(0, greenHue, 200); // blue
 							}
 							
-							var key = keys[note.pitch];
 							Rectangle rect;
 							if (key.IsBlack) {
 								rect = new Rectangle(Math.Abs(x - frameNumber) * keyLength + LEFT_MARGIN, key.Y, keyLength + LEFT_MARGIN, blackKeyHeight-1);
@@ -804,23 +821,6 @@ namespace CommonUtils.MathLib.FFT
 								rect = new Rectangle(Math.Abs(x - frameNumber) * keyLength + LEFT_MARGIN, key.Y+4, keyLength + LEFT_MARGIN, blackKeyHeight-1);
 							}
 							g.FillRectangle(new SolidBrush(noteColor), rect);
-						}
-					}
-
-					// render key presses for detected peaks
-					foreach (var note in notes[frameNumber]) {
-						// lookup coordinates from the keys dictionary
-						var key = keys[note.pitch];
-						if (note.isWhiteKey()) {
-							g.FillRectangle(Brushes.Blue, key.X+15, key.Y+5, 5, 5);
-							
-							// render note labels
-							g.DrawString(note.label(), textFont, Brushes.Black, LEFT_MARGIN-16, key.Y+2);
-						} else if (note.isBlackKey()) {
-							g.FillRectangle(Brushes.Blue, key.X+8, key.Y+1, 5, 5);
-
-							// render note labels
-							g.DrawString(note.label(), textFont, Brushes.Black, LEFT_MARGIN-16, key.Y-2);
 						}
 					}
 				}
