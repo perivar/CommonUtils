@@ -365,7 +365,7 @@ namespace CommonUtils.MathLib.FFT
 			return frameNumber;
 		}
 		
-		public bool Initialize(double sampleRate, int audioChannels, double audioLength, int frames) {
+		public void Initialize(double sampleRate, int audioChannels, double audioLength, int frames) {
 			
 			this.sampleRate = sampleRate;
 			this.audioChannels = audioChannels;
@@ -401,8 +401,6 @@ namespace CommonUtils.MathLib.FFT
 			}
 			
 			PrecomputeOctaveRegions();
-			
-			return true;
 		}
 		
 		#region Midi
