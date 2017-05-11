@@ -118,7 +118,7 @@ namespace CommonUtils.MathLib.FFT
 		Image octaveBtn;
 		
 		// Font
-		Font textFont = new Font("Arial", 8.0f, FontStyle.Regular);
+		Font textFont = new Font("Arial", 6.0f, FontStyle.Regular);
 		
 		// render size
 		int TOTAL_WIDTH;
@@ -636,7 +636,7 @@ namespace CommonUtils.MathLib.FFT
 			
 			using(Graphics g = Graphics.FromImage(bitmap)) {
 				//g.DrawImage(bg, 0, 0); // Render the background image
-				RenderPianoRoll(bitmap, 40, TOTAL_HEIGHT-1);
+				RenderPianoRoll(bitmap, 42, TOTAL_HEIGHT-1);
 
 				/*
 				// Render octave toggle buttons for active octaves
@@ -739,10 +739,10 @@ namespace CommonUtils.MathLib.FFT
 				// to ensure the black keys overlay the white rectangles
 				foreach (var key in whiteKeys) {
 					g.DrawRectangle(Pens.DarkGray, key.Rectangle);
-					g.DrawString(""+key.MidiNote, textFont, Brushes.Black, key.X+19, key.Y);
+					g.DrawString(""+key.MidiNote, textFont, Brushes.Black, key.X+20, key.Y+2);
 
 					if (key.MidiNote % 12 == 0) {
-						g.DrawString("C"+key.Octave, textFont, Brushes.Black, key.X+42, key.Y);
+						g.DrawString("C"+key.Octave, textFont, Brushes.Black, key.X+30, key.Y+2);
 					}
 				}
 
@@ -812,17 +812,15 @@ namespace CommonUtils.MathLib.FFT
 						// lookup coordinates from the keys dictionary
 						var key = keys[note.pitch];
 						if (note.isWhiteKey()) {
-							//g.DrawImage(whiteKey, 10, bitmap.Height - ((note.pitch - keyboardStart) * keyHeight + keyHeight));
-							g.FillEllipse(Brushes.Blue, key.X+15, key.Y+3, 6, 6);
-
+							g.FillRectangle(Brushes.Blue, key.X+15, key.Y+5, 5, 5);
+							
 							// render note labels
-							g.DrawString(note.label(), textFont, Brushes.Black, LEFT_MARGIN, key.Y);
+							g.DrawString(note.label(), textFont, Brushes.Black, LEFT_MARGIN-16, key.Y+2);
 						} else if (note.isBlackKey()) {
-							//g.DrawImage(blackKey, 10, bitmap.Height - ((note.pitch - keyboardStart) * keyHeight + keyHeight));
-							g.FillEllipse(Brushes.Blue, key.X+5, key.Y, 6, 6);
+							g.FillRectangle(Brushes.Blue, key.X+8, key.Y+1, 5, 5);
 
 							// render note labels
-							g.DrawString(note.label(), textFont, Brushes.Black, LEFT_MARGIN, key.Y-4);
+							g.DrawString(note.label(), textFont, Brushes.Black, LEFT_MARGIN-16, key.Y-2);
 						}
 					}
 				}
@@ -853,16 +851,15 @@ namespace CommonUtils.MathLib.FFT
 						}
 					}
 
-					for (int i = keyboardStart; i < keyboardEnd + 1; i++) {
-						/*
-						// draw twice to get a shadow effect
-						fill(red(noteColor)/4, green(noteColor)/4, blue(noteColor)/4);
-						rect(24, height - ((i - keyboardStart) * keyHeight), 25 + amp[i], height - ((i - keyboardStart) * keyHeight + keyHeight)); // shadow
-        
-						fill(noteColor);
-						rect(24, height - ((i - keyboardStart) * keyHeight) - 1, 24 + amp[i] , height - ((i - keyboardStart) * keyHeight + keyHeight));
-						 */
-						var rect = new Rectangle(LEFT_MARGIN, bitmap.Height - ((i - keyboardStart) * keyHeight) + 1, LEFT_MARGIN + (int) amp[i], keyHeight - 2);
+					for (int i = keyboardStart; i < keyboardEnd; i++) {
+						var key = keys[i];
+						Rectangle rect;
+						if (key.IsBlack) {
+							rect = new Rectangle(LEFT_MARGIN, key.Y, LEFT_MARGIN + (int) amp[i], blackKeyHeight-1);
+						} else {
+							rect = new Rectangle(LEFT_MARGIN, key.Y+4, LEFT_MARGIN + (int) amp[i], blackKeyHeight-1);
+						}
+
 						g.FillRectangle(new SolidBrush(noteColor), rect);
 					}
 				}
