@@ -19,6 +19,8 @@ namespace CommonUtils.Tests
 		double audioLength;
 		int frames; // total horizontal audio frames
 		
+		Audio2Midi audio2midi;
+		
 		//[Test]
 		public void TestPianoRoll() {
 			var audio2Midi = new Audio2Midi();
@@ -27,11 +29,8 @@ namespace CommonUtils.Tests
 			audio2Midi.RenderPianoRoll(bitmap, 42, 784);
 			bitmap.Save("piano_roll.png");
 		}
-		
-		[Test]
-		public void TestMethod()
-		{
-			const string inputFilepath = @"Tests\Passacaglia, Handel-Sine-86bmp.wav";
+
+		void Audio2MidiInitialise(string inputFilepath) {
 			
 			// init audio system
 			var audioSystem = BassProxy.Instance;
@@ -42,10 +41,34 @@ namespace CommonUtils.Tests
 			frames = MathUtils.RoundAwayFromZero((double)wavData.Length / (double)bufferSize);
 			audioLength = (double)wavData.Length / (double)sampleRate * 1000;
 			
-			var audio2Midi = new Audio2Midi();
-			audio2Midi.IsTrackLoaded = true;
-			audio2Midi.Initialize(sampleRate, audioChannels, audioLength, frames);
-			ProcessWaveform(audio2Midi, wavData);
+			audio2midi = new Audio2Midi();
+			audio2midi.IsTrackLoaded = true;
+			audio2midi.Initialize(sampleRate, audioChannels, audioLength, frames);
+			ProcessWaveform(audio2midi, wavData);
+		}
+		
+		[Test]
+		public void TestAudio2MidiRender()
+		{
+			Audio2MidiInitialise(@"Tests\Passacaglia, Handel-Sine-86bmp.wav");
+			
+			// render
+			audio2midi.Render(Audio2Midi.RenderType.FFTWindow).Save("fft_window.png");
+			
+			for (int i = 0; i < frames - 1; i++) {
+				audio2midi.FrameNumber = i;
+				audio2midi.Render(Audio2Midi.RenderType.FFTSpectrum).Save("fft_spectrum_" + i + ".png");
+				audio2midi.Render(Audio2Midi.RenderType.MidiPeaks).Save("midi_peaks_" + i + ".png");
+			}
+		}
+		
+		[Test]
+		public void TestAudio2MidiOutput()
+		{
+			Audio2MidiInitialise(@"Tests\Passacaglia, Handel-Sine-86bmp.wav");
+			
+			// get midi
+			audio2midi.SaveMidiSequence("output.mid");
 		}
 		
 		#region Test Methods
@@ -85,14 +108,6 @@ namespace CommonUtils.Tests
 				}
 				audio2midi.Process(chunkArray);
 				count++;
-			}
-			
-			audio2midi.Render(Audio2Midi.RenderType.FFTWindow).Save("fft_window.png");
-			
-			for (int i = 0; i < frames - 1; i++) {
-				audio2midi.FrameNumber = i;
-				audio2midi.Render(Audio2Midi.RenderType.FFTSpectrum).Save("fft_spectrum_" + i + ".png");
-				audio2midi.Render(Audio2Midi.RenderType.MidiPeaks).Save("midi_peaks_" + i + ".png");
 			}
 		}
 

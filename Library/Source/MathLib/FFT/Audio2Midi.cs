@@ -3,13 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.ComponentModel;
 using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Drawing.Extended; // Rounded Rectangles
 using System.Drawing.Imaging;
 using System.Diagnostics; // Debug
 
 using CommonUtils;
 using CommonUtils.Audio;
+
+using System.IO;
+using gnu.sound.midi;
+using gnu.sound.midi.file;
+using gnu.sound.midi.info;
 
 namespace CommonUtils.MathLib.FFT
 {
@@ -442,6 +445,37 @@ namespace CommonUtils.MathLib.FFT
 		}
 		#endregion
 		
+		public Sequence GetMidiSequence() {
+			// Generate midi file
+			var sequence = new Sequence(0, 120, 0, (int) MidiHelper.MidiFormat.SingleTrack);
+			
+			var track1 = sequence.CreateTrack();
+			track1.Add(MetaEvent.CreateMetaEvent((int) MidiHelper.MetaEventType.SequenceOrTrackName, "Audio2Midi", 0, 120));
+			track1.Add(MetaEvent.CreateMetaEvent((int) MidiHelper.MetaEventType.CopyrightNotice, "perivar@nerseth.com", 0, 120));
+			track1.Add(MetaEvent.CreateMetaEvent((int) MidiHelper.MetaEventType.Tempo, "100", 0, 120));
+			track1.Add(MetaEvent.CreateMetaEvent((int) MidiHelper.MetaEventType.TimeSignature, "4/4", 0, 120));
+			
+			// one frame is bufferSize length
+			int midiLength = 70;
+			
+			for (int x = 0; x < frameNumber; x++) {
+				foreach (var note in notes[x]) {
+					//track1.Add(ShortEvent.CreateShortEvent((int) MidiHelper.MidiEventType.NoteOn, 0, NoteNames.GetNoteNumber("D6"), 110, 0));
+					//track1.Add(ShortEvent.CreateShortEvent((int) MidiHelper.MidiEventType.NoteOff, 0, NoteNames.GetNoteNumber("D6"), 0, 71));
+					track1.Add(ShortEvent.CreateShortEvent((int) MidiHelper.MidiEventType.NoteOn, 0, note.pitch, 110, x*midiLength));
+					track1.Add(ShortEvent.CreateShortEvent((int) MidiHelper.MidiEventType.NoteOff, 0, note.pitch, 0, (x+1)*midiLength));
+				}
+			}
+			
+			return sequence;
+		}
+		
+		public void SaveMidiSequence(string filePath) {
+			var sequence = GetMidiSequence();
+			sequence.DumpMidi("output.mid.txt");
+			new MidiFileWriter().Write(sequence, sequence.MidiFileType, new FileInfo(filePath));
+		}
+		
 		public void Process(float[] buffer) {
 			if (frameNumber < frames - 1) {
 				// need to apply the window transform before we zeropad
@@ -463,9 +497,7 @@ namespace CommonUtils.MathLib.FFT
 		}
 
 		public void Analyze() {
-			//fft = new FFT(fftBufferSize, audio.sampleRate());
-			//fft.forward(bufferPadded); // run fft on the buffer
-
+			
 			int N = bufferPadded.Length;
 			double[] din = bufferPadded;
 			var dout = new double[N];
@@ -623,11 +655,6 @@ namespace CommonUtils.MathLib.FFT
 		#endregion
 		
 		#region Render methods
-		// draw directly in c# ?
-		// https://gist.github.com/Folyd/e59d100900b8720bf17b
-		// https://github.com/tranchis/project-blink/blob/master/src/main/java/midi/Piano.java
-		// and
-		// https://github.com/tranchis/project-blink/blob/master/src/main/java/midi/Key.java
 		public Bitmap Render(RenderType type)
 		{
 			var bitmap = new Bitmap( TOTAL_WIDTH, TOTAL_HEIGHT, PixelFormat.Format32bppArgb );
