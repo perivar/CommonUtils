@@ -56,6 +56,12 @@ namespace CommonUtils.Tests
 			// render images
 			audio2midi.Render(Audio2Midi.RenderType.FFTWindow).Save("fft_window.png");
 			
+			audio2midi.Render(Audio2Midi.RenderType.MidiSong).Save("midi_song.png");
+
+			audio2midi.Render(Audio2Midi.RenderType.FFTSpectrogram).Save("fft_spectrogram.png");
+
+			return;
+			
 			for (int i = 0; i < frames - 1; i++) {
 				audio2midi.FrameNumber = i;
 				audio2midi.Render(Audio2Midi.RenderType.FFTSpectrum).Save("fft_spectrum_" + i + ".png");

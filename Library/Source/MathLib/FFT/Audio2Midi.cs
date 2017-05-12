@@ -4,7 +4,8 @@ using System.Linq;
 using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Imaging;
-using System.Diagnostics; // Debug
+using System.Diagnostics;
+using CommonUtils.MathLib.MatrixLib; // Debug
 
 using CommonUtils;
 using CommonUtils.Audio;
@@ -110,9 +111,9 @@ namespace CommonUtils.MathLib.FFT
 		int[] OCTAVE_OUTPUT_CHANNEL = {0,0,0,0,0,0,0,0};
 
 		// Toggles and their defaults
-		bool isLinearEQActive = false;
+		bool isLinearEQActive = true; // since the intercept and slope is default set to 1, this doesn't do anything
 		bool isPCPActive = true;
-		bool isHarmonicsActive = false;
+		bool isHarmonicsActive = true;
 		bool isMIDIActive = true;
 
 		// default fft bin weighting is uniform
@@ -150,7 +151,9 @@ namespace CommonUtils.MathLib.FFT
 		public enum RenderType {
 			FFTWindow,
 			FFTSpectrum,
-			MidiPeaks
+			FFTSpectrogram,
+			MidiSong,
+			MidiPeaks,
 		}
 		#endregion
 		
@@ -544,7 +547,7 @@ namespace CommonUtils.MathLib.FFT
 		
 		public void Analyze() {
 			
-			// perform fft on the 
+			// perform fft on the
 			var spectrum_fft_abs = FFTWLIB(bufferPadded);
 			
 			var binDistance = new double[fftSize];
@@ -695,7 +698,6 @@ namespace CommonUtils.MathLib.FFT
 			var bitmap = new Bitmap( TOTAL_WIDTH, TOTAL_HEIGHT, PixelFormat.Format32bppArgb );
 			
 			using(Graphics g = Graphics.FromImage(bitmap)) {
-				//g.DrawImage(bg, 0, 0); // Render the background image
 				RenderPianoRoll(bitmap, 42, TOTAL_HEIGHT-1);
 
 				/*
@@ -711,6 +713,10 @@ namespace CommonUtils.MathLib.FFT
 					RenderFFTWindow(bitmap);
 				} else if (type == RenderType.FFTSpectrum) {
 					RenderFFTSpectrum(bitmap);
+				} else if (type == RenderType.FFTSpectrogram) {
+					RenderFFTSpectrogram(bitmap);
+				} else if (type == RenderType.MidiSong) {
+					RenderMidiSong(bitmap);
 				} else if (type == RenderType.MidiPeaks) {
 					RenderMidiPeaks(bitmap);
 				} else {
@@ -729,6 +735,9 @@ namespace CommonUtils.MathLib.FFT
 					//sliderProgress.setValueLabel("NO FILE LOADED");
 				}
 			}
+			
+			bool colorize = true;
+			if (colorize) bitmap = ColorUtils.Colorize(bitmap, 255, ColorUtils.ColorPaletteType.PHOTOSOUNDER);
 			return bitmap;
 		}
 
@@ -809,6 +818,48 @@ namespace CommonUtils.MathLib.FFT
 		}
 		#endregion
 		
+		public void RenderMidiSong(Bitmap bitmap) {
+
+			using(Graphics g = Graphics.FromImage(bitmap)) {
+
+				if (IsLoaded()) {
+					int keyLength = MathUtils.RoundAwayFromZero((double) bitmap.Width / frames);
+					
+					for (int x = 0; x < frames; x++) {
+						foreach (var note in notes[x]) {
+							// lookup coordinates from the keys dictionary
+							var key = keys[note.pitch];
+							
+							// render notes
+							Color noteColor;
+							int greenHue = 0;
+							if (pcp[x][note.pitch % 12] == 1.0f) {
+								greenHue = (int) (100 * note.amplitude / 400);
+								if (greenHue < 0 || greenHue > 255) {
+									greenHue = 100;
+								}
+								noteColor = Color.FromArgb(255, greenHue, 0);
+							} else {
+								greenHue = (int) (255 * note.amplitude / 400);
+								if (greenHue < 0 || greenHue > 255) {
+									greenHue = 255;
+								}
+								noteColor = Color.FromArgb(0, greenHue, 200); // blue
+							}
+							
+							Rectangle rect;
+							if (key.IsBlack) {
+								rect = new Rectangle(Math.Abs(x - frameNumber) * keyLength + LEFT_MARGIN, key.Y, keyLength, blackKeyHeight-1);
+							} else {
+								rect = new Rectangle(Math.Abs(x - frameNumber) * keyLength + LEFT_MARGIN, key.Y+4, keyLength, blackKeyHeight-1);
+							}
+							g.FillRectangle(new SolidBrush(noteColor), rect);
+						}
+					}
+				}
+			}
+		}
+		
 		public void RenderFFTWindow(Bitmap bitmap) {
 			const int windowX = 50;
 			const int windowY = 160;
@@ -826,11 +877,10 @@ namespace CommonUtils.MathLib.FFT
 		public void RenderMidiPeaks(Bitmap bitmap) {
 			
 			using(Graphics g = Graphics.FromImage(bitmap)) {
-				int keyHeight = bitmap.Height / (keyboardEnd - keyboardStart);
 
 				if (IsLoaded()) {
 					// render detected peaks
-					const int keyLength = 6;
+					const int keyLength = 8;
 					int scroll = (frameNumber * keyLength > bitmap.Width) ? frameNumber - bitmap.Width/keyLength : 0;
 
 					for (int x = frameNumber; x >= scroll; x--) {
@@ -872,9 +922,9 @@ namespace CommonUtils.MathLib.FFT
 							
 							Rectangle rect;
 							if (key.IsBlack) {
-								rect = new Rectangle(Math.Abs(x - frameNumber) * keyLength + LEFT_MARGIN, key.Y, keyLength + LEFT_MARGIN, blackKeyHeight-1);
+								rect = new Rectangle(Math.Abs(x - frameNumber) * keyLength + LEFT_MARGIN, key.Y, keyLength, blackKeyHeight-1);
 							} else {
-								rect = new Rectangle(Math.Abs(x - frameNumber) * keyLength + LEFT_MARGIN, key.Y+4, keyLength + LEFT_MARGIN, blackKeyHeight-1);
+								rect = new Rectangle(Math.Abs(x - frameNumber) * keyLength + LEFT_MARGIN, key.Y+4, keyLength, blackKeyHeight-1);
 							}
 							g.FillRectangle(new SolidBrush(noteColor), rect);
 						}
@@ -886,19 +936,21 @@ namespace CommonUtils.MathLib.FFT
 		public void RenderFFTSpectrum(Bitmap bitmap)
 		{
 			using(Graphics g = Graphics.FromImage(bitmap)) {
-				int keyHeight = bitmap.Height / (keyboardEnd - keyboardStart);
 				Color noteColor = Color.FromArgb(0, 255, 240);
+				
 				var amp = new double[128];
-
 				int previousPitch = -1;
 				int currentPitch;
 
 				if (IsLoaded()) {
+					
+					// split into 128 pitch bands
 					for (int k = 0; k < spectrogram[frameNumber].Length; k++) {
 						double freq = k / (double)fftBufferSize * sampleRate;
 
 						currentPitch = FreqToPitch(freq);
 
+						// store the loudest amplitude per pitch
 						if (currentPitch == previousPitch) {
 							amp[currentPitch] = amp[currentPitch] > spectrogram[frameNumber][k] ? amp[currentPitch] : spectrogram[frameNumber][k];
 						} else {
@@ -907,6 +959,7 @@ namespace CommonUtils.MathLib.FFT
 						}
 					}
 
+					// draw amp per used band
 					for (int i = keyboardStart; i < keyboardEnd; i++) {
 						var key = keys[i];
 						Rectangle rect;
@@ -921,6 +974,62 @@ namespace CommonUtils.MathLib.FFT
 				}
 				
 				g.DrawLine(Pens.Black, PEAK_THRESHOLD + LEFT_MARGIN, 0, PEAK_THRESHOLD + LEFT_MARGIN, bitmap.Height);
+			}
+		}
+
+		public void RenderFFTSpectrogram(Bitmap bitmap)
+		{
+			using(Graphics g = Graphics.FromImage(bitmap)) {
+
+				if (IsLoaded()) {
+					
+					int keyLength = MathUtils.RoundAwayFromZero((double) bitmap.Width / frames);
+					double max = MathUtils.Max(spectrogram);
+					
+					for (int x = 0; x < frames; x++) {
+						
+						var amp = new double[128];
+						int previousPitch = -1;
+						int currentPitch = 0;
+						
+						// split into 128 pitch bands
+						for (int k = 0; k < spectrogram[x].Length; k++) {
+							double freq = k / (double)fftBufferSize * sampleRate;
+
+							currentPitch = FreqToPitch(freq);
+
+							// store the loudest amplitude per pitch
+							if (currentPitch == previousPitch) {
+								amp[currentPitch] = amp[currentPitch] > spectrogram[x][k] ? amp[currentPitch] : spectrogram[x][k];
+							} else {
+								amp[currentPitch] = spectrogram[x][k];
+								previousPitch = currentPitch;
+							}
+						}
+
+						//double max = MathUtils.Max(amp);
+						
+						// draw amp per used band
+						for (int i = keyboardStart; i < keyboardEnd; i++) {
+							var key = keys[i];
+							
+							double hue = 255;
+							if (amp[i] > 0) {
+								hue = MathUtils.ConvertAndMainainRatio(amp[i], 0, max, 255, 0);
+							}
+							Color noteColor = Color.FromArgb((int) hue, (int) hue, (int) hue);
+							
+							Rectangle rect;
+							if (key.IsBlack) {
+								rect = new Rectangle(Math.Abs(x - frameNumber) * keyLength + LEFT_MARGIN, key.Y, keyLength, blackKeyHeight-1);
+							} else {
+								rect = new Rectangle(Math.Abs(x - frameNumber) * keyLength + LEFT_MARGIN, key.Y+4, keyLength, blackKeyHeight-1);
+							}
+							g.FillRectangle(new SolidBrush(noteColor), rect);
+						}
+						
+					}
+				}
 			}
 		}
 		#endregion
