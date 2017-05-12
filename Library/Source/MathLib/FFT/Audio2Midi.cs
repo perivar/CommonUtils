@@ -51,7 +51,6 @@ namespace CommonUtils.MathLib.FFT
 		// octaves 0 .. 2 for example, zero padding is nessessary to improve the interpolation resolution of the FFT
 		// otherwise FFT bins will be quite large making it impossible to distinguish between low octave notes which
 		// are seperated by only a few Hz in these ranges.
-		
 		const int ZERO_PAD_MULTIPLIER = 4; // zero padding adds interpolation resolution to the FFT, it also dilutes the magnitude of the bins
 
 		const int fftBufferSize = bufferSize * ZERO_PAD_MULTIPLIER;
@@ -92,11 +91,14 @@ namespace CommonUtils.MathLib.FFT
 		double[][] pcp; // pitch class profile
 
 		List<Note>[] notes;
-
 		Note[] notesOpen = new Note[128];
 
-		const double linearEQIntercept = 1f; // default no eq boost
-		const double linearEQSlope = 0f; // default no slope boost
+		// Midi properties
+		Sequence midiSequence;
+		Track midiTrack;
+
+		const double linearEQIntercept = 1.0f; // default no eq boost
+		const double linearEQSlope = 0.0f; // default no slope boost
 
 		// octave toggle determines if any octaves should be disabled
 		bool[] OCTAVE_ACTIVE = {true, true, true, true, true, true, true, true};
@@ -108,17 +110,11 @@ namespace CommonUtils.MathLib.FFT
 		// Toggles and their defaults
 		bool isLinearEQActive = false;
 		bool isPCPActive = true;
-		bool isHarmonicsActive = true;
+		bool isHarmonicsActive = false;
 		bool isMIDIActive = true;
 
 		// default fft bin weighting is uniform
 		FFTBinWeighting weightType = FFTBinWeighting.UNIFORM;
-
-		// UI Images
-		Image bg;
-		Image whiteKey;
-		Image blackKey;
-		Image octaveBtn;
 		
 		// Font
 		Font textFont = new Font("Arial", 6.0f, FontStyle.Regular);
@@ -127,6 +123,11 @@ namespace CommonUtils.MathLib.FFT
 		int TOTAL_WIDTH;
 		int TOTAL_HEIGHT;
 		int LEFT_MARGIN;
+		
+		// piano roll variables
+		const int TYPE_PIANO = 56; // 56 white keys = 8 octaves
+		int whiteKeyHeight, whiteKeyWidth, blackKeyHeight, blackKeyWidth;
+		Dictionary<int, PianoKey> keys = new Dictionary<int, PianoKey>();		
 
 		#region Enums
 		// Smoothing
@@ -206,7 +207,6 @@ namespace CommonUtils.MathLib.FFT
 				isTrackLoaded = value;
 			}
 		}
-		#endregion
 
 		public bool IsLoaded() {
 			if ( isTrackLoaded && frameNumber > -1 ) {
@@ -215,6 +215,8 @@ namespace CommonUtils.MathLib.FFT
 				return false;
 			}
 		}
+
+		#endregion
 		
 		// constructor
 		public Audio2Midi() {
@@ -223,7 +225,7 @@ namespace CommonUtils.MathLib.FFT
 			TOTAL_HEIGHT = 785; // 96 keys, 56 white keys
 			LEFT_MARGIN = 60;
 			
-			window = new FFTWindow(FFTWindowType.RECTANGULAR, bufferSize);
+			window = new FFTWindow(FFTWindowType.HANNING, bufferSize);
 			
 			InitMidiSequence();
 		}
@@ -279,6 +281,7 @@ namespace CommonUtils.MathLib.FFT
 		}
 		#endregion
 
+		#region Computing methods
 		// Normalize the pitch class profile
 		void NormalizePCP() {
 			double pcpMax = MathUtils.Max(pcp[frameNumber]);
@@ -307,6 +310,7 @@ namespace CommonUtils.MathLib.FFT
 				#endif
 			}
 		}
+		#endregion
 		
 		public int OpenAudioFile(string audioFilePath) {
 			if (isTrackLoaded) {
@@ -439,25 +443,20 @@ namespace CommonUtils.MathLib.FFT
 		}
 		
 		void SendMidiNoteOn(int channel, int pitch, int velocity) {
-			int tick = frameNumber * 40;
+			long tick = frameNumber * 40;
 			//midiTrack.Add(ShortEvent.CreateShortEvent((int) MidiHelper.MidiEventType.NoteOn, channel, pitch, velocity, tick));
 			midiTrack.Add(ShortEvent.CreateShortEvent((int) MidiHelper.MidiEventType.NoteOn, channel, pitch, 100, tick));
 		}
 
 		void SendMidiNoteOff(int channel, int pitch, int velocity) {
-			int tick = frameNumber * 40;
+			long tick = frameNumber * 40;
 			//midiTrack.Add(ShortEvent.CreateShortEvent((int) MidiHelper.MidiEventType.NoteOff, channel, pitch, velocity, tick));
 			midiTrack.Add(ShortEvent.CreateShortEvent((int) MidiHelper.MidiEventType.NoteOff, channel, pitch, 0, tick));
 		}
 		
-		#endregion
-		
-		Sequence midiSequence;
-		Track midiTrack;
-		
 		void InitMidiSequence() {
 			// Generate midi file
-			midiSequence = new Sequence(0, 420, 0, (int) MidiHelper.MidiFormat.SingleTrack);
+			midiSequence = new Sequence(0, 480, 0, (int) MidiHelper.MidiFormat.SingleTrack);
 			midiTrack = midiSequence.CreateTrack();
 
 			midiTrack.Add(MetaEvent.CreateMetaEvent((int) MidiHelper.MetaEventType.SequenceOrTrackName, "Audio2Midi", 0, 120));
@@ -468,12 +467,13 @@ namespace CommonUtils.MathLib.FFT
 		
 		public void SaveMidiSequence(string filePath) {
 			
-			int tick = frameNumber * 40;
-			midiTrack.Add(MetaEvent.CreateMetaEvent((int) MidiHelper.MetaEventType.EndOfTrack, "", tick, 96));
+			long tick = midiTrack.Ticks();
+			midiTrack.Add(MetaEvent.CreateMetaEvent((int) MidiHelper.MetaEventType.EndOfTrack, "", tick, 120));
 
 			midiSequence.DumpMidi("output.mid.txt");
 			new MidiFileWriter().Write(midiSequence, midiSequence.MidiFileType, new FileInfo(filePath));
 		}
+		#endregion
 		
 		public void Process(float[] buffer) {
 			if (frameNumber < frames - 1) {
@@ -697,10 +697,6 @@ namespace CommonUtils.MathLib.FFT
 		}
 
 		#region Draw Piano Roll
-		const int TYPE_PIANO = 56; // 56 white keys = 8 octaves
-		int whiteKeyHeight, whiteKeyWidth, blackKeyHeight, blackKeyWidth;
-		Dictionary<int, PianoKey> keys = new Dictionary<int, PianoKey>();
-
 		public void RenderPianoRoll(Bitmap bitmap, int width, int height) {
 			
 			keys.Clear();
@@ -798,7 +794,7 @@ namespace CommonUtils.MathLib.FFT
 
 				if (IsLoaded()) {
 					// render detected peaks
-					const int keyLength = 10;
+					const int keyLength = 6;
 					int scroll = (frameNumber * keyLength > bitmap.Width) ? frameNumber - bitmap.Width/keyLength : 0;
 
 					for (int x = frameNumber; x >= scroll; x--) {

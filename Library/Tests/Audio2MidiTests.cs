@@ -52,7 +52,7 @@ namespace CommonUtils.Tests
 		{
 			Audio2MidiInitialise(@"Tests\Passacaglia, Handel-Sine-86bmp.wav");
 			
-			// render
+			// render images
 			audio2midi.Render(Audio2Midi.RenderType.FFTWindow).Save("fft_window.png");
 			
 			for (int i = 0; i < frames - 1; i++) {
