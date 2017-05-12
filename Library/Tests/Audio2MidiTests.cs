@@ -6,6 +6,7 @@ using CommonUtils.MathLib.FFT;
 using CommonUtils.Audio;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Diagnostics;
 
 namespace CommonUtils.Tests
 {
@@ -87,6 +88,10 @@ namespace CommonUtils.Tests
 		#endregion
 		
 		private void ProcessWaveform(Audio2Midi audio2midi, float[] waveform) {
+			
+			// Start the stopwatch
+			Stopwatch sw = Stopwatch.StartNew();
+
 			// stereo waveform
 			float[] monoSignal = BassProxy.GetMonoSignal(waveform, audioChannels, BassProxy.MonoSummingType.Mix);
 			//float[] monoSignal = ReadTestSignal();
@@ -109,7 +114,9 @@ namespace CommonUtils.Tests
 				audio2midi.Process(chunkArray);
 				count++;
 			}
-		}
 
+			sw.Stop();
+			Console.Out.WriteLine("Audio2Midi Processed All: Time used: {0} ms",sw.Elapsed.TotalMilliseconds);
+		}
 	}
 }

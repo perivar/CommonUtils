@@ -14,6 +14,8 @@ using gnu.sound.midi;
 using gnu.sound.midi.file;
 using gnu.sound.midi.info;
 
+using fftwlib;
+
 namespace CommonUtils.MathLib.FFT
 {
 	/// <summary>
@@ -127,7 +129,7 @@ namespace CommonUtils.MathLib.FFT
 		// piano roll variables
 		const int TYPE_PIANO = 56; // 56 white keys = 8 octaves
 		int whiteKeyHeight, whiteKeyWidth, blackKeyHeight, blackKeyWidth;
-		Dictionary<int, PianoKey> keys = new Dictionary<int, PianoKey>();		
+		Dictionary<int, PianoKey> keys = new Dictionary<int, PianoKey>();
 
 		#region Enums
 		// Smoothing
@@ -494,11 +496,11 @@ namespace CommonUtils.MathLib.FFT
 				CloseMIDINotes();
 			}
 		}
-
-		public void Analyze() {
+		
+		static double[] FFTWLIB_INPLACE(double[] signal) {
 			
-			int N = bufferPadded.Length;
-			double[] din = bufferPadded;
+			int N = signal.Length;
+			double[] din = signal;
 			var dout = new double[N];
 			
 			// perform the FFT
@@ -510,6 +512,40 @@ namespace CommonUtils.MathLib.FFT
 			
 			//Export.ExportCSV("audio_buffer_padded.csv", din);
 			//Export.ExportCSV("spectrum_fft_abs.csv", spectrum_fft_abs, fftSize);
+			
+			return spectrum_fft_abs;
+		}
+		
+		// seem to the be the fastest FFT?
+		static double[] FFTWLIB(double[] signal) {
+
+			var complexSignal = FFTUtils.DoubleToComplexDouble(signal);
+
+			// prepare the input arrays
+			var complexInput = new fftw_complexarray(complexSignal);
+			var complexOutput = new fftw_complexarray(complexSignal.Length/2);
+			fftw_plan fft = fftw_plan.dft_1d(complexSignal.Length/2, complexInput, complexOutput, fftw_direction.Forward, fftw_flags.Estimate);
+			
+			// perform the FFT
+			fft.Execute();
+
+			// get the result
+			var spectrum_fft_abs = complexOutput.Abs;
+
+			//Export.ExportCSV("audio_buffer_padded2.csv", signal);
+			//Export.ExportCSV("spectrum_fft_abs2.csv", spectrum_fft_abs2, fftSize);
+			
+			// free up memory
+			complexInput = null;
+			complexOutput = null;
+			
+			return spectrum_fft_abs;
+		}
+		
+		public void Analyze() {
+			
+			// perform fft on the 
+			var spectrum_fft_abs = FFTWLIB(bufferPadded);
 			
 			var binDistance = new double[fftSize];
 			var freq = new double[fftSize];

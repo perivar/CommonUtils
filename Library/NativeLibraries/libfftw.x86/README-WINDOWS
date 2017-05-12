@@ -19,4 +19,4 @@ but should also work on older processors (the library checks at runtime
 to see whether SSE/SSE2 is supported and disables the relevant code if not).
 
 They were compiled by the GNU C compiler for MinGW, specifically:
-i686-w64-mingw32-gcc (GCC) 4.6.3
+i686-w64-mingw32-gcc (GCC) 4.9.1
