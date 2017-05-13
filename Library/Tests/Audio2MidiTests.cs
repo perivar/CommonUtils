@@ -53,6 +53,7 @@ namespace CommonUtils.Tests
 		{
 			//Audio2MidiInitialise(@"Tests\Passacaglia, Handel-Sine-86bmp.wav");
 			Audio2MidiInitialise(@"Tests\Passacaglia, Handel-Saw-86bmp.wav");
+			//Audio2MidiInitialise(@"Tests\Passacaglia, Handel-Piano-86bmp.wav");
 			
 			// render images
 			audio2midi.Render(Audio2Midi.RenderType.FFTWindow).Save("fft_window.png");
@@ -75,6 +76,7 @@ namespace CommonUtils.Tests
 		{
 			//Audio2MidiInitialise(@"Tests\Passacaglia, Handel-Sine-86bmp.wav");
 			Audio2MidiInitialise(@"Tests\Passacaglia, Handel-Saw-86bmp.wav");
+			//Audio2MidiInitialise(@"Tests\Passacaglia, Handel-Piano-86bmp.wav");
 			
 			// get midi
 			audio2midi.SaveMidiSequence("output.mid");

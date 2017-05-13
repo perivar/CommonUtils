@@ -109,6 +109,7 @@
     <Compile Include="Source\ColorUtils.cs" />
     <Compile Include="Source\ImageHash\ImageAverageHash.cs" />
     <Compile Include="Source\ImageHash\ImagePHash.cs" />
+    <Compile Include="Source\MathLib\FeatureExtraction\ConstantQTransform.cs" />
     <Compile Include="Source\MathLib\MatrixLib\CholeskyDecomposition.cs" />
     <Compile Include="Source\MathLib\MatrixLib\DctMatrix.cs" />
     <Compile Include="Source\MathLib\MatrixLib\DctMethods.cs" />
