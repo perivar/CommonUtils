@@ -460,20 +460,27 @@ namespace CommonUtils.MathLib.FFT
 		}
 		
 		void InitMidiSequence() {
+			int resolution = 480;
+			
 			// Generate midi file
-			midiSequence = new Sequence(0, 480, 0, (int) MidiHelper.MidiFormat.SingleTrack);
+			midiSequence = new Sequence(Sequence.PPQ, resolution, 0, (int) MidiHelper.MidiFormat.SingleTrack);
 			midiTrack = midiSequence.CreateTrack();
 
-			midiTrack.Add(MetaEvent.CreateMetaEvent((int) MidiHelper.MetaEventType.SequenceOrTrackName, "Audio2Midi", 0, 120));
-			midiTrack.Add(MetaEvent.CreateMetaEvent((int) MidiHelper.MetaEventType.CopyrightNotice, "perivar@nerseth.com", 0, 120));
-			midiTrack.Add(MetaEvent.CreateMetaEvent((int) MidiHelper.MetaEventType.Tempo, "100", 0, 120));
-			midiTrack.Add(MetaEvent.CreateMetaEvent((int) MidiHelper.MetaEventType.TimeSignature, "4/4", 0, 120));
+			midiTrack.Add(MetaEvent.CreateMetaEvent((int) MidiHelper.MetaEventType.SequenceOrTrackName, "Audio2Midi", 0, resolution));
+			midiTrack.Add(MetaEvent.CreateMetaEvent((int) MidiHelper.MetaEventType.CopyrightNotice, "perivar@nerseth.com", 0, resolution));
+			midiTrack.Add(MetaEvent.CreateMetaEvent((int) MidiHelper.MetaEventType.Tempo, "120", 0, resolution));
+			midiTrack.Add(MetaEvent.CreateMetaEvent((int) MidiHelper.MetaEventType.TimeSignature, "4/4", 0, resolution));
+			
+			// Convert from ticks to duration
+			// Midi timings are explained here
+			// http://sites.uci.edu/camp2014/2014/05/19/timing-in-midi-files/
+			
 		}
 		
 		public void SaveMidiSequence(string filePath) {
-			
-			long tick = midiTrack.Ticks();
-			midiTrack.Add(MetaEvent.CreateMetaEvent((int) MidiHelper.MetaEventType.EndOfTrack, "", tick, 120));
+						
+			long ticks = midiTrack.Ticks();
+			midiTrack.Add(MetaEvent.CreateMetaEvent((int) MidiHelper.MetaEventType.EndOfTrack, "", ticks, 120));
 
 			midiSequence.DumpMidi("output.mid.txt");
 			new MidiFileWriter().Write(midiSequence, midiSequence.MidiFileType, new FileInfo(filePath));
@@ -849,9 +856,9 @@ namespace CommonUtils.MathLib.FFT
 							
 							Rectangle rect;
 							if (key.IsBlack) {
-								rect = new Rectangle(Math.Abs(x - frameNumber) * keyLength + LEFT_MARGIN, key.Y, keyLength, blackKeyHeight-1);
+								rect = new Rectangle(x * keyLength + LEFT_MARGIN, key.Y, keyLength, blackKeyHeight-1);
 							} else {
-								rect = new Rectangle(Math.Abs(x - frameNumber) * keyLength + LEFT_MARGIN, key.Y+4, keyLength, blackKeyHeight-1);
+								rect = new Rectangle(x * keyLength + LEFT_MARGIN, key.Y+4, keyLength, blackKeyHeight-1);
 							}
 							g.FillRectangle(new SolidBrush(noteColor), rect);
 						}
@@ -1021,9 +1028,9 @@ namespace CommonUtils.MathLib.FFT
 							
 							Rectangle rect;
 							if (key.IsBlack) {
-								rect = new Rectangle(Math.Abs(x - frameNumber) * keyLength + LEFT_MARGIN, key.Y, keyLength, blackKeyHeight-1);
+								rect = new Rectangle(x * keyLength + LEFT_MARGIN, key.Y, keyLength, blackKeyHeight-1);
 							} else {
-								rect = new Rectangle(Math.Abs(x - frameNumber) * keyLength + LEFT_MARGIN, key.Y+4, keyLength, blackKeyHeight-1);
+								rect = new Rectangle(x * keyLength + LEFT_MARGIN, key.Y+4, keyLength, blackKeyHeight-1);
 							}
 							g.FillRectangle(new SolidBrush(noteColor), rect);
 						}

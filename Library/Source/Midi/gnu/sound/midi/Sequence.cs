@@ -148,7 +148,7 @@ namespace gnu.sound.midi
 		
 		/// <summary>
 		/// Get the file division type.
-		/// <returns>the file divison type</returns>
+		/// <returns>the file divison type (PPQ or SMPTE*)</returns>
 		/// </summary>
 		public float DivisionType {
 			get {

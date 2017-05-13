@@ -72,8 +72,9 @@ namespace CommonUtils.Tests
 		[Test]
 		public void TestGenerateMidi()
 		{
-			string fileName = @"Tests\Passacaglia, Handel_Sample.mid";
+			//string fileName = @"Tests\Passacaglia, Handel_Sample.mid";
 			//string fileName = @"Tests\agnes-release_me.mid";
+			string fileName = @"Tests\Passacaglia, Handel_Sample_Cubase_Format0.mid";
 			
 			var fileIn = new FileInfo(fileName);
 			var sequence = new MidiFileReader().GetSequence(fileIn);
