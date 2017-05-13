@@ -67,6 +67,7 @@ namespace CommonUtils.MathLib.FFT
 		const int PEAK_THRESHOLD = 50; // default peak threshold (default = 50)
 
 		// MIDI notes span from 0 - 128, octaves -1 -> 9. Specify start and end for piano
+		// http://www.sengpielaudio.com/calculator-notenames.htm
 		const int keyboardStart = 12; // 12 is octave C0
 		const int keyboardEnd = 108;
 		// 108 - 12 = 96 keys in total
@@ -242,7 +243,10 @@ namespace CommonUtils.MathLib.FFT
 		#region Freq to Pitch or Pitch to Freq
 		public static int FreqToPitch(double f) {
 			
-			int p = MathUtils.RoundAwayFromZero(69.0f + 12.0f *(Math.Log(f/440.0f) / Math.Log(2.0f)));
+			// Formula for finding a MIDI note number given the frequency in Hz of the MIDI note:
+			// n = (12 × log2 (f / 440)) + 69
+			// log2 can be done as Math.Log() / Math.Log(2)
+			int p = MathUtils.RoundAwayFromZero(69.0 + 12.0 * Math.Log(f/440.0, 2));
 			if (p > 0 && p < 128) {
 				return p;
 			} else {
@@ -251,7 +255,7 @@ namespace CommonUtils.MathLib.FFT
 		}
 
 		public static double PitchToFreq(int p) {
-			return 440.0f * Math.Pow(2, (p - 69) / 12.0f);
+			return 440.0 * Math.Pow(2, (p - 69) / 12.0);
 		}
 		#endregion
 
@@ -478,14 +482,16 @@ namespace CommonUtils.MathLib.FFT
 		
 		void SendMidiNoteOn(int channel, int pitch, int velocity) {
 			long tick = (long) (currentFrameNumber * tickMultiplier);
-			//midiTrack.Add(ShortEvent.CreateShortEvent((int) MidiHelper.MidiEventType.NoteOn, channel, pitch, velocity, tick));
-			midiTrack.Add(ShortEvent.CreateShortEvent((int) MidiHelper.MidiEventType.NoteOn, channel, pitch, 100, tick));
+			// TODO: Why do I have to subtract 12 to get right notes?
+			//midiTrack.Add(ShortEvent.CreateShortEvent((int) MidiHelper.MidiEventType.NoteOn, channel, pitch-12, velocity, tick));
+			midiTrack.Add(ShortEvent.CreateShortEvent((int) MidiHelper.MidiEventType.NoteOn, channel, pitch-12, 100, tick));
 		}
 
 		void SendMidiNoteOff(int channel, int pitch, int velocity) {
 			long tick = (long) (currentFrameNumber * tickMultiplier);
-			//midiTrack.Add(ShortEvent.CreateShortEvent((int) MidiHelper.MidiEventType.NoteOff, channel, pitch, velocity, tick));
-			midiTrack.Add(ShortEvent.CreateShortEvent((int) MidiHelper.MidiEventType.NoteOff, channel, pitch, 0, tick));
+			// TODO: Why do I have to subtract 12 to get right notes?
+			//midiTrack.Add(ShortEvent.CreateShortEvent((int) MidiHelper.MidiEventType.NoteOff, channel, pitch-12, velocity, tick));
+			midiTrack.Add(ShortEvent.CreateShortEvent((int) MidiHelper.MidiEventType.NoteOff, channel, pitch-12, 0, tick));
 		}
 		
 		public void SaveMidiSequence(string filePath) {
@@ -584,8 +590,8 @@ namespace CommonUtils.MathLib.FFT
 					continue;
 				}
 
-				// Calculate fft bin distance and apply weighting to spectrum
-				double closestFreq = PitchToFreq(FreqToPitch(freq[k])); // Rounds FFT frequency to closest semitone frequency
+				// Rounds FFT frequency to closest semitone frequency
+				double closestFreq = PitchToFreq(FreqToPitch(freq[k]));
 
 				// Filter out frequncies from disabled octaves
 				bool filterOutFreq = false;
@@ -600,8 +606,15 @@ namespace CommonUtils.MathLib.FFT
 
 				// Set spectrum
 				if (!filterOutFreq) {
-					binDistance[k] = 2 * Math.Abs((12 * Math.Log(freq[k]/440.0f) / Math.Log(2)) - (12 * Math.Log(closestFreq/440.0f) / Math.Log(2)));
+					
+					// Calculate fft bin distance and apply weighting to spectrum
 
+					// Formula for finding a MIDI note number given the frequency in Hz of the MIDI note:
+					// n = (12 × log2 (f / 440)) + 69
+					// log2 can be done as Math.Log() / Math.Log(2)
+					// so the tone distance between two bins would be: (12 × log2 (f1 / 440)) - (12 × log2 (f2 / 440))
+					binDistance[k] = 2 * Math.Abs( (12.0 * Math.Log(freq[k]/440.0, 2)) - (12.0 * Math.Log(closestFreq/440.0, 2)) );
+					
 					spectrum[k] = spectrum_fft_abs[k] * BinWeight(weightType, binDistance[k]);
 
 					if (isLinearEQActive) {
@@ -609,6 +622,8 @@ namespace CommonUtils.MathLib.FFT
 					}
 
 					// Sum PCP bins
+					// for more details around pitch class profile see
+					// https://dsp.stackexchange.com/questions/13722/pitch-class-profiling
 					pcp[currentFrameNumber][FreqToPitch(freq[k]) % 12] += Math.Pow(spectrum_fft_abs[k], 2) * BinWeight(weightType, binDistance[k]);
 				}
 			}
@@ -666,14 +681,14 @@ namespace CommonUtils.MathLib.FFT
 					if (isHarmonicsActive) {
 						for (int f = 0; f < foundPeak.Count; f++) {
 							
-							//TODO: Cant remember why this is here
+							// TODO: Cant remember why this is here
 							/*
-							if (foundPeak.Count > 2)
-							{
+							if (foundPeak.Count > 2) {
 								isHarmonic = true;
 								break;
 							}
 							 */
+							
 							// If the current frequencies note has already peaked in a lower octave
 							// check to see if its level is lower.
 							// if so it's probably a harmonic
@@ -849,15 +864,15 @@ namespace CommonUtils.MathLib.FFT
 							// render notes
 							Color noteColor;
 							int greenHue = 0;
-							if (pcp[x][note.pitch % 12] == 1.0f) {
+							if (pcp[x][note.pitch % 12] == 1.0) {
 								greenHue = (int) (100 * note.amplitude / 400);
-								if (greenHue < 0 || greenHue > 255) {
-									greenHue = 100;
+								if (greenHue > 255) {
+									greenHue = 255;
 								}
 								noteColor = Color.FromArgb(255, greenHue, 0);
 							} else {
 								greenHue = (int) (255 * note.amplitude / 400);
-								if (greenHue < 0 || greenHue > 255) {
+								if (greenHue > 255) {
 									greenHue = 255;
 								}
 								noteColor = Color.FromArgb(0, greenHue, 200); // blue
@@ -922,15 +937,15 @@ namespace CommonUtils.MathLib.FFT
 							// render notes
 							Color noteColor;
 							int greenHue = 0;
-							if (pcp[x][note.pitch % 12] == 1.0f) {
+							if (pcp[x][note.pitch % 12] == 1.0) {
 								greenHue = (int) (100 * note.amplitude / 400);
-								if (greenHue < 0 || greenHue > 255) {
-									greenHue = 100;
+								if (greenHue > 255) {
+									greenHue = 255;
 								}
 								noteColor = Color.FromArgb(255, greenHue, 0);
 							} else {
 								greenHue = (int) (255 * note.amplitude / 400);
-								if (greenHue < 0 || greenHue > 255) {
+								if (greenHue > 255) {
 									greenHue = 255;
 								}
 								noteColor = Color.FromArgb(0, greenHue, 200); // blue
