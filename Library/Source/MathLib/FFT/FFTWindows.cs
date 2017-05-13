@@ -4,7 +4,7 @@ namespace CommonUtils.MathLib.FFT
 {
 	public enum FFTWindowType
 	{
-		RECTANGULAR = 0,
+		RECTANGULAR = 0, // equivilent to no window
 		BARTLETT = 1,
 		HAMMING = 2,
 		HANNING = 3,

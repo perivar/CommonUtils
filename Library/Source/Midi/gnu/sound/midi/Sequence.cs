@@ -41,27 +41,33 @@ namespace gnu.sound.midi
 		List<Track> tracks;
 
 		/// <summary>
-		/// Tempo-based timing.  Resolution is specified in ticks per beat.
+		/// Tempo-based timing.
+		/// Resolution is specified in “ticks per quarter note”, 
+		/// a.k.a. “parts per quarter” (or “PPQ”).
 		/// </summary>
 		public const float PPQ = 0.0f;
 
 		/// <summary>
-		/// 24 frames/second timing.  Resolution is specific in ticks per frame.
+		/// 24 frames/second timing.  
+		/// Resolution is specific in ticks per frame.
 		/// </summary>
 		public const float SMPTE_24 = 24.0f;
 
 		/// <summary>
-		/// 25 frames/second timing.  Resolution is specific in ticks per frame.
+		/// 25 frames/second timing.  
+		/// Resolution is specific in ticks per frame.
 		/// </summary>
 		public const float SMPTE_25 = 25.0f;
 
 		/// <summary>
-		/// 30 frames/second timing.  Resolution is specific in ticks per frame.
+		/// 30 frames/second timing.  
+		/// Resolution is specific in ticks per frame.
 		/// </summary>
 		public const float SMPTE_30 = 30.0f;
 
 		/// <summary>
-		/// 29.97 frames/second timing.  Resolution is specific in ticks per frame.
+		/// 29.97 frames/second timing.  
+		/// Resolution is specific in ticks per frame.
 		/// </summary>
 		public const float SMPTE_30DROP = 29.97f;
 

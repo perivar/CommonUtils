@@ -86,8 +86,8 @@ namespace CommonUtils.MathLib.FFT
 		
 		FFTWindow window;
 
-		int frames; // total horizontal audio frames
-		int frameNumber = -1; // current audio frame
+		int totalNumFrames; // total horizontal audio frames
+		int currentFrameNumber = -1; // current audio frame
 
 		int cuePosition; // cue position in milliseconds
 
@@ -111,9 +111,9 @@ namespace CommonUtils.MathLib.FFT
 		int[] OCTAVE_OUTPUT_CHANNEL = {0,0,0,0,0,0,0,0};
 
 		// Toggles and their defaults
-		bool isLinearEQActive = true; // since the intercept and slope is default set to 1, this doesn't do anything
+		bool isLinearEQActive = false; // since the intercept and slope is default set to 1, this doesn't do anything
 		bool isPCPActive = true;
-		bool isHarmonicsActive = true;
+		bool isHarmonicsActive = false;
 		bool isMIDIActive = true;
 
 		// default fft bin weighting is uniform
@@ -131,6 +131,11 @@ namespace CommonUtils.MathLib.FFT
 		const int TYPE_PIANO = 56; // 56 white keys = 8 octaves
 		int whiteKeyHeight, whiteKeyWidth, blackKeyHeight, blackKeyWidth;
 		Dictionary<int, PianoKey> keys = new Dictionary<int, PianoKey>();
+
+		// BPM is the tempo of the track (Beats Per Minute)
+		int midiBPM = 120; // default: 120
+		int midiTickResolution = 480; // Ticks Per Beat
+		double tickMultiplier = 30; // audio frame multiplier for correct midi duration
 
 		#region Enums
 		// Smoothing
@@ -197,10 +202,10 @@ namespace CommonUtils.MathLib.FFT
 		
 		public int FrameNumber {
 			get {
-				return frameNumber;
+				return currentFrameNumber;
 			}
 			set {
-				frameNumber = value;
+				currentFrameNumber = value;
 			}
 		}
 
@@ -214,7 +219,7 @@ namespace CommonUtils.MathLib.FFT
 		}
 
 		public bool IsLoaded() {
-			if ( isTrackLoaded && frameNumber > -1 ) {
+			if ( isTrackLoaded && currentFrameNumber > -1 ) {
 				return true;
 			} else {
 				return false;
@@ -230,9 +235,8 @@ namespace CommonUtils.MathLib.FFT
 			TOTAL_HEIGHT = 785; // 96 keys, 56 white keys
 			LEFT_MARGIN = 60;
 			
-			window = new FFTWindow(FFTWindowType.HANNING, bufferSize);
-			
-			InitMidiSequence();
+			// RECTANGULAR is equivilent to no window
+			window = new FFTWindow(FFTWindowType.RECTANGULAR, bufferSize);
 		}
 		
 		#region Freq to Pitch or Pitch to Freq
@@ -289,9 +293,9 @@ namespace CommonUtils.MathLib.FFT
 		#region Computing methods
 		// Normalize the pitch class profile
 		void NormalizePCP() {
-			double pcpMax = MathUtils.Max(pcp[frameNumber]);
+			double pcpMax = MathUtils.Max(pcp[currentFrameNumber]);
 			for ( int k = 0; k < 12; k++ ) {
-				pcp[frameNumber][k] /= pcpMax;
+				pcp[currentFrameNumber][k] /= pcpMax;
 			}
 		}
 
@@ -355,7 +359,7 @@ namespace CommonUtils.MathLib.FFT
 			//sliderProgress.setMax(audioLength);
 			cuePosition = audioPosition;
 
-			frameNumber = -1;
+			currentFrameNumber = -1;
 
 			loadedAudioFilePath = audioFilePath;
 			isTrackLoaded = true;
@@ -368,7 +372,7 @@ namespace CommonUtils.MathLib.FFT
 			}
 			 */
 			
-			return frameNumber;
+			return currentFrameNumber;
 		}
 		
 		public void Initialize(double sampleRate, int audioChannels, double audioLength, int frames) {
@@ -376,7 +380,7 @@ namespace CommonUtils.MathLib.FFT
 			this.sampleRate = sampleRate;
 			this.audioChannels = audioChannels;
 			this.audioLength = audioLength;
-			this.frames = frames;
+			this.totalNumFrames = frames;
 			
 			#if DEBUG
 			Debug.WriteLine("Duration: {0:N2} seconds ({1} frames)", audioLength / 1000, frames);
@@ -407,13 +411,38 @@ namespace CommonUtils.MathLib.FFT
 			}
 			
 			PrecomputeOctaveRegions();
+			InitMidiSequence();
 		}
 		
 		#region Midi
+		void InitMidiSequence() {
+			// Generate midi file
+			midiSequence = new Sequence(Sequence.PPQ, midiTickResolution, 0, (int) MidiHelper.MidiFormat.SingleTrack);
+			midiTrack = midiSequence.CreateTrack();
+
+			midiTrack.Add(MetaEvent.CreateMetaEvent((int) MidiHelper.MetaEventType.SequenceOrTrackName, "Audio2Midi", 0, midiTickResolution));
+			midiTrack.Add(MetaEvent.CreateMetaEvent((int) MidiHelper.MetaEventType.CopyrightNotice, "perivar@nerseth.com", 0, midiTickResolution));
+			midiTrack.Add(MetaEvent.CreateMetaEvent((int) MidiHelper.MetaEventType.Tempo, ""+midiBPM, 0, midiTickResolution));
+			midiTrack.Add(MetaEvent.CreateMetaEvent((int) MidiHelper.MetaEventType.TimeSignature, "4/4", 0, midiTickResolution));
+			
+			// Convert from ticks to duration
+			// Midi timings are explained here
+			// http://sites.uci.edu/camp2014/2014/05/19/timing-in-midi-files/
+			// http://stackoverflow.com/questions/2038313/midi-ticks-to-actual-playback-seconds-midi-music
+			// The formula is 60000 / (BPM * PPQ) (milliseconds).
+			// Where BPM is the tempo of the track (Beats Per Minute).
+			// (i.e. a 120 BPM track would have a MIDI time of:
+			// (60000 / (120 * 192)) or 2.604 ms for 1 tick.
+			double timeBufferMs = ((double)bufferSize / sampleRate) * 1000;
+			double timeTickMs = (60000 / (double) (midiBPM * midiTickResolution));
+			
+			tickMultiplier = timeBufferMs / timeTickMs;
+		}
+		
 		public void OutputMIDINotes() {
 			if (isMIDIActive) {
 				// send NoteOns
-				foreach (var note in notes[frameNumber]) {
+				foreach (var note in notes[currentFrameNumber]) {
 					if (OCTAVE_ACTIVE[note.octave] && notesOpen[note.pitch] == null) {
 						SendMidiNoteOn(note.channel, note.pitch, note.velocity);
 						notesOpen[note.pitch] = note;
@@ -424,8 +453,8 @@ namespace CommonUtils.MathLib.FFT
 				for (int i = 0; i < notesOpen.Length; i++) {
 					bool isOpen = false;
 					if (notesOpen[i] != null) {
-						for (int j = 0; j < notes[frameNumber].Count; j++) {
-							if (notes[frameNumber][j].pitch == i) {
+						for (int j = 0; j < notes[currentFrameNumber].Count; j++) {
+							if (notes[currentFrameNumber][j].pitch == i) {
 								isOpen = true;
 							}
 						}
@@ -448,39 +477,21 @@ namespace CommonUtils.MathLib.FFT
 		}
 		
 		void SendMidiNoteOn(int channel, int pitch, int velocity) {
-			long tick = frameNumber * 40;
+			long tick = (long) (currentFrameNumber * tickMultiplier);
 			//midiTrack.Add(ShortEvent.CreateShortEvent((int) MidiHelper.MidiEventType.NoteOn, channel, pitch, velocity, tick));
 			midiTrack.Add(ShortEvent.CreateShortEvent((int) MidiHelper.MidiEventType.NoteOn, channel, pitch, 100, tick));
 		}
 
 		void SendMidiNoteOff(int channel, int pitch, int velocity) {
-			long tick = frameNumber * 40;
+			long tick = (long) (currentFrameNumber * tickMultiplier);
 			//midiTrack.Add(ShortEvent.CreateShortEvent((int) MidiHelper.MidiEventType.NoteOff, channel, pitch, velocity, tick));
 			midiTrack.Add(ShortEvent.CreateShortEvent((int) MidiHelper.MidiEventType.NoteOff, channel, pitch, 0, tick));
 		}
 		
-		void InitMidiSequence() {
-			int resolution = 480;
-			
-			// Generate midi file
-			midiSequence = new Sequence(Sequence.PPQ, resolution, 0, (int) MidiHelper.MidiFormat.SingleTrack);
-			midiTrack = midiSequence.CreateTrack();
-
-			midiTrack.Add(MetaEvent.CreateMetaEvent((int) MidiHelper.MetaEventType.SequenceOrTrackName, "Audio2Midi", 0, resolution));
-			midiTrack.Add(MetaEvent.CreateMetaEvent((int) MidiHelper.MetaEventType.CopyrightNotice, "perivar@nerseth.com", 0, resolution));
-			midiTrack.Add(MetaEvent.CreateMetaEvent((int) MidiHelper.MetaEventType.Tempo, "120", 0, resolution));
-			midiTrack.Add(MetaEvent.CreateMetaEvent((int) MidiHelper.MetaEventType.TimeSignature, "4/4", 0, resolution));
-			
-			// Convert from ticks to duration
-			// Midi timings are explained here
-			// http://sites.uci.edu/camp2014/2014/05/19/timing-in-midi-files/
-			
-		}
-		
 		public void SaveMidiSequence(string filePath) {
-						
+			
 			long ticks = midiTrack.Ticks();
-			midiTrack.Add(MetaEvent.CreateMetaEvent((int) MidiHelper.MetaEventType.EndOfTrack, "", ticks, 120));
+			midiTrack.Add(MetaEvent.CreateMetaEvent((int) MidiHelper.MetaEventType.EndOfTrack, "", ticks, midiTickResolution));
 
 			midiSequence.DumpMidi("output.mid.txt");
 			new MidiFileWriter().Write(midiSequence, midiSequence.MidiFileType, new FileInfo(filePath));
@@ -488,7 +499,7 @@ namespace CommonUtils.MathLib.FFT
 		#endregion
 		
 		public void Process(float[] buffer) {
-			if (frameNumber < frames - 1) {
+			if (currentFrameNumber < totalNumFrames - 1) {
 				// need to apply the window transform before we zeropad
 				window.Apply(buffer); // add window to samples
 
@@ -496,7 +507,7 @@ namespace CommonUtils.MathLib.FFT
 
 				//if (audioSystem.IsPlaying)
 				if (true) {
-					frameNumber++;
+					currentFrameNumber++;
 					//Console.Write("Processing frame: {0}      \n", frameNumber);
 					Analyze();
 					OutputMIDINotes();
@@ -598,7 +609,7 @@ namespace CommonUtils.MathLib.FFT
 					}
 
 					// Sum PCP bins
-					pcp[frameNumber][FreqToPitch(freq[k]) % 12] += Math.Pow(spectrum_fft_abs[k], 2) * BinWeight(weightType, binDistance[k]);
+					pcp[currentFrameNumber][FreqToPitch(freq[k]) % 12] += Math.Pow(spectrum_fft_abs[k], 2) * BinWeight(weightType, binDistance[k]);
 				}
 			}
 
@@ -610,7 +621,7 @@ namespace CommonUtils.MathLib.FFT
 						continue;
 					}
 
-					spectrum[k] *= pcp[frameNumber][FreqToPitch(freq[k]) % 12];
+					spectrum[k] *= pcp[currentFrameNumber][FreqToPitch(freq[k]) % 12];
 				}
 			}
 
@@ -679,7 +690,7 @@ namespace CommonUtils.MathLib.FFT
 					} else {
 						peak[k] = Smoothing.PEAK;
 						
-						notes[frameNumber].Add(new Note(this, freq[k], spectrum[k]));
+						notes[currentFrameNumber].Add(new Note(this, freq[k], spectrum[k]));
 
 						// Track Peaks and Levels in this pass so we can detect harmonics
 						foundPeak.Add(freq[k]);
@@ -689,7 +700,7 @@ namespace CommonUtils.MathLib.FFT
 			}
 			
 			// add spectrum to spectrogram
-			Array.Copy(spectrum, spectrogram[frameNumber], spectrum.Length);
+			Array.Copy(spectrum, spectrogram[currentFrameNumber], spectrum.Length);
 		}
 
 		#region IDSPPlugin implementation
@@ -743,8 +754,6 @@ namespace CommonUtils.MathLib.FFT
 				}
 			}
 			
-			bool colorize = true;
-			if (colorize) bitmap = ColorUtils.Colorize(bitmap, 255, ColorUtils.ColorPaletteType.PHOTOSOUNDER);
 			return bitmap;
 		}
 
@@ -830,9 +839,9 @@ namespace CommonUtils.MathLib.FFT
 			using(Graphics g = Graphics.FromImage(bitmap)) {
 
 				if (IsLoaded()) {
-					int keyLength = MathUtils.RoundAwayFromZero((double) bitmap.Width / frames);
+					int keyLength = MathUtils.RoundAwayFromZero((double) bitmap.Width / totalNumFrames);
 					
-					for (int x = 0; x < frames; x++) {
+					for (int x = 0; x < totalNumFrames; x++) {
 						foreach (var note in notes[x]) {
 							// lookup coordinates from the keys dictionary
 							var key = keys[note.pitch];
@@ -888,15 +897,15 @@ namespace CommonUtils.MathLib.FFT
 				if (IsLoaded()) {
 					// render detected peaks
 					const int keyLength = 8;
-					int scroll = (frameNumber * keyLength > bitmap.Width) ? frameNumber - bitmap.Width/keyLength : 0;
+					int scroll = (currentFrameNumber * keyLength > bitmap.Width) ? currentFrameNumber - bitmap.Width/keyLength : 0;
 
-					for (int x = frameNumber; x >= scroll; x--) {
+					for (int x = currentFrameNumber; x >= scroll; x--) {
 						foreach (var note in notes[x]) {
 							// lookup coordinates from the keys dictionary
 							var key = keys[note.pitch];
 							
 							// draw note labels for the current frame
-							if (x == frameNumber) {
+							if (x == currentFrameNumber) {
 								if (note.isWhiteKey()) {
 									g.FillRectangle(Brushes.Blue, key.X+15, key.Y+5, 5, 5);
 									
@@ -929,9 +938,9 @@ namespace CommonUtils.MathLib.FFT
 							
 							Rectangle rect;
 							if (key.IsBlack) {
-								rect = new Rectangle(Math.Abs(x - frameNumber) * keyLength + LEFT_MARGIN, key.Y, keyLength, blackKeyHeight-1);
+								rect = new Rectangle(Math.Abs(x - currentFrameNumber) * keyLength + LEFT_MARGIN, key.Y, keyLength, blackKeyHeight-1);
 							} else {
-								rect = new Rectangle(Math.Abs(x - frameNumber) * keyLength + LEFT_MARGIN, key.Y+4, keyLength, blackKeyHeight-1);
+								rect = new Rectangle(Math.Abs(x - currentFrameNumber) * keyLength + LEFT_MARGIN, key.Y+4, keyLength, blackKeyHeight-1);
 							}
 							g.FillRectangle(new SolidBrush(noteColor), rect);
 						}
@@ -952,16 +961,16 @@ namespace CommonUtils.MathLib.FFT
 				if (IsLoaded()) {
 					
 					// split into 128 pitch bands
-					for (int k = 0; k < spectrogram[frameNumber].Length; k++) {
+					for (int k = 0; k < spectrogram[currentFrameNumber].Length; k++) {
 						double freq = k / (double)fftBufferSize * sampleRate;
 
 						currentPitch = FreqToPitch(freq);
 
 						// store the loudest amplitude per pitch
 						if (currentPitch == previousPitch) {
-							amp[currentPitch] = amp[currentPitch] > spectrogram[frameNumber][k] ? amp[currentPitch] : spectrogram[frameNumber][k];
+							amp[currentPitch] = amp[currentPitch] > spectrogram[currentFrameNumber][k] ? amp[currentPitch] : spectrogram[currentFrameNumber][k];
 						} else {
-							amp[currentPitch] = spectrogram[frameNumber][k];
+							amp[currentPitch] = spectrogram[currentFrameNumber][k];
 							previousPitch = currentPitch;
 						}
 					}
@@ -990,10 +999,11 @@ namespace CommonUtils.MathLib.FFT
 
 				if (IsLoaded()) {
 					
-					int keyLength = MathUtils.RoundAwayFromZero((double) bitmap.Width / frames);
+					var gradients = ColorUtils.GetRGBColorGradients(256, ColorUtils.ColorPaletteType.PHOTOSOUNDER);
+					int keyLength = MathUtils.RoundAwayFromZero((double) bitmap.Width / totalNumFrames);
 					double max = MathUtils.Max(spectrogram);
 					
-					for (int x = 0; x < frames; x++) {
+					for (int x = 0; x < totalNumFrames; x++) {
 						
 						var amp = new double[128];
 						int previousPitch = -1;
@@ -1013,18 +1023,16 @@ namespace CommonUtils.MathLib.FFT
 								previousPitch = currentPitch;
 							}
 						}
-
-						//double max = MathUtils.Max(amp);
 						
 						// draw amp per used band
 						for (int i = keyboardStart; i < keyboardEnd; i++) {
 							var key = keys[i];
 							
-							double hue = 255;
+							double hue = 0;
 							if (amp[i] > 0) {
-								hue = MathUtils.ConvertAndMainainRatio(amp[i], 0, max, 255, 0);
+								hue = MathUtils.ConvertAndMainainRatio(amp[i], 0, max, 0, 255);
 							}
-							Color noteColor = Color.FromArgb((int) hue, (int) hue, (int) hue);
+							var noteColor = gradients[(int)hue];
 							
 							Rectangle rect;
 							if (key.IsBlack) {
