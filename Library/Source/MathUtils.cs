@@ -238,7 +238,7 @@ namespace CommonUtils
 		/// <param name="samples">Signal to be Normalized</param>
 		public static void NormalizeInPlace(float[] samples)
 		{
-			double squares = samples.AsParallel().Aggregate<float, double>(0, (current, t) => current + (t * t));
+			double squares = samples.Aggregate<float, double>(0, (current, t) => current + (t * t));
 
 			// we don't want to normalize by the real RMS, because excessive clipping will occur
 			float rms = (float)Math.Sqrt(squares / samples.Length) * 10;
